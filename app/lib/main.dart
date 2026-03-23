@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import 'router.dart';
 
 void main() async {
@@ -11,21 +12,22 @@ void main() async {
     DeviceOrientation.landscapeRight,
   ]);
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  WakelockPlus.enable();
 
   runApp(
     const ProviderScope(
-      child: YotoApp(),
+      child: ShiruApp(),
     ),
   );
 }
 
-class YotoApp extends StatelessWidget {
-  const YotoApp({Key? key}) : super(key: key);
+class ShiruApp extends StatelessWidget {
+  const ShiruApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Yoto DIY',
+      title: 'Shiru',
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

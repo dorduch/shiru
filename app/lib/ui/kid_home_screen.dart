@@ -9,6 +9,7 @@ import '../providers/audio_player_provider.dart';
 import 'package:flutter/services.dart';
 import '../services/audio_service.dart';
 import 'pixel_sprite.dart';
+import 'giphy_sprite.dart';
 
 class KidHomeScreen extends ConsumerWidget {
   const KidHomeScreen({Key? key}) : super(key: key);
@@ -28,16 +29,46 @@ class KidHomeScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.asset(
+                          'assets/images/app_icon.png',
+                          width: 56,
+                          height: 56,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Shiru',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF222f3e),
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ],
+                  ),
                   InkWell(
                     onTap: () => context.push('/pin'),
                     child: Container(
-                      width: 48, height: 48,
+                      width: 48,
+                      height: 48,
                       decoration: const BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 12, offset: Offset(0, 4))],
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 12,
+                            offset: Offset(0, 4),
+                          )
+                        ],
                       ),
                       child: const Icon(Icons.lock, color: Colors.grey),
                     ),
@@ -117,7 +148,7 @@ class KidHomeScreen extends ConsumerWidget {
                     decoration: BoxDecoration(color: hexOrFallback(card.color), shape: BoxShape.circle),
                     alignment: Alignment.center,
                     child: FittedBox(
-                        child: PixelSprite(sprite: spriteDef, state: isPlayingGlobal ? SpriteState.active : SpriteState.idle, scale: 3.5)
+                        child: GiphySprite(title: card.spriteKey != null && card.spriteKey!.isNotEmpty ? card.spriteKey! : card.title, fallbackSprite: spriteDef, state: isPlayingGlobal ? SpriteState.active : SpriteState.idle, scale: 3.5)
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -300,7 +331,7 @@ class _AudioCardTileState extends ConsumerState<AudioCardTile> with SingleTicker
                       child: FittedBox(
                         child: Padding(
                           padding: const EdgeInsets.all(16),
-                          child: PixelSprite(sprite: spriteDef, state: state, scale: 6.0),
+                          child: GiphySprite(title: widget.card.spriteKey != null && widget.card.spriteKey!.isNotEmpty ? widget.card.spriteKey! : widget.card.title, fallbackSprite: spriteDef, state: state, scale: 6.0),
                         ),
                       ),
                     ),

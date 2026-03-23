@@ -5,6 +5,7 @@ import 'package:intl/intl.dart' as intl;
 import '../providers/cards_provider.dart';
 import '../models/sprites.dart';
 import 'pixel_sprite.dart';
+import 'giphy_sprite.dart';
 
 class ParentListScreen extends ConsumerWidget {
   const ParentListScreen({Key? key}) : super(key: key);
@@ -79,7 +80,7 @@ class ParentListScreen extends ConsumerWidget {
                                 width: 68, height: 68,
                                 decoration: BoxDecoration(color: hexOrFallback(card.color), borderRadius: BorderRadius.circular(12)),
                                 alignment: Alignment.center,
-                                child: PixelSprite(sprite: spriteDef, state: SpriteState.idle, scale: 2.5),
+                                child: GiphySprite(title: card.spriteKey != null && card.spriteKey!.isNotEmpty ? card.spriteKey! : card.title, fallbackSprite: spriteDef, state: SpriteState.idle, scale: 2.5),
                               ),
                               const SizedBox(width: 24),
                               Expanded(

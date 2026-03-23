@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +14,7 @@ import '../models/audio_card.dart';
 import '../providers/cards_provider.dart';
 import '../models/sprites.dart';
 import 'pixel_sprite.dart';
+import 'giphy_sprite.dart';
 
 class ParentEditScreen extends ConsumerStatefulWidget {
   final String? cardId;
@@ -24,9 +26,11 @@ class ParentEditScreen extends ConsumerStatefulWidget {
 
 class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
   final _titleController = TextEditingController();
+  final _spriteKeyController = TextEditingController();
   String? _audioPath;
   String _color = '#F0FDF4'; 
   bool _isLoading = false;
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -43,6 +47,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
     final card = cardsAsync.value?.firstWhere((c) => c.id == id);
     if (card != null) {
       _titleController.text = card.title;
+      _spriteKeyController.text = card.spriteKey ?? '';
       _audioPath = card.audioPath;
       _color = card.color;
       setState((){});
@@ -84,6 +89,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
         id: widget.cardId ?? const Uuid().v4(),
         title: _titleController.text,
         color: _color,
+        spriteKey: _spriteKeyController.text.isNotEmpty ? _spriteKeyController.text : null,
         audioPath: finalAudioPath,
         position: widget.cardId == null ? cardsList.length : 0, 
         createdAt: DateTime.now().millisecondsSinceEpoch,
@@ -102,6 +108,14 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _titleController.dispose();
+    _spriteKeyController.dispose();
+    super.dispose();
   }
 
   @override
@@ -164,11 +178,39 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                         const SizedBox(height: 8),
                         TextField(
                           controller: _titleController,
-                          onChanged: (v) => setState((){}),
+                          onChanged: (v) {
+                            if (_debounce?.isActive ?? false) _debounce!.cancel();
+                            _debounce = Timer(const Duration(milliseconds: 700), () {
+                              if (mounted) setState(() {});
+                            });
+                          },
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                           textDirection: intl.Bidi.detectRtlDirectionality(_titleController.text) ? TextDirection.rtl : TextDirection.ltr,
                           textAlign: intl.Bidi.detectRtlDirectionality(_titleController.text) ? TextAlign.right : TextAlign.left,
                           decoration: InputDecoration(
+                            filled: true, fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.all(16),
+                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 2)),
+                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFFF6B6B), width: 2)),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        const Text('Custom GIF Search (Optional)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _spriteKeyController,
+                          onChanged: (v) {
+                            if (_debounce?.isActive ?? false) _debounce!.cancel();
+                            _debounce = Timer(const Duration(milliseconds: 700), () {
+                              if (mounted) setState(() {});
+                            });
+                          },
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                          textDirection: intl.Bidi.detectRtlDirectionality(_spriteKeyController.text) ? TextDirection.rtl : TextDirection.ltr,
+                          textAlign: intl.Bidi.detectRtlDirectionality(_titleController.text) ? TextAlign.right : TextAlign.left,
+                          decoration: InputDecoration(
+                            hintText: 'e.g. running cat',
+                            hintStyle: const TextStyle(color: Colors.black38),
                             filled: true, fillColor: Colors.white,
                             contentPadding: const EdgeInsets.all(16),
                             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 2)),
@@ -242,7 +284,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                 child: FittedBox(
                     child: Padding(
                         padding: const EdgeInsets.all(16),
-                        child: PixelSprite(sprite: sprite, state: SpriteState.active, scale: 6.0)
+                        child: GiphySprite(title: _spriteKeyController.text.isNotEmpty ? _spriteKeyController.text : _titleController.text, fallbackSprite: sprite, state: SpriteState.active, scale: 6.0)
                     )
                 ),
               ),
