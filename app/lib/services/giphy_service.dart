@@ -14,8 +14,9 @@ class GiphyService {
 
     try {
       // We search for "pixel art" + the card title, and filter for stickers (transparent background)
-      final url = Uri.parse('https://api.giphy.com/v1/stickers/search?api_key=$_apiKey&q=pixel+art+$query&limit=1&rating=g');
-      final response = await http.get(url).timeout(const Duration(seconds: 3));
+      final encodedQuery = Uri.encodeComponent('pixel art $query');
+      final url = Uri.parse('https://api.giphy.com/v1/stickers/search?api_key=$_apiKey&q=$encodedQuery&limit=1&rating=g');
+      final response = await http.get(url).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
