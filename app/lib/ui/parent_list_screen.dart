@@ -32,24 +32,48 @@ class ParentListScreen extends ConsumerWidget {
                       const Text('Library', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800)),
                     ]
                   ),
-                  GestureDetector(
-                    onTap: () => context.go('/parent/edit'),
-                    child: Container(
-                      height: 48,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFF6B6B),
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: const [BoxShadow(color: Color(0x40FF6B6B), blurRadius: 12, offset: Offset(0, 4))]
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => context.push('/parent/categories'),
+                        child: Container(
+                          height: 48,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(color: const Color(0xFFE5E7EB), width: 2),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.category, color: Color(0xFF6B7280), size: 20),
+                              SizedBox(width: 8),
+                              Text('Categories', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+                            ],
+                          ),
+                        ),
                       ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.add, color: Colors.white, size: 20),
-                          SizedBox(width: 8),
-                          Text('Add Card', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white))
-                        ]
-                      )
-                    )
+                      const SizedBox(width: 12),
+                      GestureDetector(
+                        onTap: () => context.go('/parent/edit'),
+                        child: Container(
+                          height: 48,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFF6B6B),
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: const [BoxShadow(color: Color(0x40FF6B6B), blurRadius: 12, offset: Offset(0, 4))]
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.add, color: Colors.white, size: 20),
+                              SizedBox(width: 8),
+                              Text('Add Card', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white))
+                            ]
+                          )
+                        )
+                      ),
+                    ],
                   )
                 ]
               ),
