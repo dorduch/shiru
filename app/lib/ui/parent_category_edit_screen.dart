@@ -4,7 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 import '../models/category.dart';
+import '../models/audio_card.dart';
 import '../providers/categories_provider.dart';
+import '../providers/cards_provider.dart';
+import '../db/database_service.dart';
 
 class ParentCategoryEditScreen extends ConsumerStatefulWidget {
   final Category? category;
@@ -80,14 +83,19 @@ class _ParentCategoryEditScreenState
   Widget build(BuildContext context) {
     final isEditing = widget.category != null;
 
+    final cardsAsync = ref.watch(cardsProvider);
+    final allCategories = ref.watch(categoriesProvider).value ?? [];
+    final categoryId = widget.category?.id;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F8),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -131,11 +139,11 @@ class _ParentCategoryEditScreenState
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
+              // Emoji + Name row
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  // Emoji — small square
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -168,7 +176,6 @@ class _ParentCategoryEditScreenState
                     ],
                   ),
                   const SizedBox(width: 16),
-                  // Category Name — fills remaining width
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -201,10 +208,104 @@ class _ParentCategoryEditScreenState
                   ),
                 ],
               ),
+              // Card assignment list (only when editing)
+              if (isEditing) ...[
+                const SizedBox(height: 28),
+                const Text('Cards',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: cardsAsync.when(
+                    data: (cards) {
+                      if (cards.isEmpty) {
+                        return const Center(
+                          child: Text('No cards yet.',
+                              style: TextStyle(fontSize: 16, color: Colors.black54)),
+                        );
+                      }
+                      return ListView.separated(
+                        itemCount: cards.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final card = cards[index];
+                          final isInThis = card.collectionId == categoryId;
+                          final otherCat = (!isInThis && card.collectionId != null)
+                              ? allCategories.where((c) => c.id == card.collectionId).firstOrNull
+                              : null;
+
+                          return GestureDetector(
+                            onTap: () => _toggleCard(card, isInThis),
+                            child: Container(
+                              height: 64,
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: isInThis ? const Color(0xFFECFDF5) : Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: isInThis
+                                    ? Border.all(color: const Color(0xFF22C55E), width: 2)
+                                    : Border.all(color: const Color(0xFFE5E7EB), width: 1),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    isInThis ? Icons.check_circle : Icons.circle_outlined,
+                                    color: isInThis ? const Color(0xFF22C55E) : const Color(0xFFD1D5DB),
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      card.title,
+                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (otherCat != null)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF3F4F6),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        '${otherCat.emoji} ${otherCat.name}',
+                                        style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    loading: () => const Center(child: CircularProgressIndicator()),
+                    error: (e, s) => Center(child: Text(e.toString())),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _toggleCard(AudioCard card, bool isCurrentlyInThis) async {
+    final newCollectionId = isCurrentlyInThis ? null : widget.category!.id;
+    final updated = AudioCard(
+      id: card.id,
+      collectionId: newCollectionId,
+      title: card.title,
+      color: card.color,
+      spriteKey: card.spriteKey,
+      customImagePath: card.customImagePath,
+      audioPath: card.audioPath,
+      playbackPosition: card.playbackPosition,
+      position: card.position,
+      createdAt: card.createdAt,
+    );
+    await DatabaseService.instance.updateCard(updated);
+    ref.read(cardsProvider.notifier).loadCards();
   }
 }
