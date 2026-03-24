@@ -132,51 +132,74 @@ class _ParentCategoryEditScreenState
                 ],
               ),
               const SizedBox(height: 32),
-              const Text('Emoji',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _emojiController,
-                style: const TextStyle(fontSize: 32),
-                decoration: InputDecoration(
-                  hintText: '🎵',
-                  hintStyle: const TextStyle(fontSize: 32, color: Colors.black26),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.all(16),
-                  enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(
-                          color: Color(0xFFE5E7EB), width: 2)),
-                  focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(
-                          color: Color(0xFF22C55E), width: 2)),
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text('Category Name',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _nameController,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-                decoration: InputDecoration(
-                  hintText: 'e.g. Songs',
-                  hintStyle: const TextStyle(color: Colors.black38),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.all(16),
-                  enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(
-                          color: Color(0xFFE5E7EB), width: 2)),
-                  focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(
-                          color: Color(0xFF22C55E), width: 2)),
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  // Emoji — small square
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Emoji',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: 72,
+                        child: TextField(
+                          controller: _emojiController,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 32),
+                          decoration: InputDecoration(
+                            hintText: '🎵',
+                            hintStyle: const TextStyle(fontSize: 32, color: Colors.black26),
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                            enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: const BorderSide(
+                                    color: Color(0xFFE5E7EB), width: 2)),
+                            focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: const BorderSide(
+                                    color: Color(0xFF22C55E), width: 2)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 16),
+                  // Category Name — fills remaining width
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Category Name',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _nameController,
+                          style:
+                              const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                          decoration: InputDecoration(
+                            hintText: 'e.g. Songs',
+                            hintStyle: const TextStyle(color: Colors.black38),
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.all(16),
+                            enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: const BorderSide(
+                                    color: Color(0xFFE5E7EB), width: 2)),
+                            focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: const BorderSide(
+                                    color: Color(0xFF22C55E), width: 2)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
