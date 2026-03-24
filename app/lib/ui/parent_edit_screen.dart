@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'widgets/audio_recorder_widget.dart';
 import 'package:uuid/uuid.dart';
 
 import '../db/database_service.dart';
@@ -57,13 +57,6 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
     }
   }
 
-  Future<void> _pickAudio() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.audio);
-    if (result != null && result.files.single.path != null) {
-      setState(() => _audioPath = result.files.single.path);
-    }
-  }
-
   Future<void> _save() async {
     if (_titleController.text.isEmpty || _audioPath == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please provide a title and audio file.')));
@@ -82,6 +75,12 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
          final newFile = File(path.join(docsDir.path, '$uuidStr$extStr'));
          await File(_audioPath!).copy(newFile.path);
          finalAudioPath = newFile.path;
+
+         // Clean up temp file if it came from recording
+         final tempDir = await getTemporaryDirectory();
+         if (_audioPath!.startsWith(tempDir.path)) {
+           try { await File(_audioPath!).delete(); } catch (_) {}
+         }
       } else {
          finalAudioPath = _audioPath!;
       }
@@ -259,32 +258,19 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        const Text('Audio File', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const Text('Audio', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
-                        GestureDetector(
-                          onTap: _pickAudio,
-                          child: Container(
-                            height: 72,
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 12, offset: Offset(0, 4))]
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.audio_file, color: Color(0xFFFF6B6B), size: 28),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    _audioPath == null ? "Tap to select audio file" : path.basename(_audioPath!),
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                                    overflow: TextOverflow.ellipsis,
-                                  )
-                                )
-                              ]
-                            )
-                          )
+                        AudioRecorderWidget(
+                          currentAudioPath: _audioPath,
+                          onAudioSelected: (selectedPath) {
+                            setState(() {
+                              if (selectedPath.isEmpty) {
+                                _audioPath = null;
+                              } else {
+                                _audioPath = selectedPath;
+                              }
+                            });
+                          },
                         )
                       ]
                     )
