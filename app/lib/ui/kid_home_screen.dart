@@ -6,19 +6,30 @@ import '../models/audio_card.dart';
 import '../models/sprites.dart';
 import '../providers/cards_provider.dart';
 import '../providers/audio_player_provider.dart';
+import '../providers/categories_provider.dart';
+import '../models/category.dart' as cat_model;
 import 'package:flutter/services.dart';
 import '../services/audio_service.dart';
 import 'pixel_sprite.dart';
 import 'giphy_sprite.dart';
 
-class KidHomeScreen extends ConsumerWidget {
+class KidHomeScreen extends ConsumerStatefulWidget {
   const KidHomeScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<KidHomeScreen> createState() => _KidHomeScreenState();
+}
+
+class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
+  String? _selectedCategoryId; // null means "All"
+
+  @override
+  Widget build(BuildContext context) {
     final cardsAsync = ref.watch(cardsProvider);
     final currentlyPlayingId = ref.watch(currentPlayingCardIdProvider);
     final isPlaying = ref.watch(isPlayingProvider);
+    final categoriesAsync = ref.watch(categoriesProvider);
+    final categories = categoriesAsync.value ?? [];
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFFBEB),
@@ -28,6 +39,7 @@ class KidHomeScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Header (unchanged)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -75,13 +87,31 @@ class KidHomeScreen extends ConsumerWidget {
                   )
                 ],
               ),
-              const SizedBox(height: 24),
-              
+              const SizedBox(height: 16),
+
+              // Category tabs (only shown if categories exist)
+              if (categories.isNotEmpty) ...[
+                _buildCategoryTabs(categories),
+                const SizedBox(height: 16),
+              ],
+
               Expanded(
                 child: cardsAsync.when(
                   data: (cards) {
-                    if (cards.isEmpty) {
-                      return const Center(child: Text("Ask your parent to add some cards!", style: TextStyle(fontSize: 24, color: Colors.black54)));
+                    // Filter by selected category
+                    final filtered = _selectedCategoryId == null
+                        ? cards
+                        : cards.where((c) => c.collectionId == _selectedCategoryId).toList();
+
+                    if (filtered.isEmpty) {
+                      return Center(
+                        child: Text(
+                          _selectedCategoryId == null
+                              ? "Ask your parent to add some cards!"
+                              : "No cards in this category yet!",
+                          style: const TextStyle(fontSize: 24, color: Colors.black54),
+                        ),
+                      );
                     }
                     return GridView.builder(
                       padding: const EdgeInsets.only(bottom: 24),
@@ -91,9 +121,9 @@ class KidHomeScreen extends ConsumerWidget {
                         mainAxisSpacing: 24,
                         childAspectRatio: 0.85,
                       ),
-                      itemCount: cards.length,
+                      itemCount: filtered.length,
                       itemBuilder: (context, index) {
-                        final card = cards[index];
+                        final card = filtered[index];
                         final isPlayingThis = currentlyPlayingId == card.id;
                         final isAnotherPlaying = currentlyPlayingId != null && currentlyPlayingId != card.id;
                         return AudioCardTile(
@@ -109,9 +139,9 @@ class KidHomeScreen extends ConsumerWidget {
                   error: (err, stack) => Center(child: Text('Error: $err')),
                 )
               ),
-              
+
               const SizedBox(height: 24),
-              if (currentlyPlayingId != null) 
+              if (currentlyPlayingId != null)
                  _buildPlayerPill(ref, currentlyPlayingId, isPlaying)
             ]
           )
@@ -120,7 +150,54 @@ class KidHomeScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildCategoryTabs(List<cat_model.Category> categories) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _buildTab(label: 'All', isActive: _selectedCategoryId == null, onTap: () {
+            setState(() => _selectedCategoryId = null);
+          }),
+          const SizedBox(width: 8),
+          ...categories.map((cat) => Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: _buildTab(
+              label: '${cat.emoji} ${cat.name}',
+              isActive: _selectedCategoryId == cat.id,
+              onTap: () {
+                setState(() => _selectedCategoryId = cat.id);
+              },
+            ),
+          )),
+        ],
+      ),
+    );
+  }
 
+  Widget _buildTab({required String label, required bool isActive, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF22C55E) : Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))],
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: isActive ? Colors.white : const Color(0xFF6B7280),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildPlayerPill(WidgetRef ref, String playingId, bool isPlayingGlobal) {
     final cardsAsync = ref.read(cardsProvider);
@@ -158,9 +235,9 @@ class KidHomeScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            card.title, 
-                            maxLines: 1, 
-                            overflow: TextOverflow.ellipsis, 
+                            card.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF1A1A1A)),
                             textDirection: intl.Bidi.detectRtlDirectionality(card.title) ? TextDirection.rtl : TextDirection.ltr,
                           ),
@@ -189,7 +266,7 @@ class KidHomeScreen extends ConsumerWidget {
                 child: Container(
                   width: 64, height: 64,
                   decoration: const BoxDecoration(
-                    color: Color(0xFFFF6B6B), 
+                    color: Color(0xFFFF6B6B),
                     shape: BoxShape.circle,
                     boxShadow: [BoxShadow(color: Color(0x40FF6B6B), blurRadius: 12, offset: Offset(0, 4))]
                   ),
