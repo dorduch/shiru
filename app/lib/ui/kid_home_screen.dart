@@ -31,6 +31,12 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
     final categoriesAsync = ref.watch(categoriesProvider);
     final categories = categoriesAsync.value ?? [];
 
+    // Reset to "All" if selected category was deleted
+    if (_selectedCategoryId != null &&
+        categories.every((c) => c.id != _selectedCategoryId)) {
+      _selectedCategoryId = null;
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFFFFBEB),
       body: SafeArea(
