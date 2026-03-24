@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/audio_card.dart';
+import '../models/category.dart';
 
 class DatabaseService {
   static final DatabaseService instance = DatabaseService._init();
@@ -20,8 +21,9 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: _upgradeDB,
     );
   }
 
@@ -40,6 +42,28 @@ CREATE TABLE cards (
   created_at INTEGER NOT NULL
 )
 ''');
+
+    await db.execute('''
+CREATE TABLE categories (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  emoji TEXT NOT NULL,
+  position INTEGER DEFAULT 0
+)
+''');
+  }
+
+  Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('''
+CREATE TABLE categories (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  emoji TEXT NOT NULL,
+  position INTEGER DEFAULT 0
+)
+''');
+    }
   }
 
   Future<AudioCard> createCard(AudioCard card) async {
@@ -87,6 +111,51 @@ CREATE TABLE cards (
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  Future<List<Category>> readAllCategories() async {
+    final db = await instance.database;
+    final result = await db.query('categories', orderBy: 'position ASC');
+    return result.map((map) => Category.fromMap(map)).toList();
+  }
+
+  Future<Category> createCategory(Category category) async {
+    final db = await instance.database;
+    await db.insert('categories', category.toMap());
+    return category;
+  }
+
+  Future<int> updateCategory(Category category) async {
+    final db = await instance.database;
+    return db.update(
+      'categories',
+      category.toMap(),
+      where: 'id = ?',
+      whereArgs: [category.id],
+    );
+  }
+
+  Future<int> deleteCategory(String id) async {
+    final db = await instance.database;
+    return await db.delete(
+      'categories',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> batchUpdateCategoryPositions(List<Category> categories) async {
+    final db = await instance.database;
+    await db.transaction((txn) async {
+      for (final cat in categories) {
+        await txn.update(
+          'categories',
+          {'position': cat.position},
+          where: 'id = ?',
+          whereArgs: [cat.id],
+        );
+      }
+    });
   }
 
   Future close() async {
