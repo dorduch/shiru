@@ -54,6 +54,8 @@ class AudioCard {
   }
 
   AudioCard copyWith({
+    String? collectionId,
+    bool clearCollectionId = false,
     String? title,
     String? color,
     String? spriteKey,
@@ -64,7 +66,7 @@ class AudioCard {
   }) {
     return AudioCard(
       id: id,
-      collectionId: collectionId,
+      collectionId: clearCollectionId ? null : (collectionId ?? this.collectionId),
       title: title ?? this.title,
       color: color ?? this.color,
       spriteKey: spriteKey ?? this.spriteKey,

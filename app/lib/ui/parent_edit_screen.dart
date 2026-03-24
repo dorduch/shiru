@@ -12,6 +12,7 @@ import '../db/database_service.dart';
 import 'package:intl/intl.dart' as intl;
 import '../models/audio_card.dart';
 import '../providers/cards_provider.dart';
+import '../providers/categories_provider.dart';
 import '../models/sprites.dart';
 import 'pixel_sprite.dart';
 import 'giphy_sprite.dart';
@@ -28,7 +29,8 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
   final _titleController = TextEditingController();
   final _spriteKeyController = TextEditingController();
   String? _audioPath;
-  String _color = '#F0FDF4'; 
+  String _color = '#F0FDF4';
+  String? _selectedCategoryId;
   bool _isLoading = false;
   Timer? _debounce;
 
@@ -50,6 +52,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
       _spriteKeyController.text = card.spriteKey ?? '';
       _audioPath = card.audioPath;
       _color = card.color;
+      _selectedCategoryId = card.collectionId;
       setState((){});
     }
   }
@@ -87,11 +90,12 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
 
       final card = AudioCard(
         id: widget.cardId ?? const Uuid().v4(),
+        collectionId: _selectedCategoryId,
         title: _titleController.text,
         color: _color,
         spriteKey: _spriteKeyController.text.isNotEmpty ? _spriteKeyController.text : null,
         audioPath: finalAudioPath,
-        position: widget.cardId == null ? cardsList.length : 0, 
+        position: widget.cardId == null ? cardsList.length : 0,
         createdAt: DateTime.now().millisecondsSinceEpoch,
       );
 
@@ -193,6 +197,43 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 2)),
                             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFFF6B6B), width: 2)),
                           ),
+                        ),
+                        const SizedBox(height: 24),
+                        const Text('Category', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        Consumer(
+                          builder: (context, ref, _) {
+                            final categoriesAsync = ref.watch(categoriesProvider);
+                            final categories = categoriesAsync.value ?? [];
+                            return Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: const Color(0xFFE5E7EB), width: 2),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String?>(
+                                  isExpanded: true,
+                                  value: _selectedCategoryId,
+                                  hint: const Text('— None —'),
+                                  items: [
+                                    const DropdownMenuItem<String?>(
+                                      value: null,
+                                      child: Text('— None —'),
+                                    ),
+                                    ...categories.map((c) => DropdownMenuItem<String?>(
+                                      value: c.id,
+                                      child: Text('${c.emoji} ${c.name}', style: const TextStyle(fontSize: 16)),
+                                    )),
+                                  ],
+                                  onChanged: (value) {
+                                    setState(() => _selectedCategoryId = value);
+                                  },
+                                ),
+                              ),
+                            );
+                          },
                         ),
                         const SizedBox(height: 24),
                         const Text('Custom GIF Search (Optional)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
