@@ -1,17 +1,14 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 class GiphyService {
-  // Using a common public beta testing key for Giphy. 
-  // In production, you would replace this with your own API key.
-  static String get _apiKey => dotenv.env['GIPHY_API_KEY']!;
+  static const _apiKey = String.fromEnvironment('GIPHY_API_KEY');
   
   // Cache to store URLs so we don't spam the API for the same card
   static final Map<String, String> _cache = {};
 
   static Future<String?> fetchPixelArtGif(String query) async {
     if (_cache.containsKey(query)) return _cache[query];
+    if (_apiKey.isEmpty) return null;
 
     try {
       // We search for "pixel art" + the card title, and filter for stickers (transparent background)

@@ -4,12 +4,11 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:math';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/story_builder_state.dart';
 
 class StoryBuilderService {
-  static String get _openAiApiKey => dotenv.env['OPENAI_API_KEY']!;
-  static String get _elevenLabsApiKey => dotenv.env['ELEVENLABS_API_KEY']!;
+  static const _openAiApiKey = String.fromEnvironment('OPENAI_API_KEY');
+  static const _elevenLabsApiKey = String.fromEnvironment('ELEVENLABS_API_KEY');
   static const List<String> _voiceIds = [
     'EXAVITQu4vr4xnSDxMaL', // Sarah
     '21m00Tcm4TlvDq8ikWAM', // Rachel
@@ -24,6 +23,9 @@ class StoryBuilderService {
     required String theme,
     required StoryLength length,
   }) async {
+    if (_openAiApiKey.isEmpty) {
+      throw Exception('OPENAI_API_KEY not configured. Pass it via --dart-define=OPENAI_API_KEY=...');
+    }
     final heroLabel = storyHeroes.firstWhere((h) => h['id'] == hero)['label']!;
     final themeLabel = storyThemes.firstWhere((t) => t['id'] == theme)['label']!;
     final wordCount = length == StoryLength.short ? 150 : 400;
@@ -100,6 +102,9 @@ class StoryBuilderService {
   }
 
   static Future<String> generateAudio(String storyText) async {
+    if (_elevenLabsApiKey.isEmpty) {
+      throw Exception('ELEVENLABS_API_KEY not configured. Pass it via --dart-define=ELEVENLABS_API_KEY=...');
+    }
     final response = await http
         .post(
           Uri.parse('https://api.elevenlabs.io/v1/text-to-speech/${_voiceIds[Random().nextInt(_voiceIds.length)]}'),

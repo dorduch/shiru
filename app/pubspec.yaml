@@ -12,7 +12,6 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  flutter_dotenv: ^5.2.1
   flutter_riverpod: ^2.5.1
   go_router: ^17.1.0
   http: ^1.6.0
@@ -38,7 +37,6 @@ flutter:
   uses-material-design: true
 
   assets:
-    - .env
     - assets/images/app_icon.png
 
 flutter_launcher_icons:
