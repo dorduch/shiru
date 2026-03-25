@@ -62,7 +62,7 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                       ),
                       const SizedBox(width: 12),
                       const Text(
-                        'Shiru',
+                        'שירו',
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w900,
@@ -113,8 +113,8 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                       return Center(
                         child: Text(
                           _selectedCategoryId == null
-                              ? "Ask your parent to add some cards!"
-                              : "No cards in this category yet!",
+                              ? "בקשו מההורים להוסיף כרטיסים!"
+                              : "אין כרטיסים בקטגוריה הזו!",
                           style: const TextStyle(fontSize: 24, color: Colors.black54),
                         ),
                       );
@@ -142,7 +142,7 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                     );
                   },
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (err, stack) => Center(child: Text('Error: $err')),
+                  error: (err, stack) => Center(child: Text('שגיאה: $err')),
                 )
               ),
 
@@ -161,12 +161,12 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          _buildTab(label: 'All', isActive: _selectedCategoryId == null, onTap: () {
+          _buildTab(label: 'הכל', isActive: _selectedCategoryId == null, onTap: () {
             setState(() => _selectedCategoryId = null);
           }),
           const SizedBox(width: 8),
           ...categories.map((cat) => Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsetsDirectional.only(end: 8),
             child: _buildTab(
               label: '${cat.emoji} ${cat.name}',
               isActive: _selectedCategoryId == cat.id,
@@ -248,7 +248,7 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                             textDirection: intl.Bidi.detectRtlDirectionality(card.title) ? TextDirection.rtl : TextDirection.ltr,
                           ),
                           const SizedBox(height: 2),
-                          Text(isPlayingGlobal ? "Now Playing" : "Paused", maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isPlayingGlobal ? const Color(0xFF22C55E) : const Color(0xFF6B7280))),
+                          Text(isPlayingGlobal ? "מתנגן כעת" : "מושהה", maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isPlayingGlobal ? const Color(0xFF22C55E) : const Color(0xFF6B7280))),
                         ],
                       )
                   )

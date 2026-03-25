@@ -26,11 +26,11 @@ class ParentCategoriesScreen extends ConsumerWidget {
                 children: [
                   Row(children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_ios, size: 28),
+                      icon: const Icon(Icons.arrow_forward_ios, size: 28),
                       onPressed: () => context.pop(),
                     ),
                     const SizedBox(width: 8),
-                    const Text('Categories',
+                    const Text('קטגוריות',
                         style: TextStyle(
                             fontSize: 32, fontWeight: FontWeight.w800)),
                   ]),
@@ -47,7 +47,7 @@ class ParentCategoriesScreen extends ConsumerWidget {
                   data: (categories) {
                     if (categories.isEmpty) {
                       return const Center(
-                        child: Text('No categories yet.',
+                        child: Text('אין קטגוריות עדיין.',
                             style: TextStyle(
                                 fontSize: 20, color: Colors.black54)),
                       );
@@ -101,7 +101,7 @@ class ParentCategoriesScreen extends ConsumerWidget {
                     children: [
                       Icon(Icons.add, color: Colors.white),
                       SizedBox(width: 8),
-                      Text('Add Category',
+                      Text('הוסף קטגוריה',
                           style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
@@ -122,13 +122,13 @@ class ParentCategoriesScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Delete "${category.emoji} ${category.name}"?'),
+        title: Text('למחוק את "${category.emoji} ${category.name}"?'),
         content: const Text(
-            'Cards in this category will become uncategorized.'),
+            'הכרטיסים בקטגוריה הזו יהפכו ללא קטגוריה.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+              child: const Text('ביטול')),
           TextButton(
             onPressed: () {
               ref
@@ -136,7 +136,7 @@ class ParentCategoriesScreen extends ConsumerWidget {
                   .deleteCategory(category.id);
               Navigator.pop(ctx);
             },
-            child: const Text('Delete',
+            child: const Text('מחיקה',
                 style: TextStyle(color: Colors.redAccent)),
           ),
         ],

@@ -44,13 +44,13 @@ class _ParentCategoryEditScreenState
 
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a category name.')),
+        const SnackBar(content: Text('יש להזין שם קטגוריה.')),
       );
       return;
     }
     if (_emojiController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter an emoji.')),
+        const SnackBar(content: Text('יש להזין אימוג׳י.')),
       );
       return;
     }
@@ -101,12 +101,12 @@ class _ParentCategoryEditScreenState
                 children: [
                   Row(children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_ios, size: 28),
+                      icon: const Icon(Icons.arrow_forward_ios, size: 28),
                       onPressed: () => context.pop(),
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      isEditing ? 'Edit Category' : 'New Category',
+                      isEditing ? 'עריכת קטגוריה' : 'קטגוריה חדשה',
                       style: const TextStyle(
                           fontSize: 32, fontWeight: FontWeight.w800),
                     ),
@@ -129,7 +129,7 @@ class _ParentCategoryEditScreenState
                       child: const Row(children: [
                         Icon(Icons.check, color: Colors.white),
                         SizedBox(width: 8),
-                        Text('Save',
+                        Text('שמור',
                             style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
@@ -147,7 +147,7 @@ class _ParentCategoryEditScreenState
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Emoji',
+                      const Text('אימוג׳י',
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
                       SizedBox(
@@ -180,7 +180,7 @@ class _ParentCategoryEditScreenState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Category Name',
+                        const Text('שם קטגוריה',
                             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         TextField(
@@ -188,7 +188,7 @@ class _ParentCategoryEditScreenState
                           style:
                               const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                           decoration: InputDecoration(
-                            hintText: 'e.g. Songs',
+                            hintText: 'למשל: שירים',
                             hintStyle: const TextStyle(color: Colors.black38),
                             filled: true,
                             fillColor: Colors.white,
@@ -211,7 +211,7 @@ class _ParentCategoryEditScreenState
               // Card assignment list (only when editing)
               if (isEditing) ...[
                 const SizedBox(height: 28),
-                const Text('Cards',
+                const Text('כרטיסים',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Expanded(
@@ -219,7 +219,7 @@ class _ParentCategoryEditScreenState
                     data: (cards) {
                       if (cards.isEmpty) {
                         return const Center(
-                          child: Text('No cards yet.',
+                          child: Text('אין כרטיסים עדיין.',
                               style: TextStyle(fontSize: 16, color: Colors.black54)),
                         );
                       }

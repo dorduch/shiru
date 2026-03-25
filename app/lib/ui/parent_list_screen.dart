@@ -27,9 +27,9 @@ class ParentListScreen extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      IconButton(icon: const Icon(Icons.arrow_back_ios, size: 28), onPressed: () => context.go('/')),
+                      IconButton(icon: const Icon(Icons.arrow_forward_ios, size: 28), onPressed: () => context.go('/')),
                       const SizedBox(width: 8),
-                      const Text('Library', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800)),
+                      const Text('ספרייה', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800)),
                     ]
                   ),
                   Row(
@@ -48,7 +48,7 @@ class ParentListScreen extends ConsumerWidget {
                             children: [
                               Icon(Icons.category, color: Color(0xFF6B7280), size: 20),
                               SizedBox(width: 8),
-                              Text('Categories', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+                              Text('קטגוריות', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
                             ],
                           ),
                         ),
@@ -70,7 +70,7 @@ class ParentListScreen extends ConsumerWidget {
                             children: [
                               Icon(Icons.auto_awesome, color: Colors.white, size: 20),
                               SizedBox(width: 8),
-                              Text('Story Builder', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+                              Text('בונה סיפורים', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
                             ],
                           ),
                         ),
@@ -90,7 +90,7 @@ class ParentListScreen extends ConsumerWidget {
                             children: [
                               Icon(Icons.add, color: Colors.white, size: 20),
                               SizedBox(width: 8),
-                              Text('Add Card', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white))
+                              Text('הוסף כרטיס', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white))
                             ]
                           )
                         )
@@ -104,7 +104,7 @@ class ParentListScreen extends ConsumerWidget {
                 child: cardsAsync.when(
                   data: (cards) {
                     if (cards.isEmpty) {
-                      return const Center(child: Text("Library is empty.", style: TextStyle(fontSize: 24, color: Colors.black54)));
+                      return const Center(child: Text("הספרייה ריקה.", style: TextStyle(fontSize: 24, color: Colors.black54)));
                     }
                     return ListView.separated(
                       itemCount: cards.length,

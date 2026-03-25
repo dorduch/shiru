@@ -55,23 +55,25 @@ class _ShiruAppState extends ConsumerState<ShiruApp> with WidgetsBindingObserver
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'Shiru',
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('en', ''),
-        Locale('he', ''),
-        Locale('ar', ''),
-      ],
-      theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFFFFFBEB),
-        fontFamily: 'sans-serif',
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: MaterialApp.router(
+        title: 'שירו',
+        locale: const Locale('he'),
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('he', ''),
+        ],
+        theme: ThemeData(
+          scaffoldBackgroundColor: const Color(0xFFFFFBEB),
+          fontFamily: 'sans-serif',
+        ),
+        routerConfig: _router,
       ),
-      routerConfig: _router,
     );
   }
 }

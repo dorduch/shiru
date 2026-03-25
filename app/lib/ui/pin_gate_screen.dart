@@ -27,7 +27,7 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
           context.go('/parent');
         } else {
           setState(() => _pin = '');
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Incorrect PIN')));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('קוד PIN שגוי')));
         }
       }
     }
@@ -46,15 +46,15 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
                 children: [
                   const SizedBox(width: 24),
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, size: 32),
+                    icon: const Icon(Icons.arrow_forward_ios, size: 32),
                     onPressed: () => context.pop(),
                   ),
                   const Expanded(child: SizedBox()),
                 ],
               ),
-              const Text('Parents Only! 🔒', style: TextStyle(fontSize: 36, fontWeight: FontWeight.w800)),
+              const Text('להורים בלבד! 🔒', style: TextStyle(fontSize: 36, fontWeight: FontWeight.w800)),
               const SizedBox(height: 8),
-              const Text('Enter your 4-digit PIN', style: TextStyle(fontSize: 20, color: Color(0xFF6B7280))),
+              const Text('הזינו קוד PIN בן 4 ספרות', style: TextStyle(fontSize: 20, color: Color(0xFF6B7280))),
               const SizedBox(height: 32),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

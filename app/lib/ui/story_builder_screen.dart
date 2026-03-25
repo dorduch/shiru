@@ -20,18 +20,15 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFFBEB),
-      body: Directionality(
-        textDirection: TextDirection.rtl,
-        child: SafeArea(
-          child: switch (state.step) {
-            StoryBuilderStep.heroSelection => _buildHeroSelection(state),
-            StoryBuilderStep.themeSelection => _buildThemeSelection(state),
-            StoryBuilderStep.lengthSelection => _buildLengthSelection(state),
-            StoryBuilderStep.generating => _buildGenerating(state),
-            StoryBuilderStep.done => _buildDone(),
-            StoryBuilderStep.error => _buildError(state),
-          },
-        ),
+      body: SafeArea(
+        child: switch (state.step) {
+          StoryBuilderStep.heroSelection => _buildHeroSelection(state),
+          StoryBuilderStep.themeSelection => _buildThemeSelection(state),
+          StoryBuilderStep.lengthSelection => _buildLengthSelection(state),
+          StoryBuilderStep.generating => _buildGenerating(state),
+          StoryBuilderStep.done => _buildDone(),
+          StoryBuilderStep.error => _buildError(state),
+        },
       ),
     );
   }

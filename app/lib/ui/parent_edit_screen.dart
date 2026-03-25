@@ -40,7 +40,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
     if (widget.cardId != null) {
       _loadCard(widget.cardId!);
     } else {
-      _titleController.text = "New Story";
+      _titleController.text = "סיפור חדש";
     }
   }
 
@@ -59,7 +59,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
 
   Future<void> _save() async {
     if (_titleController.text.isEmpty || _audioPath == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please provide a title and audio file.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('יש למלא כותרת ולהוסיף קובץ שמע.')));
       return;
     }
 
@@ -81,7 +81,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
            try { await newFile.delete(); } catch (_) {}
            if (mounted) {
              ScaffoldMessenger.of(context).showSnackBar(
-               const SnackBar(content: Text('Failed to import audio file (0 bytes written). Please try again.')),
+               const SnackBar(content: Text('ייבוא קובץ השמע נכשל. נסו שוב.')),
              );
            }
            setState(() => _isLoading = false);
@@ -121,7 +121,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
 
       if (mounted) context.pop();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: \$e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('שגיאה: \$e')));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -154,9 +154,9 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                 children: [
                   Row(
                     children: [
-                      IconButton(icon: const Icon(Icons.arrow_back_ios, size: 32), onPressed: () => context.pop()),
+                      IconButton(icon: const Icon(Icons.arrow_forward_ios, size: 32), onPressed: () => context.pop()),
                       const SizedBox(width: 16),
-                      Text(widget.cardId == null ? 'Create Card' : 'Edit Card', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800)),
+                      Text(widget.cardId == null ? 'כרטיס חדש' : 'עריכת כרטיס', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800)),
                     ]
                   ),
                   GestureDetector(
@@ -173,7 +173,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                         children: [
                           Icon(Icons.check, color: Colors.white),
                           SizedBox(width: 8),
-                          Text('Save', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white))
+                          Text('שמור', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white))
                         ]
                       )
                     )
@@ -191,7 +191,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Card Title', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const Text('כותרת', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         TextField(
                           controller: _titleController,
@@ -212,7 +212,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        const Text('Category', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const Text('קטגוריה', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         Consumer(
                           builder: (context, ref, _) {
@@ -229,11 +229,11 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                                 child: DropdownButton<String?>(
                                   isExpanded: true,
                                   value: _selectedCategoryId,
-                                  hint: const Text('— None —'),
+                                  hint: const Text('— ללא —'),
                                   items: [
                                     const DropdownMenuItem<String?>(
                                       value: null,
-                                      child: Text('— None —'),
+                                      child: Text('— ללא —'),
                                     ),
                                     ...categories.map((c) => DropdownMenuItem<String?>(
                                       value: c.id,
@@ -249,7 +249,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                           },
                         ),
                         const SizedBox(height: 24),
-                        const Text('Custom GIF Search (Optional)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const Text('חיפוש GIF מותאם (אופציונלי)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         TextField(
                           controller: _spriteKeyController,
@@ -261,9 +261,9 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                           },
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                           textDirection: intl.Bidi.detectRtlDirectionality(_spriteKeyController.text) ? TextDirection.rtl : TextDirection.ltr,
-                          textAlign: intl.Bidi.detectRtlDirectionality(_titleController.text) ? TextAlign.right : TextAlign.left,
+                          textAlign: intl.Bidi.detectRtlDirectionality(_spriteKeyController.text) ? TextAlign.right : TextAlign.left,
                           decoration: InputDecoration(
-                            hintText: 'e.g. running cat',
+                            hintText: 'למשל: חתול רץ',
                             hintStyle: const TextStyle(color: Colors.black38),
                             filled: true, fillColor: Colors.white,
                             contentPadding: const EdgeInsets.all(16),
@@ -272,7 +272,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        const Text('Audio', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const Text('שמע', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         AudioRecorderWidget(
                           currentAudioPath: _audioPath,
@@ -301,7 +301,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
   Widget _buildPreview(SpriteDef sprite) {
     return Column(
       children: [
-        const Text("Preview", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+        const Text("תצוגה מקדימה", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
         const SizedBox(height: 16),
         Container(
           width: 220,
@@ -331,7 +331,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                _titleController.text.isEmpty ? "New Story" : _titleController.text,
+                _titleController.text.isEmpty ? "סיפור חדש" : _titleController.text,
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
