@@ -62,7 +62,7 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                       ),
                       const SizedBox(width: 12),
                       const Text(
-                        'שירו',
+                        'Shiru',
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w900,
@@ -113,8 +113,8 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                       return Center(
                         child: Text(
                           _selectedCategoryId == null
-                              ? "בקשו מההורים להוסיף כרטיסים!"
-                              : "אין כרטיסים בקטגוריה הזו!",
+                              ? "Ask your parents to add cards!"
+                              : "No cards in this category!",
                           style: const TextStyle(fontSize: 24, color: Colors.black54),
                         ),
                       );
@@ -142,7 +142,7 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                     );
                   },
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (err, stack) => Center(child: Text('שגיאה: $err')),
+                  error: (err, stack) => Center(child: Text('Error: $err')),
                 )
               ),
 
@@ -161,7 +161,7 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          _buildTab(label: 'הכל', isActive: _selectedCategoryId == null, onTap: () {
+          _buildTab(label: 'All', isActive: _selectedCategoryId == null, onTap: () {
             setState(() => _selectedCategoryId = null);
           }),
           const SizedBox(width: 8),
@@ -248,7 +248,7 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                             textDirection: intl.Bidi.detectRtlDirectionality(card.title) ? TextDirection.rtl : TextDirection.ltr,
                           ),
                           const SizedBox(height: 2),
-                          Text(isPlayingGlobal ? "מתנגן כעת" : "מושהה", maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isPlayingGlobal ? const Color(0xFF22C55E) : const Color(0xFF6B7280))),
+                          Text(isPlayingGlobal ? "Now Playing" : "Paused", maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isPlayingGlobal ? const Color(0xFF22C55E) : const Color(0xFF6B7280))),
                         ],
                       )
                   )

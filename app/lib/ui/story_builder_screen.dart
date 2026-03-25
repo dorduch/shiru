@@ -120,7 +120,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildHeader(
-          title: '✨ בחר גיבור',
+          title: '✨ Choose Hero',
           dotIndex: 0,
           onBack: () {
             HapticFeedback.mediumImpact();
@@ -166,7 +166,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildHeader(
-          title: '🎭 בחר נושא',
+          title: '🎭 Choose Theme',
           dotIndex: 1,
           onBack: () {
             HapticFeedback.mediumImpact();
@@ -212,7 +212,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildHeader(
-          title: '📖 בחר אורך',
+          title: '📖 Choose Length',
           dotIndex: 2,
           onBack: () {
             HapticFeedback.mediumImpact();
@@ -227,8 +227,8 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
                 Expanded(
                   child: StoryOptionCard(
                     emoji: '⚡',
-                    label: 'קצר',
-                    subtitle: '~1 דקה',
+                    label: 'Short',
+                    subtitle: '~1 min',
                     onTap: () {
                       HapticFeedback.mediumImpact();
                       notifier.selectLength(StoryLength.short);
@@ -239,8 +239,8 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
                 Expanded(
                   child: StoryOptionCard(
                     emoji: '📚',
-                    label: 'בינוני',
-                    subtitle: '~3 דקות',
+                    label: 'Medium',
+                    subtitle: '~3 min',
                     onTap: () {
                       HapticFeedback.mediumImpact();
                       notifier.selectLength(StoryLength.medium);
@@ -275,7 +275,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
         : '';
 
     final isRecording = state.progress > 0.5;
-    final title = isRecording ? '...מקליט את הסיפור' : '...כותב את הסיפור';
+    final title = isRecording ? 'Recording the story...' : 'Writing the story...';
 
     return Center(
       child: Padding(
@@ -387,7 +387,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
             ),
             const SizedBox(height: 24),
             const Text(
-              '!הסיפור מוכן',
+              'Story Ready!',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.w700,
@@ -397,7 +397,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
             ),
             const SizedBox(height: 12),
             const Text(
-              'הסיפור נשמר בספרייה שלך',
+              'The story has been saved to your library',
               style: TextStyle(
                 fontSize: 16,
                 color: Color(0xFF6B7280),
@@ -428,7 +428,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
                 ),
                 child: const Center(
                   child: Text(
-                    'חזרה הביתה',
+                    'Back Home',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -449,7 +449,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
   Widget _buildError(StoryBuilderState state) {
     final notifier = ref.read(storyBuilderProvider.notifier);
     final errorText =
-        state.errorMessage ?? 'אירעה שגיאה. אנא נסה שוב.';
+        state.errorMessage ?? 'An error occurred. Please try again.';
 
     return Center(
       child: Padding(
@@ -463,7 +463,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
             ),
             const SizedBox(height: 24),
             const Text(
-              '!אופס! משהו השתבש',
+              'Oops! Something went wrong!',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
@@ -505,7 +505,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
                 ),
                 child: const Center(
                   child: Text(
-                    'נסה שוב',
+                    'Try Again',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -539,7 +539,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
                 ),
                 child: const Center(
                   child: Text(
-                    'חזרה',
+                    'Back',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,

@@ -81,7 +81,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
       if (fileSize > maxBytes) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('הקובץ גדול מדי. הגודל המרבי הוא 200 MB.')),
+            const SnackBar(content: Text('File is too large. Maximum size is 200 MB.')),
           );
         }
         return;
@@ -98,7 +98,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
       if (status.isDenied) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('נדרשת הרשאת מיקרופון להקלטה.')),
+            const SnackBar(content: Text('Microphone permission required for recording.')),
           );
         }
         return;
@@ -108,16 +108,16 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
           showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
-              title: const Text('הרשאת מיקרופון'),
-              content: const Text('יש לאפשר גישה למיקרופון בהגדרות כדי להקליט.'),
+              title: const Text('Microphone Permission'),
+              content: const Text('Enable microphone access in settings to record.'),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('ביטול')),
+                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
                 TextButton(
                   onPressed: () {
                     Navigator.pop(ctx);
                     openAppSettings();
                   },
-                  child: const Text('פתח הגדרות'),
+                  child: const Text('Open Settings'),
                 ),
               ],
             ),
@@ -248,7 +248,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
               setState(() => _recState = RecordingState.idle);
               widget.onAudioSelected(''); // Clear to show source selection
             },
-            child: const Text('שנה', style: TextStyle(color: Color(0xFFFF6B6B))),
+            child: const Text('Change', style: TextStyle(color: Color(0xFFFF6B6B))),
           ),
         ],
       ),
@@ -273,9 +273,9 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
                 children: [
                   Icon(Icons.folder_open, color: Color(0xFF6B7280), size: 32),
                   SizedBox(height: 8),
-                  Text('בחר קובץ', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF1A1A1A))),
+                  Text('Choose File', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF1A1A1A))),
                   SizedBox(height: 4),
-                  Text('ייבוא שמע', style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
+                  Text('Import Audio', style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
                 ],
               ),
             ),
@@ -300,9 +300,9 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
                 children: [
                   Icon(Icons.mic, color: Colors.white, size: 32),
                   SizedBox(height: 8),
-                  Text('הקלטה', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
+                  Text('Record', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
                   SizedBox(height: 4),
-                  Text('שימוש במיקרופון', style: TextStyle(fontSize: 12, color: Color(0xFFFECACA))),
+                  Text('Use Microphone', style: TextStyle(fontSize: 12, color: Color(0xFFFECACA))),
                 ],
               ),
             ),
@@ -342,7 +342,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
               ),
               const SizedBox(width: 10),
               Text(
-                isPaused ? 'מושהה' : 'מקליט',
+                isPaused ? 'Paused' : 'Recording',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -381,7 +381,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
                         Icon(isPaused ? Icons.play_arrow : Icons.pause, color: Colors.white, size: 18),
                         const SizedBox(width: 8),
                         Text(
-                          isPaused ? 'המשך' : 'השהה',
+                          isPaused ? 'Resume' : 'Pause',
                           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
                         ),
                       ],
@@ -404,7 +404,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
                       children: [
                         Icon(Icons.stop, color: Colors.white, size: 18),
                         SizedBox(width: 8),
-                        Text('עצור', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+                        Text('Stop', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
                       ],
                     ),
                   ),
@@ -415,7 +415,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
           const SizedBox(height: 8),
           GestureDetector(
             onTap: _cancelRecording,
-            child: const Text('ביטול', style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF))),
+            child: const Text('Cancel', style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF))),
           ),
         ],
       ),
@@ -443,7 +443,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
                 decoration: const BoxDecoration(color: Color(0xFF22C55E), shape: BoxShape.circle),
               ),
               const SizedBox(width: 10),
-              const Text('הוקלט', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF22C55E))),
+              const Text('Recorded', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF22C55E))),
               const Spacer(),
               Text(
                 _formatDuration(service.elapsed),
@@ -476,7 +476,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
                         Icon(_isPreviewPlaying ? Icons.pause : Icons.play_arrow, color: Colors.white, size: 18),
                         const SizedBox(width: 8),
                         Text(
-                          _isPreviewPlaying ? 'השהה' : 'נגן',
+                          _isPreviewPlaying ? 'Pause' : 'Play',
                           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
                         ),
                       ],
@@ -499,7 +499,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
                       children: [
                         Icon(Icons.refresh, color: Colors.white, size: 18),
                         SizedBox(width: 8),
-                        Text('הקלט שוב', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+                        Text('Re-record', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
                       ],
                     ),
                   ),

@@ -40,7 +40,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
     if (widget.cardId != null) {
       _loadCard(widget.cardId!);
     } else {
-      _titleController.text = "סיפור חדש";
+      _titleController.text = "New Story";
     }
   }
 
@@ -59,7 +59,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
 
   Future<void> _save() async {
     if (_titleController.text.isEmpty || _audioPath == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('יש למלא כותרת ולהוסיף קובץ שמע.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill in title and add an audio file.')));
       return;
     }
 
@@ -81,7 +81,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
            try { await newFile.delete(); } catch (_) {}
            if (mounted) {
              ScaffoldMessenger.of(context).showSnackBar(
-               const SnackBar(content: Text('ייבוא קובץ השמע נכשל. נסו שוב.')),
+               const SnackBar(content: Text('Audio file import failed. Please try again.')),
              );
            }
            setState(() => _isLoading = false);
@@ -121,7 +121,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
 
       if (mounted) context.pop();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('שגיאה: \$e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: \$e')));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -154,9 +154,9 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                 children: [
                   Row(
                     children: [
-                      IconButton(icon: const Icon(Icons.arrow_forward_ios, size: 32), onPressed: () => context.pop()),
+                      IconButton(icon: const Icon(Icons.arrow_back_ios_new, size: 32), onPressed: () => context.pop()),
                       const SizedBox(width: 16),
-                      Text(widget.cardId == null ? 'כרטיס חדש' : 'עריכת כרטיס', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800)),
+                      Text(widget.cardId == null ? 'New Card' : 'Edit Card', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800)),
                     ]
                   ),
                   GestureDetector(
@@ -173,7 +173,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                         children: [
                           Icon(Icons.check, color: Colors.white),
                           SizedBox(width: 8),
-                          Text('שמור', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white))
+                          Text('Save', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white))
                         ]
                       )
                     )
@@ -191,7 +191,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('כותרת', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const Text('Title', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         TextField(
                           controller: _titleController,
@@ -212,7 +212,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        const Text('קטגוריה', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const Text('Category', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         Consumer(
                           builder: (context, ref, _) {
@@ -229,11 +229,11 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                                 child: DropdownButton<String?>(
                                   isExpanded: true,
                                   value: _selectedCategoryId,
-                                  hint: const Text('— ללא —'),
+                                  hint: const Text('— None —'),
                                   items: [
                                     const DropdownMenuItem<String?>(
                                       value: null,
-                                      child: Text('— ללא —'),
+                                      child: Text('— None —'),
                                     ),
                                     ...categories.map((c) => DropdownMenuItem<String?>(
                                       value: c.id,
@@ -249,7 +249,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                           },
                         ),
                         const SizedBox(height: 24),
-                        const Text('חיפוש GIF מותאם (אופציונלי)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const Text('Custom GIF search (optional)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         TextField(
                           controller: _spriteKeyController,
@@ -263,7 +263,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                           textDirection: intl.Bidi.detectRtlDirectionality(_spriteKeyController.text) ? TextDirection.rtl : TextDirection.ltr,
                           textAlign: intl.Bidi.detectRtlDirectionality(_spriteKeyController.text) ? TextAlign.right : TextAlign.left,
                           decoration: InputDecoration(
-                            hintText: 'למשל: חתול רץ',
+                            hintText: 'e.g.: running cat',
                             hintStyle: const TextStyle(color: Colors.black38),
                             filled: true, fillColor: Colors.white,
                             contentPadding: const EdgeInsets.all(16),
@@ -272,7 +272,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        const Text('שמע', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const Text('Audio', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         AudioRecorderWidget(
                           currentAudioPath: _audioPath,
@@ -301,7 +301,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
   Widget _buildPreview(SpriteDef sprite) {
     return Column(
       children: [
-        const Text("תצוגה מקדימה", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+        const Text("Preview", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
         const SizedBox(height: 16),
         Container(
           width: 220,
@@ -331,7 +331,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                _titleController.text.isEmpty ? "סיפור חדש" : _titleController.text,
+                _titleController.text.isEmpty ? "New Story" : _titleController.text,
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

@@ -10,23 +10,23 @@ enum StoryBuilderStep {
 }
 
 const List<Map<String, String>> storyHeroes = [
-  {'id': 'astronaut', 'label': 'אסטרונאוט', 'emoji': '🧑‍🚀'},
-  {'id': 'princess', 'label': 'נסיכה', 'emoji': '👸'},
-  {'id': 'dragon', 'label': 'דרקון', 'emoji': '🐉'},
-  {'id': 'robot', 'label': 'רובוט', 'emoji': '🤖'},
-  {'id': 'wizard', 'label': 'קוסם', 'emoji': '🧙'},
-  {'id': 'cat', 'label': 'חתול', 'emoji': '🐱'},
-  {'id': 'pirate', 'label': 'פיראט', 'emoji': '🏴‍☠️'},
-  {'id': 'fairy', 'label': 'פיה', 'emoji': '🧚'},
+  {'id': 'astronaut', 'label': 'Astronaut', 'emoji': '🧑‍🚀'},
+  {'id': 'princess', 'label': 'Princess', 'emoji': '👸'},
+  {'id': 'dragon', 'label': 'Dragon', 'emoji': '🐉'},
+  {'id': 'robot', 'label': 'Robot', 'emoji': '🤖'},
+  {'id': 'wizard', 'label': 'Wizard', 'emoji': '🧙'},
+  {'id': 'cat', 'label': 'Cat', 'emoji': '🐱'},
+  {'id': 'pirate', 'label': 'Pirate', 'emoji': '🏴‍☠️'},
+  {'id': 'fairy', 'label': 'Fairy', 'emoji': '🧚'},
 ];
 
 const List<Map<String, String>> storyThemes = [
-  {'id': 'space', 'label': 'הרפתקה בחלל', 'emoji': '🚀'},
-  {'id': 'underwater', 'label': 'מתחת למים', 'emoji': '🐠'},
-  {'id': 'forest', 'label': 'יער קסום', 'emoji': '🌳'},
-  {'id': 'treasure', 'label': 'ציד אוצרות', 'emoji': '🗺️'},
-  {'id': 'time_travel', 'label': 'מסע בזמן', 'emoji': '⏰'},
-  {'id': 'candy_land', 'label': 'ארץ הממתקים', 'emoji': '🍭'},
+  {'id': 'space', 'label': 'Space Adventure', 'emoji': '🚀'},
+  {'id': 'underwater', 'label': 'Underwater', 'emoji': '🐠'},
+  {'id': 'forest', 'label': 'Enchanted Forest', 'emoji': '🌳'},
+  {'id': 'treasure', 'label': 'Treasure Hunt', 'emoji': '🗺️'},
+  {'id': 'time_travel', 'label': 'Time Travel', 'emoji': '⏰'},
+  {'id': 'candy_land', 'label': 'Candy Land', 'emoji': '🍭'},
 ];
 
 const Map<String, String> heroColors = {

@@ -9,6 +9,7 @@ import 'ui/parent_categories_screen.dart';
 import 'ui/parent_category_edit_screen.dart';
 import 'models/category.dart';
 import 'ui/story_builder_screen.dart';
+import 'ui/change_pin_screen.dart';
 
 GoRouter createRouter(WidgetRef ref) {
   return GoRouter(
@@ -24,11 +25,6 @@ GoRouter createRouter(WidgetRef ref) {
       ),
       GoRoute(
         path: '/story-builder',
-        redirect: (context, state) {
-          final isAuthenticated = ref.read(parentAuthProvider);
-          if (!isAuthenticated) return '/pin';
-          return null;
-        },
         builder: (context, state) => const StoryBuilderScreen(),
       ),
       GoRoute(
@@ -46,6 +42,10 @@ GoRouter createRouter(WidgetRef ref) {
               final cardId = state.extra as String?;
               return ParentEditScreen(cardId: cardId);
             }
+          ),
+          GoRoute(
+            path: 'change-pin',
+            builder: (context, state) => const ChangePinScreen(),
           ),
           GoRoute(
             path: 'categories',

@@ -56,17 +56,17 @@ class _ShiruAppState extends ConsumerState<ShiruApp> with WidgetsBindingObserver
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: TextDirection.ltr,
       child: MaterialApp.router(
-        title: 'שירו',
-        locale: const Locale('he'),
+        title: 'Shiru',
+        locale: const Locale('en'),
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [
-          Locale('he', ''),
+          Locale('en', ''),
         ],
         theme: ThemeData(
           scaffoldBackgroundColor: const Color(0xFFFFFBEB),

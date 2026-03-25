@@ -85,7 +85,7 @@ class StoryBuilderNotifier extends StateNotifier<StoryBuilderState> {
     } catch (e) {
       state = state.copyWith(
         step: StoryBuilderStep.error,
-        errorMessage: 'אירעה שגיאה ביצירת הסיפור. אנא נסה שוב.',
+        errorMessage: 'An error occurred while creating the story. Please try again.',
       );
     }
   }
