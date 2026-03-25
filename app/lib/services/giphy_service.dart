@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class GiphyService {
   // Using a common public beta testing key for Giphy. 
   // In production, you would replace this with your own API key.
-  static const String _apiKey = 'J2DQ0pjWs6zKt86smg6nbaPCDTDGQiq1'; 
+  static String get _apiKey => dotenv.env['GIPHY_API_KEY']!;
   
   // Cache to store URLs so we don't spam the API for the same card
   static final Map<String, String> _cache = {};

@@ -55,6 +55,28 @@ class ParentListScreen extends ConsumerWidget {
                       ),
                       const SizedBox(width: 12),
                       GestureDetector(
+                        onTap: () => context.push('/story-builder'),
+                        child: Container(
+                          height: 48,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
+                            ),
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: const [BoxShadow(color: Color(0x408B5CF6), blurRadius: 12, offset: Offset(0, 4))],
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.auto_awesome, color: Colors.white, size: 20),
+                              SizedBox(width: 8),
+                              Text('Story Builder', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      GestureDetector(
                         onTap: () => context.go('/parent/edit'),
                         child: Container(
                           height: 48,
