@@ -1,7 +1,13 @@
-import 'package:sqflite/sqflite.dart';
+import 'dart:io';
+import 'dart:math';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:sqflite_sqlcipher/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/audio_card.dart';
 import '../models/category.dart';
+
+/// Key under which the DB encryption password is stored in secure storage.
+const _kDbPasswordKey = 'db_encryption_key';
 
 class DatabaseService {
   static final DatabaseService instance = DatabaseService._init();
@@ -15,17 +21,107 @@ class DatabaseService {
     return _database!;
   }
 
+  // ---------------------------------------------------------------------------
+  // Key management
+  // ---------------------------------------------------------------------------
+
+  /// Returns the encryption key, generating and persisting it on first launch.
+  Future<String> _getOrCreateEncryptionKey() async {
+    const storage = FlutterSecureStorage();
+    String? key = await storage.read(key: _kDbPasswordKey);
+    if (key == null) {
+      final rng = Random.secure();
+      const chars =
+          'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      key = List.generate(32, (_) => chars[rng.nextInt(chars.length)]).join();
+      await storage.write(key: _kDbPasswordKey, value: key);
+    }
+    return key;
+  }
+
+  // ---------------------------------------------------------------------------
+  // DB initialisation with migration for legacy unencrypted databases
+  // ---------------------------------------------------------------------------
+
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
+    final password = await _getOrCreateEncryptionKey();
 
-    return await openDatabase(
+    final dbFile = File(path);
+    final fileExists = await dbFile.exists();
+
+    // --- Fresh install: no existing DB, create a new encrypted one -----------
+    if (!fileExists) {
+      return await openDatabase(
+        path,
+        version: 2,
+        password: password,
+        onCreate: _createDB,
+        onUpgrade: _upgradeDB,
+      );
+    }
+
+    // --- Existing DB: try opening with encryption password -------------------
+    try {
+      return await openDatabase(
+        path,
+        version: 2,
+        password: password,
+        onCreate: _createDB,
+        onUpgrade: _upgradeDB,
+      );
+    } catch (_) {
+      // Opening with a password failed — likely a legacy unencrypted DB.
+    }
+
+    // --- Legacy migration: export data, re-create as encrypted ---------------
+    late final List<Map<String, dynamic>> legacyCards;
+    late final List<Map<String, dynamic>> legacyCategories;
+
+    try {
+      final legacyDb = await openDatabase(
+        path,
+        version: 2,
+        onCreate: _createDB,
+        onUpgrade: _upgradeDB,
+      );
+
+      legacyCards = await legacyDb.query('cards');
+      legacyCategories = await legacyDb.query('categories');
+      await legacyDb.close();
+    } catch (e) {
+      throw Exception(
+        'DatabaseService: cannot open DB as encrypted or unencrypted. '
+        'Underlying error: $e',
+      );
+    }
+
+    await dbFile.delete();
+
+    final newDb = await openDatabase(
       path,
       version: 2,
+      password: password,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
+
+    await newDb.transaction((txn) async {
+      for (final row in legacyCards) {
+        await txn.insert('cards', row);
+      }
+      for (final row in legacyCategories) {
+        await txn.insert('categories', row);
+      }
+    });
+
+    return newDb;
   }
+
+  // ---------------------------------------------------------------------------
+  // Schema
+  // ---------------------------------------------------------------------------
 
   Future _createDB(Database db, int version) async {
     await db.execute('''
@@ -65,6 +161,10 @@ CREATE TABLE categories (
 ''');
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // CRUD — cards
+  // ---------------------------------------------------------------------------
 
   Future<AudioCard> createCard(AudioCard card) async {
     final db = await instance.database;
@@ -112,6 +212,10 @@ CREATE TABLE categories (
       whereArgs: [id],
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // CRUD — categories
+  // ---------------------------------------------------------------------------
 
   Future<List<Category>> readAllCategories() async {
     final db = await instance.database;

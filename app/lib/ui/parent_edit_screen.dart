@@ -74,6 +74,20 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
          final extStr = path.extension(_audioPath!);
          final newFile = File(path.join(docsDir.path, '$uuidStr$extStr'));
          await File(_audioPath!).copy(newFile.path);
+
+         // Verify the copy actually wrote bytes
+         final copiedSize = await newFile.length();
+         if (copiedSize == 0) {
+           try { await newFile.delete(); } catch (_) {}
+           if (mounted) {
+             ScaffoldMessenger.of(context).showSnackBar(
+               const SnackBar(content: Text('Failed to import audio file (0 bytes written). Please try again.')),
+             );
+           }
+           setState(() => _isLoading = false);
+           return;
+         }
+
          finalAudioPath = newFile.path;
 
          // Clean up temp file if it came from recording

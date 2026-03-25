@@ -76,6 +76,16 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
   Future<void> _pickAudio() async {
     final result = await FilePicker.platform.pickFiles(type: FileType.audio);
     if (result != null && result.files.single.path != null) {
+      const maxBytes = 200 * 1024 * 1024; // 200 MB
+      final fileSize = result.files.single.size;
+      if (fileSize > maxBytes) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('File is too large. Maximum allowed size is 200 MB.')),
+          );
+        }
+        return;
+      }
       widget.onAudioSelected(result.files.single.path!);
     }
   }

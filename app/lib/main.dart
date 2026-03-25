@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'providers/auth_provider.dart';
 import 'router.dart';
 
 void main() async {
@@ -23,8 +24,36 @@ void main() async {
   );
 }
 
-class ShiruApp extends StatelessWidget {
+class ShiruApp extends ConsumerStatefulWidget {
   const ShiruApp({Key? key}) : super(key: key);
+
+  @override
+  ConsumerState<ShiruApp> createState() => _ShiruAppState();
+}
+
+class _ShiruAppState extends ConsumerState<ShiruApp> with WidgetsBindingObserver {
+  late final _router = createRouter(ref);
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.detached) {
+      ref.read(parentAuthProvider.notifier).state = false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,15 +65,15 @@ class ShiruApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [
-        Locale('en', ''), 
-        Locale('he', ''), 
+        Locale('en', ''),
+        Locale('he', ''),
         Locale('ar', ''),
       ],
       theme: ThemeData(
         scaffoldBackgroundColor: const Color(0xFFFFFBEB),
         fontFamily: 'sans-serif',
       ),
-      routerConfig: appRouter,
+      routerConfig: _router,
     );
   }
 }

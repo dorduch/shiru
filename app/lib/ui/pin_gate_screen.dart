@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../providers/auth_provider.dart';
 
-class PinGateScreen extends StatefulWidget {
+class PinGateScreen extends ConsumerStatefulWidget {
   const PinGateScreen({Key? key}) : super(key: key);
 
   @override
   _PinGateScreenState createState() => _PinGateScreenState();
 }
 
-class _PinGateScreenState extends State<PinGateScreen> {
+class _PinGateScreenState extends ConsumerState<PinGateScreen> {
   String _pin = '';
   final String _correctPin = '1234';
 
@@ -21,6 +23,7 @@ class _PinGateScreenState extends State<PinGateScreen> {
       setState(() => _pin += key);
       if (_pin.length == 4) {
         if (_pin == _correctPin) {
+          ref.read(parentAuthProvider.notifier).state = true;
           context.go('/parent');
         } else {
           setState(() => _pin = '');
