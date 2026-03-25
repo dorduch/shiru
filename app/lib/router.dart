@@ -10,6 +10,8 @@ import 'ui/parent_category_edit_screen.dart';
 import 'models/category.dart';
 import 'ui/story_builder_screen.dart';
 import 'ui/change_pin_screen.dart';
+import 'ui/voice_profiles_screen.dart';
+import 'ui/voice_record_screen.dart';
 
 GoRouter createRouter(WidgetRef ref) {
   return GoRouter(
@@ -57,6 +59,16 @@ GoRouter createRouter(WidgetRef ref) {
                   final category = state.extra as Category?;
                   return ParentCategoryEditScreen(category: category);
                 },
+              ),
+            ],
+          ),
+          GoRoute(
+            path: 'voices',
+            builder: (context, state) => const VoiceProfilesScreen(),
+            routes: [
+              GoRoute(
+                path: 'record',
+                builder: (context, state) => const VoiceRecordScreen(),
               ),
             ],
           ),

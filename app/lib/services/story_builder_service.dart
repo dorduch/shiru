@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
-import 'dart:math';
 import '../models/story_builder_state.dart';
 
 class StoryBuilderService {
@@ -101,13 +100,13 @@ The text will be read aloud by a text-to-speech system. You must include the fol
     return (title: '', text: content);
   }
 
-  static Future<String> generateAudio(String storyText) async {
+  static Future<String> generateAudio(String storyText, {required String voiceId}) async {
     if (_elevenLabsApiKey.isEmpty) {
       throw Exception('ELEVENLABS_API_KEY not configured. Pass it via --dart-define=ELEVENLABS_API_KEY=...');
     }
     final response = await http
         .post(
-          Uri.parse('https://api.elevenlabs.io/v1/text-to-speech/${_voiceIds[Random().nextInt(_voiceIds.length)]}'),
+          Uri.parse('https://api.elevenlabs.io/v1/text-to-speech/$voiceId'),
           headers: {
             'xi-api-key': _elevenLabsApiKey,
             'Content-Type': 'application/json',

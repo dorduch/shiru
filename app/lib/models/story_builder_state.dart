@@ -3,6 +3,7 @@ enum StoryLength { short, medium }
 enum StoryBuilderStep {
   heroSelection,
   themeSelection,
+  voiceSelection,
   lengthSelection,
   generating,
   done,
@@ -29,6 +30,15 @@ const List<Map<String, String>> storyThemes = [
   {'id': 'candy_land', 'label': 'Candy Land', 'emoji': '🍭'},
 ];
 
+const List<Map<String, String>> stockVoices = [
+  {'id': 'EXAVITQu4vr4xnSDxMaL', 'name': 'Sarah', 'emoji': '👩'},
+  {'id': '21m00Tcm4TlvDq8ikWAM', 'name': 'Rachel', 'emoji': '👩‍🦰'},
+  {'id': 'ErXwobaYiN019PkySvjV', 'name': 'Antoni', 'emoji': '👨'},
+  {'id': 'TxGEqnHWrfWFTfGW9XjX', 'name': 'Josh', 'emoji': '👨‍🦱'},
+  {'id': 'onwK4e9ZLuTAKqWW03F9', 'name': 'Daniel', 'emoji': '👨'},
+  {'id': 'XB0fDUnXU5powFXDhCwa', 'name': 'Charlotte', 'emoji': '👩‍🦳'},
+];
+
 const Map<String, String> heroColors = {
   'astronaut': '#E0E7FF',
   'princess': '#FCE7F3',
@@ -44,6 +54,7 @@ class StoryBuilderState {
   final StoryBuilderStep step;
   final String? selectedHero;
   final String? selectedTheme;
+  final String? selectedVoiceId;
   final StoryLength? selectedLength;
   final String? generatedStoryText;
   final String? generatedAudioPath;
@@ -54,6 +65,7 @@ class StoryBuilderState {
     this.step = StoryBuilderStep.heroSelection,
     this.selectedHero,
     this.selectedTheme,
+    this.selectedVoiceId,
     this.selectedLength,
     this.generatedStoryText,
     this.generatedAudioPath,
@@ -65,6 +77,7 @@ class StoryBuilderState {
     StoryBuilderStep? step,
     String? selectedHero,
     String? selectedTheme,
+    String? selectedVoiceId,
     StoryLength? selectedLength,
     String? generatedStoryText,
     String? generatedAudioPath,
@@ -75,6 +88,7 @@ class StoryBuilderState {
       step: step ?? this.step,
       selectedHero: selectedHero ?? this.selectedHero,
       selectedTheme: selectedTheme ?? this.selectedTheme,
+      selectedVoiceId: selectedVoiceId ?? this.selectedVoiceId,
       selectedLength: selectedLength ?? this.selectedLength,
       generatedStoryText: generatedStoryText ?? this.generatedStoryText,
       generatedAudioPath: generatedAudioPath ?? this.generatedAudioPath,

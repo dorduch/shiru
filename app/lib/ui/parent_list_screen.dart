@@ -75,6 +75,26 @@ class ParentListScreen extends ConsumerWidget {
                       ),
                       const SizedBox(width: 12),
                       GestureDetector(
+                        onTap: () => context.push('/parent/voices'),
+                        child: Container(
+                          height: 48,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(color: const Color(0xFFE5E7EB), width: 2),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.mic, color: Color(0xFF6B7280), size: 20),
+                              SizedBox(width: 8),
+                              Text('Voices', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      GestureDetector(
                         onTap: () => context.push('/story-builder'),
                         child: Container(
                           height: 48,

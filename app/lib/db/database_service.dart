@@ -5,6 +5,7 @@ import 'package:sqflite_sqlcipher/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/audio_card.dart';
 import '../models/category.dart';
+import '../models/voice_profile.dart';
 
 /// Key under which the DB encryption password is stored in secure storage.
 const _kDbPasswordKey = 'db_encryption_key';
@@ -55,7 +56,7 @@ class DatabaseService {
     if (!fileExists) {
       return await openDatabase(
         path,
-        version: 2,
+        version: 3,
         password: password,
         onCreate: _createDB,
         onUpgrade: _upgradeDB,
@@ -66,7 +67,7 @@ class DatabaseService {
     try {
       return await openDatabase(
         path,
-        version: 2,
+        version: 3,
         password: password,
         onCreate: _createDB,
         onUpgrade: _upgradeDB,
@@ -101,7 +102,7 @@ class DatabaseService {
 
     final newDb = await openDatabase(
       path,
-      version: 2,
+      version: 3,
       password: password,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
@@ -147,6 +148,16 @@ CREATE TABLE categories (
   position INTEGER DEFAULT 0
 )
 ''');
+
+    await db.execute('''
+CREATE TABLE voice_profiles (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  elevenlabs_voice_id TEXT NOT NULL,
+  sample_path TEXT,
+  created_at INTEGER NOT NULL
+)
+''');
   }
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
@@ -157,6 +168,17 @@ CREATE TABLE categories (
   name TEXT NOT NULL,
   emoji TEXT NOT NULL,
   position INTEGER DEFAULT 0
+)
+''');
+    }
+    if (oldVersion < 3) {
+      await db.execute('''
+CREATE TABLE voice_profiles (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  elevenlabs_voice_id TEXT NOT NULL,
+  sample_path TEXT,
+  created_at INTEGER NOT NULL
 )
 ''');
     }
@@ -260,6 +282,31 @@ CREATE TABLE categories (
         );
       }
     });
+  }
+
+  // ---------------------------------------------------------------------------
+  // CRUD — voice profiles
+  // ---------------------------------------------------------------------------
+
+  Future<VoiceProfile> createVoiceProfile(VoiceProfile profile) async {
+    final db = await instance.database;
+    await db.insert('voice_profiles', profile.toMap());
+    return profile;
+  }
+
+  Future<List<VoiceProfile>> readAllVoiceProfiles() async {
+    final db = await instance.database;
+    final result = await db.query('voice_profiles', orderBy: 'created_at DESC');
+    return result.map((map) => VoiceProfile.fromMap(map)).toList();
+  }
+
+  Future<int> deleteVoiceProfile(String id) async {
+    final db = await instance.database;
+    return await db.delete(
+      'voice_profiles',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   Future close() async {

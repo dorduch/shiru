@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../models/story_builder_state.dart';
 import '../providers/story_builder_provider.dart';
+import '../providers/voice_profiles_provider.dart';
 import 'widgets/story_option_card.dart';
 
 class StoryBuilderScreen extends ConsumerStatefulWidget {
@@ -24,6 +25,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
         child: switch (state.step) {
           StoryBuilderStep.heroSelection => _buildHeroSelection(state),
           StoryBuilderStep.themeSelection => _buildThemeSelection(state),
+          StoryBuilderStep.voiceSelection => _buildVoiceSelection(state),
           StoryBuilderStep.lengthSelection => _buildLengthSelection(state),
           StoryBuilderStep.generating => _buildGenerating(state),
           StoryBuilderStep.done => _buildDone(),
@@ -38,7 +40,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
   Widget _buildStepDots(int activeIndex) {
     return Row(
       mainAxisSize: MainAxisSize.min,
-      children: List.generate(3, (i) {
+      children: List.generate(4, (i) {
         final isActive = i == activeIndex;
         return AnimatedContainer(
           duration: const Duration(milliseconds: 250),
@@ -203,7 +205,114 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
     );
   }
 
-  // ─── Screen 3: Length selection ───────────────────────────────────────────
+  // ─── Screen 3: Voice selection ────────────────────────────────────────────
+
+  Widget _buildVoiceSelection(StoryBuilderState state) {
+    final notifier = ref.read(storyBuilderProvider.notifier);
+    final profilesAsync = ref.watch(voiceProfilesProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildHeader(
+          title: '🎤 Choose Voice',
+          dotIndex: 2,
+          onBack: () {
+            HapticFeedback.mediumImpact();
+            notifier.goBack();
+          },
+        ),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                profilesAsync.when(
+                  data: (profiles) {
+                    if (profiles.isEmpty) return const SizedBox.shrink();
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          'Family Voices',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF374151),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 120,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: profiles.length,
+                            separatorBuilder: (_, __) => const SizedBox(width: 12),
+                            itemBuilder: (context, index) {
+                              final profile = profiles[index];
+                              return SizedBox(
+                                width: 100,
+                                child: StoryOptionCard(
+                                  emoji: '🎤',
+                                  label: profile.name,
+                                  onTap: () {
+                                    HapticFeedback.mediumImpact();
+                                    notifier.selectVoice(profile.elevenLabsVoiceId);
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    );
+                  },
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                ),
+                const Text(
+                  'Stock Voices',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF374151),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: stockVoices.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 1.2,
+                  ),
+                  itemBuilder: (context, index) {
+                    final voice = stockVoices[index];
+                    return StoryOptionCard(
+                      emoji: voice['emoji']!,
+                      label: voice['name']!,
+                      onTap: () {
+                        HapticFeedback.mediumImpact();
+                        notifier.selectVoice(voice['id']!);
+                      },
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  // ─── Screen 4: Length selection ───────────────────────────────────────────
 
   Widget _buildLengthSelection(StoryBuilderState state) {
     final notifier = ref.read(storyBuilderProvider.notifier);
@@ -213,7 +322,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
       children: [
         _buildHeader(
           title: '📖 Choose Length',
-          dotIndex: 2,
+          dotIndex: 3,
           onBack: () {
             HapticFeedback.mediumImpact();
             notifier.goBack();

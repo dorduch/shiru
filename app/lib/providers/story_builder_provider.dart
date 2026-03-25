@@ -21,6 +21,13 @@ class StoryBuilderNotifier extends StateNotifier<StoryBuilderState> {
   void selectTheme(String themeId) {
     state = state.copyWith(
       selectedTheme: themeId,
+      step: StoryBuilderStep.voiceSelection,
+    );
+  }
+
+  void selectVoice(String voiceId) {
+    state = state.copyWith(
+      selectedVoiceId: voiceId,
       step: StoryBuilderStep.lengthSelection,
     );
   }
@@ -34,8 +41,10 @@ class StoryBuilderNotifier extends StateNotifier<StoryBuilderState> {
     switch (state.step) {
       case StoryBuilderStep.themeSelection:
         state = state.copyWith(step: StoryBuilderStep.heroSelection);
-      case StoryBuilderStep.lengthSelection:
+      case StoryBuilderStep.voiceSelection:
         state = state.copyWith(step: StoryBuilderStep.themeSelection);
+      case StoryBuilderStep.lengthSelection:
+        state = state.copyWith(step: StoryBuilderStep.voiceSelection);
       default:
         break;
     }
@@ -59,7 +68,7 @@ class StoryBuilderNotifier extends StateNotifier<StoryBuilderState> {
       );
       state = state.copyWith(generatedStoryText: story.text, progress: 0.5);
 
-      final audioPath = await StoryBuilderService.generateAudio(story.text);
+      final audioPath = await StoryBuilderService.generateAudio(story.text, voiceId: state.selectedVoiceId!);
       state = state.copyWith(generatedAudioPath: audioPath, progress: 0.9);
 
       final heroLabel = storyHeroes
