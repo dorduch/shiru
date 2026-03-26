@@ -30,15 +30,6 @@ const List<Map<String, String>> storyThemes = [
   {'id': 'candy_land', 'label': 'Candy Land', 'emoji': '🍭'},
 ];
 
-const List<Map<String, String>> stockVoices = [
-  {'id': 'EXAVITQu4vr4xnSDxMaL', 'name': 'Sarah', 'emoji': '👩'},
-  {'id': '21m00Tcm4TlvDq8ikWAM', 'name': 'Rachel', 'emoji': '👩‍🦰'},
-  {'id': 'ErXwobaYiN019PkySvjV', 'name': 'Antoni', 'emoji': '👨'},
-  {'id': 'TxGEqnHWrfWFTfGW9XjX', 'name': 'Josh', 'emoji': '👨‍🦱'},
-  {'id': 'onwK4e9ZLuTAKqWW03F9', 'name': 'Daniel', 'emoji': '👨'},
-  {'id': 'XB0fDUnXU5powFXDhCwa', 'name': 'Charlotte', 'emoji': '👩‍🦳'},
-];
-
 const Map<String, String> heroColors = {
   'astronaut': '#E0E7FF',
   'princess': '#FCE7F3',

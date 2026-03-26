@@ -104,3 +104,8 @@ final storyBuilderProvider =
     StateNotifierProvider.autoDispose<StoryBuilderNotifier, StoryBuilderState>(
   (ref) => StoryBuilderNotifier(ref),
 );
+
+/// Fetches Cartesia stock voices once and caches for the app session.
+final stockVoicesProvider = FutureProvider<List<Map<String, String>>>((ref) {
+  return StoryBuilderService.loadStockVoices();
+});
