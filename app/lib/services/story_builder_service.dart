@@ -155,7 +155,7 @@ The text will be read aloud by a text-to-speech system. You must include the fol
         voices = data;
       }
 
-      return voices.map((v) {
+      return voices.take(6).map((v) {
         final gender = v['gender'] as String?;
         final emoji = gender == 'masculine'
             ? '👨'
