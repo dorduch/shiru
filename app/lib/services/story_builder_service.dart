@@ -150,7 +150,9 @@ The text will be read aloud by a text-to-speech system. You must include the fol
       if (decoded is List) {
         voices = decoded;
       } else {
-        voices = (decoded as Map<String, dynamic>)['data'] as List<dynamic>;
+        final data = (decoded as Map<String, dynamic>)['data'];
+        if (data is! List) return [];
+        voices = data;
       }
 
       return voices.map((v) {
