@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
 if [ ! -f env.json ]; then
-  echo "Error: env.json not found. Create it with OPENAI_API_KEY, ELEVENLABS_API_KEY, GIPHY_API_KEY."
+  echo "Error: env.json not found. Create it with OPENAI_API_KEY, CARTESIA_API_KEY, GIPHY_API_KEY."
   exit 1
 fi
 
