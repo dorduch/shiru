@@ -26,7 +26,7 @@ class VoiceProfilesNotifier extends StateNotifier<AsyncValue<List<VoiceProfile>>
     final profile = VoiceProfile(
       id: const Uuid().v4(),
       name: name,
-      elevenLabsVoiceId: voiceId,
+      voiceId: voiceId,
       samplePath: audioFilePath,
       createdAt: DateTime.now().millisecondsSinceEpoch,
     );
@@ -37,7 +37,7 @@ class VoiceProfilesNotifier extends StateNotifier<AsyncValue<List<VoiceProfile>>
   Future<void> deleteProfile(String id) async {
     final profiles = state.value ?? [];
     final profile = profiles.firstWhere((p) => p.id == id);
-    await VoiceCloneService.deleteVoice(profile.elevenLabsVoiceId);
+    await VoiceCloneService.deleteVoice(profile.voiceId);
     await DatabaseService.instance.deleteVoiceProfile(id);
     await loadProfiles();
   }

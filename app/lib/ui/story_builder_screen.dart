@@ -258,7 +258,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
                                   label: profile.name,
                                   onTap: () {
                                     HapticFeedback.mediumImpact();
-                                    notifier.selectVoice(profile.elevenLabsVoiceId);
+                                    notifier.selectVoice(profile.voiceId);
                                   },
                                 ),
                               );
