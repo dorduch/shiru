@@ -7,15 +7,8 @@ import '../models/story_builder_state.dart';
 
 class StoryBuilderService {
   static const _openAiApiKey = String.fromEnvironment('OPENAI_API_KEY');
-  static const _elevenLabsApiKey = String.fromEnvironment('ELEVENLABS_API_KEY');
-  static const List<String> _voiceIds = [
-    'EXAVITQu4vr4xnSDxMaL', // Sarah
-    '21m00Tcm4TlvDq8ikWAM', // Rachel
-    'ErXwobaYiN019PkySvjV', // Antoni
-    'TxGEqnHWrfWFTfGW9XjX', // Josh
-    'onwK4e9ZLuTAKqWW03F9', // Daniel
-    'XB0fDUnXU5powFXDhCwa', // Charlotte
-  ];
+  static const _cartesiaApiKey = String.fromEnvironment('CARTESIA_API_KEY');
+  static const _cartesiaVersion = '2025-04-16';
 
   static Future<({String title, String text})> generateStory({
     required String hero,
@@ -101,24 +94,27 @@ The text will be read aloud by a text-to-speech system. You must include the fol
   }
 
   static Future<String> generateAudio(String storyText, {required String voiceId}) async {
-    if (_elevenLabsApiKey.isEmpty) {
-      throw Exception('ELEVENLABS_API_KEY not configured. Pass it via --dart-define=ELEVENLABS_API_KEY=...');
+    if (_cartesiaApiKey.isEmpty) {
+      throw Exception('CARTESIA_API_KEY not configured. Pass it via --dart-define=CARTESIA_API_KEY=...');
     }
     final response = await http
         .post(
-          Uri.parse('https://api.elevenlabs.io/v1/text-to-speech/$voiceId'),
+          Uri.parse('https://api.cartesia.ai/tts/bytes'),
           headers: {
-            'xi-api-key': _elevenLabsApiKey,
+            'Authorization': 'Bearer $_cartesiaApiKey',
+            'Cartesia-Version': _cartesiaVersion,
             'Content-Type': 'application/json',
-            'Accept': 'audio/mpeg',
           },
           body: jsonEncode({
-            'text': storyText,
-            'model_id': 'eleven_v3',
-            'voice_settings': {
-              'stability': 0.5,
-              'similarity_boost': 0.75,
+            'transcript': storyText,
+            'model_id': 'sonic-3',
+            'voice': {'mode': 'id', 'id': voiceId},
+            'output_format': {
+              'container': 'mp3',
+              'bit_rate': 128,
+              'sample_rate': 44100,
             },
+            'language': 'en',
           }),
         )
         .timeout(const Duration(seconds: 60));
@@ -132,5 +128,46 @@ The text will be read aloud by a text-to-speech system. You must include the fol
     final file = File('${dir.path}/$fileName');
     await file.writeAsBytes(response.bodyBytes);
     return file.path;
+  }
+
+  /// Fetches up to 6 English voices from Cartesia's public voice library.
+  /// Returns an empty list on any failure so callers degrade gracefully.
+  static Future<List<Map<String, String>>> loadStockVoices() async {
+    if (_cartesiaApiKey.isEmpty) return [];
+    try {
+      final response = await http.get(
+        Uri.parse('https://api.cartesia.ai/voices?language=en&limit=6'),
+        headers: {
+          'Authorization': 'Bearer $_cartesiaApiKey',
+          'Cartesia-Version': _cartesiaVersion,
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode != 200) return [];
+
+      final decoded = jsonDecode(response.body);
+      final List<dynamic> voices;
+      if (decoded is List) {
+        voices = decoded;
+      } else {
+        voices = (decoded as Map<String, dynamic>)['data'] as List<dynamic>;
+      }
+
+      return voices.map((v) {
+        final gender = v['gender'] as String?;
+        final emoji = gender == 'masculine'
+            ? '👨'
+            : gender == 'feminine'
+                ? '👩'
+                : '🎤';
+        return {
+          'id': v['id'] as String,
+          'name': v['name'] as String,
+          'emoji': emoji,
+        };
+      }).toList();
+    } catch (_) {
+      return [];
+    }
   }
 }
