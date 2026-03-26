@@ -1,14 +1,14 @@
 class VoiceProfile {
   final String id;
   final String name;
-  final String elevenLabsVoiceId;
+  final String voiceId;
   final String? samplePath;
   final int createdAt;
 
   VoiceProfile({
     required this.id,
     required this.name,
-    required this.elevenLabsVoiceId,
+    required this.voiceId,
     this.samplePath,
     required this.createdAt,
   });
@@ -17,7 +17,7 @@ class VoiceProfile {
     return VoiceProfile(
       id: map['id'],
       name: map['name'],
-      elevenLabsVoiceId: map['elevenlabs_voice_id'],
+      voiceId: map['voice_id'],
       samplePath: map['sample_path'],
       createdAt: map['created_at'],
     );
@@ -27,7 +27,7 @@ class VoiceProfile {
     return {
       'id': id,
       'name': name,
-      'elevenlabs_voice_id': elevenLabsVoiceId,
+      'voice_id': voiceId,
       'sample_path': samplePath,
       'created_at': createdAt,
     };
@@ -35,13 +35,13 @@ class VoiceProfile {
 
   VoiceProfile copyWith({
     String? name,
-    String? elevenLabsVoiceId,
+    String? voiceId,
     String? samplePath,
   }) {
     return VoiceProfile(
       id: id,
       name: name ?? this.name,
-      elevenLabsVoiceId: elevenLabsVoiceId ?? this.elevenLabsVoiceId,
+      voiceId: voiceId ?? this.voiceId,
       samplePath: samplePath ?? this.samplePath,
       createdAt: createdAt,
     );
