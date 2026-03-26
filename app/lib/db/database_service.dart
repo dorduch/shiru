@@ -56,7 +56,7 @@ class DatabaseService {
     if (!fileExists) {
       return await openDatabase(
         path,
-        version: 3,
+        version: 4,
         password: password,
         onCreate: _createDB,
         onUpgrade: _upgradeDB,
@@ -67,7 +67,7 @@ class DatabaseService {
     try {
       return await openDatabase(
         path,
-        version: 3,
+        version: 4,
         password: password,
         onCreate: _createDB,
         onUpgrade: _upgradeDB,
@@ -102,7 +102,7 @@ class DatabaseService {
 
     final newDb = await openDatabase(
       path,
-      version: 3,
+      version: 4,
       password: password,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
@@ -153,7 +153,7 @@ CREATE TABLE categories (
 CREATE TABLE voice_profiles (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
-  elevenlabs_voice_id TEXT NOT NULL,
+  voice_id TEXT NOT NULL,
   sample_path TEXT,
   created_at INTEGER NOT NULL
 )
@@ -181,6 +181,24 @@ CREATE TABLE voice_profiles (
   created_at INTEGER NOT NULL
 )
 ''');
+    }
+    if (oldVersion < 4) {
+      await db.execute('''
+CREATE TABLE voice_profiles_new (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  voice_id TEXT NOT NULL,
+  sample_path TEXT,
+  created_at INTEGER NOT NULL
+)
+''');
+      await db.execute('''
+INSERT INTO voice_profiles_new
+SELECT id, name, elevenlabs_voice_id, sample_path, created_at
+FROM voice_profiles
+''');
+      await db.execute('DROP TABLE voice_profiles');
+      await db.execute('ALTER TABLE voice_profiles_new RENAME TO voice_profiles');
     }
   }
 
