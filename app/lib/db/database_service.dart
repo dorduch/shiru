@@ -183,7 +183,8 @@ CREATE TABLE voice_profiles (
 ''');
     }
     if (oldVersion < 4) {
-      await db.execute('''
+      await db.transaction((txn) async {
+        await txn.execute('''
 CREATE TABLE voice_profiles_new (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -192,13 +193,14 @@ CREATE TABLE voice_profiles_new (
   created_at INTEGER NOT NULL
 )
 ''');
-      await db.execute('''
+        await txn.execute('''
 INSERT INTO voice_profiles_new
 SELECT id, name, elevenlabs_voice_id, sample_path, created_at
 FROM voice_profiles
 ''');
-      await db.execute('DROP TABLE voice_profiles');
-      await db.execute('ALTER TABLE voice_profiles_new RENAME TO voice_profiles');
+        await txn.execute('DROP TABLE voice_profiles');
+        await txn.execute('ALTER TABLE voice_profiles_new RENAME TO voice_profiles');
+      });
     }
   }
 
