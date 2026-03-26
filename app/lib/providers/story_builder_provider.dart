@@ -107,5 +107,6 @@ final storyBuilderProvider =
 
 /// Fetches Cartesia stock voices once and caches for the app session.
 final stockVoicesProvider = FutureProvider<List<Map<String, String>>>((ref) {
+  ref.keepAlive();
   return StoryBuilderService.loadStockVoices();
 });

@@ -281,27 +281,36 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: stockVoices.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 1.2,
+                ref.watch(stockVoicesProvider).when(
+                  loading: () => const Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: CircularProgressIndicator(),
+                    ),
                   ),
-                  itemBuilder: (context, index) {
-                    final voice = stockVoices[index];
-                    return StoryOptionCard(
-                      emoji: voice['emoji']!,
-                      label: voice['name']!,
-                      onTap: () {
-                        HapticFeedback.mediumImpact();
-                        notifier.selectVoice(voice['id']!);
-                      },
-                    );
-                  },
+                  error: (_, __) => const SizedBox.shrink(),
+                  data: (voices) => GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: voices.length,
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 1.2,
+                    ),
+                    itemBuilder: (context, index) {
+                      final voice = voices[index];
+                      return StoryOptionCard(
+                        emoji: voice['emoji']!,
+                        label: voice['name']!,
+                        onTap: () {
+                          HapticFeedback.mediumImpact();
+                          notifier.selectVoice(voice['id']!);
+                        },
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
