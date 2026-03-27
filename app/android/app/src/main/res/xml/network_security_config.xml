@@ -42,6 +42,14 @@
         </trust-anchors>
     </domain-config>
 
+    <!-- ElevenLabs API — enforce HTTPS, trust system CAs -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">api.elevenlabs.io</domain>
+        <trust-anchors>
+            <certificates src="system"/>
+        </trust-anchors>
+    </domain-config>
+
     <!-- Giphy API — enforce HTTPS, trust system CAs -->
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">api.giphy.com</domain>
