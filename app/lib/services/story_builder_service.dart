@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:developer' as dev;
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
@@ -44,13 +46,24 @@ class StoryBuilderService {
 - Use rhetorical questions that draw the child in: "And what do you think he did?"
 
 # Speaking Instructions (required!)
-The text will be read aloud by a text-to-speech system. You must include the following instructions within the text:
-- <break time="300ms"/> — after every important sentence, to let the child absorb it
-- <break time="700ms"/> — before a surprising or suspenseful moment ("And suddenly..." <break time="700ms"/>)
+The text will be read aloud by a Cartesia text-to-speech system that supports the following tags:
+
+**Pauses** — insert silence:
+- <break time="300ms"/> — after every important sentence
+- <break time="700ms"/> — before a surprising or suspenseful moment
 - <break time="1.2s"/> — between story sections (opening→adventure, adventure→climax)
+
+**Emotions** — shift the narrator's tone (place the tag just before the text it should affect):
+- <emotion value="content" /> — for calm, warm narration (default)
+- <emotion value="excited" /> — for adventure, discovery, joyful moments
+- <emotion value="scared" /> — for suspenseful or tense moments
+- <emotion value="sad" /> — for moments of loss or disappointment (resolved by the end)
+- Return to <emotion value="content" /> after each emotional peak
+
+**Other style notes:**
 - When a character speaks in a whisper, write it in parentheses: (whispering) "Let's get out of here..."
 - When there is a shout or excitement, use an exclamation mark: "Hooray! We did it!"
-- When there is a sound or effect, write it as a single word followed by a pause: BOOM! <break time="500ms"/>
+- When there is a sound effect, write it as a single word: BOOM!
 
 # Rules
 - On the first line write a short, creative title for the story (no numbering, no "Title:", just the text).
@@ -93,10 +106,35 @@ The text will be read aloud by a text-to-speech system. You must include the fol
     return (title: '', text: content);
   }
 
-  static Future<String> generateAudio(String storyText, {required String voiceId}) async {
+  static Future<String> generateAudio(
+    String storyText, {
+    required String voiceId,
+    double speed = 1.0,
+    double volume = 1.0,
+  }) async {
     if (_cartesiaApiKey.isEmpty) {
       throw Exception('CARTESIA_API_KEY not configured. Pass it via --dart-define=CARTESIA_API_KEY=...');
     }
+    final requestBody = jsonEncode({
+      'transcript': storyText,
+      'model_id': 'sonic-3',
+      'voice': {'mode': 'id', 'id': voiceId},
+      'output_format': {
+        'container': 'mp3',
+        'bit_rate': 128000,
+        'sample_rate': 44100,
+      },
+      'language': 'en',
+      'generation_config': {
+        'speed': speed,
+        'volume': volume,
+      },
+    });
+    dev.log(requestBody, name: 'CartesiaTTS');
+    try {
+      final logDir = await getApplicationDocumentsDirectory();
+      await File('${logDir.path}/last_tts_request.json').writeAsString(requestBody);
+    } catch (_) {}
     final response = await http
         .post(
           Uri.parse('https://api.cartesia.ai/tts/bytes'),
@@ -105,17 +143,7 @@ The text will be read aloud by a text-to-speech system. You must include the fol
             'Cartesia-Version': _cartesiaVersion,
             'Content-Type': 'application/json',
           },
-          body: jsonEncode({
-            'transcript': storyText,
-            'model_id': 'sonic-3',
-            'voice': {'mode': 'id', 'id': voiceId},
-            'output_format': {
-              'container': 'mp3',
-              'bit_rate': 128000,
-              'sample_rate': 44100,
-            },
-            'language': 'en',
-          }),
+          body: requestBody,
         )
         .timeout(const Duration(seconds: 60));
 
@@ -130,44 +158,40 @@ The text will be read aloud by a text-to-speech system. You must include the fol
     return file.path;
   }
 
-  /// Fetches up to 6 English voices from Cartesia's public voice library.
+  static const _stockVoiceIds = [
+    'e13cae5c-ec59-4f71-b0a6-266df3c9bb8e',
+    'a33f7a4c-100f-41cf-a1fd-5822e8fc253f',
+  ];
+
+  /// Fetches the two pinned stock voices from Cartesia by ID.
   /// Returns an empty list on any failure so callers degrade gracefully.
   static Future<List<Map<String, String>>> loadStockVoices() async {
     if (_cartesiaApiKey.isEmpty) return [];
     try {
-      final response = await http.get(
-        Uri.parse('https://api.cartesia.ai/voices?language=en&limit=6'),
-        headers: {
-          'Authorization': 'Bearer $_cartesiaApiKey',
-          'Cartesia-Version': _cartesiaVersion,
-        },
-      ).timeout(const Duration(seconds: 10));
-
-      if (response.statusCode != 200) return [];
-
-      final decoded = jsonDecode(response.body);
-      final List<dynamic> voices;
-      if (decoded is List) {
-        voices = decoded;
-      } else {
-        final data = (decoded as Map<String, dynamic>)['data'];
-        if (data is! List) return [];
-        voices = data;
-      }
-
-      return voices.take(6).map((v) {
+      final results = <Map<String, String>>[];
+      for (final id in _stockVoiceIds) {
+        final response = await http.get(
+          Uri.parse('https://api.cartesia.ai/voices/$id'),
+          headers: {
+            'Authorization': 'Bearer $_cartesiaApiKey',
+            'Cartesia-Version': _cartesiaVersion,
+          },
+        ).timeout(const Duration(seconds: 10));
+        if (response.statusCode != 200) continue;
+        final v = jsonDecode(response.body) as Map<String, dynamic>;
         final gender = v['gender'] as String?;
         final emoji = gender == 'masculine'
             ? '👨'
             : gender == 'feminine'
                 ? '👩'
                 : '🎤';
-        return {
-          'id': v['id'] as String,
+        results.add({
+          'id': id,
           'name': v['name'] as String,
           'emoji': emoji,
-        };
-      }).toList();
+        });
+      }
+      return results;
     } catch (_) {
       return [];
     }

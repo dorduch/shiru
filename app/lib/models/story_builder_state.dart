@@ -46,6 +46,7 @@ class StoryBuilderState {
   final String? selectedHero;
   final String? selectedTheme;
   final String? selectedVoiceId;
+  final String? selectedVoiceName;
   final StoryLength? selectedLength;
   final String? generatedStoryText;
   final String? generatedAudioPath;
@@ -57,6 +58,7 @@ class StoryBuilderState {
     this.selectedHero,
     this.selectedTheme,
     this.selectedVoiceId,
+    this.selectedVoiceName,
     this.selectedLength,
     this.generatedStoryText,
     this.generatedAudioPath,
@@ -69,6 +71,7 @@ class StoryBuilderState {
     String? selectedHero,
     String? selectedTheme,
     String? selectedVoiceId,
+    String? selectedVoiceName,
     StoryLength? selectedLength,
     String? generatedStoryText,
     String? generatedAudioPath,
@@ -80,6 +83,7 @@ class StoryBuilderState {
       selectedHero: selectedHero ?? this.selectedHero,
       selectedTheme: selectedTheme ?? this.selectedTheme,
       selectedVoiceId: selectedVoiceId ?? this.selectedVoiceId,
+      selectedVoiceName: selectedVoiceName ?? this.selectedVoiceName,
       selectedLength: selectedLength ?? this.selectedLength,
       generatedStoryText: generatedStoryText ?? this.generatedStoryText,
       generatedAudioPath: generatedAudioPath ?? this.generatedAudioPath,

@@ -1,0 +1,126 @@
+<h2>Recording Feature — UI States</h2>
+<p class="subtitle">How the audio section in ParentEditScreen changes based on recording state</p>
+
+<div class="cards" style="grid-template-columns: repeat(3, 1fr); gap: 24px;">
+
+  <!-- State 1: Audio Source Selection -->
+  <div class="card" style="cursor: default;">
+    <div class="card-image" style="background: #1a1a2e; padding: 24px;">
+      <div style="color: #9ca3af; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">State 1: No Audio Selected</div>
+      <div style="display: flex; gap: 12px;">
+        <div style="flex: 1; background: #2d2d44; border: 2px dashed #4a4a6a; border-radius: 12px; padding: 16px; text-align: center;">
+          <div style="font-size: 24px; margin-bottom: 8px;">📁</div>
+          <div style="color: #e5e7eb; font-size: 13px; font-weight: 600;">Pick File</div>
+          <div style="color: #9ca3af; font-size: 11px; margin-top: 4px;">Import audio</div>
+        </div>
+        <div style="flex: 1; background: linear-gradient(135deg, #dc2626, #ef4444); border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 4px 12px rgba(239,68,68,0.3);">
+          <div style="font-size: 24px; margin-bottom: 8px;">🎙️</div>
+          <div style="color: white; font-size: 13px; font-weight: 600;">Record</div>
+          <div style="color: #fecaca; font-size: 11px; margin-top: 4px;">Use microphone</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Audio Source Selection</h3>
+      <p>Two options side by side: import existing file or record new audio</p>
+    </div>
+  </div>
+
+  <!-- State 2: Recording in Progress -->
+  <div class="card" style="cursor: default;">
+    <div class="card-image" style="background: #1a1a2e; padding: 24px;">
+      <div style="color: #9ca3af; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">State 2: Recording</div>
+      <div style="background: #2d2d44; border: 2px solid #ef4444; border-radius: 12px; padding: 16px;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+          <div style="width: 12px; height: 12px; background: #ef4444; border-radius: 50%; animation: pulse 1s infinite;"></div>
+          <span style="color: #ef4444; font-weight: 600; font-size: 14px;">Recording</span>
+          <span style="color: #e5e7eb; font-family: monospace; font-size: 18px; margin-left: auto;">02:34</span>
+        </div>
+        <!-- Fake waveform -->
+        <div style="display: flex; align-items: center; gap: 2px; height: 32px; margin-bottom: 12px;">
+          <div style="width: 3px; height: 40%; background: #ef4444; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 70%; background: #ef4444; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 90%; background: #ef4444; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 50%; background: #ef4444; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 80%; background: #ef4444; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 30%; background: #ef4444; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 60%; background: #ef4444; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 95%; background: #ef4444; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 45%; background: #ef4444; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 75%; background: #ef4444; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 55%; background: #ef4444; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 85%; background: #ef4444; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 35%; background: #ef4444; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 65%; background: #ef4444; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 50%; background: #4a4a6a; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 50%; background: #4a4a6a; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 50%; background: #4a4a6a; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 50%; background: #4a4a6a; border-radius: 2px;"></div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button style="flex: 1; background: #374151; border: none; color: white; padding: 10px; border-radius: 8px; font-size: 13px; cursor: pointer;">⏸ Pause</button>
+          <button style="flex: 1; background: #ef4444; border: none; color: white; padding: 10px; border-radius: 8px; font-size: 13px; cursor: pointer;">■ Stop</button>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Recording in Progress</h3>
+      <p>Pulsing red dot, elapsed timer, waveform visualization, pause/stop controls</p>
+    </div>
+  </div>
+
+  <!-- State 3: Preview / Recorded -->
+  <div class="card" style="cursor: default;">
+    <div class="card-image" style="background: #1a1a2e; padding: 24px;">
+      <div style="color: #9ca3af; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">State 3: Preview</div>
+      <div style="background: #2d2d44; border: 2px solid #22c55e; border-radius: 12px; padding: 16px;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+          <div style="width: 12px; height: 12px; background: #22c55e; border-radius: 50%;"></div>
+          <span style="color: #22c55e; font-weight: 600; font-size: 14px;">Recorded</span>
+          <span style="color: #e5e7eb; font-family: monospace; font-size: 18px; margin-left: auto;">02:34</span>
+        </div>
+        <!-- Static waveform -->
+        <div style="display: flex; align-items: center; gap: 2px; height: 32px; margin-bottom: 12px;">
+          <div style="width: 3px; height: 40%; background: #22c55e; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 70%; background: #22c55e; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 90%; background: #22c55e; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 50%; background: #22c55e; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 80%; background: #22c55e; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 30%; background: #22c55e; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 60%; background: #22c55e; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 95%; background: #22c55e; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 45%; background: #22c55e; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 75%; background: #22c55e; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 55%; background: #22c55e; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 85%; background: #22c55e; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 35%; background: #22c55e; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 65%; background: #22c55e; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 50%; background: #22c55e; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 70%; background: #22c55e; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 40%; background: #22c55e; border-radius: 2px;"></div>
+          <div style="width: 3px; height: 60%; background: #22c55e; border-radius: 2px;"></div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button style="flex: 1; background: #22c55e; border: none; color: white; padding: 10px; border-radius: 8px; font-size: 13px; cursor: pointer;">▶ Play</button>
+          <button style="flex: 1; background: #374151; border: none; color: white; padding: 10px; border-radius: 8px; font-size: 13px; cursor: pointer;">🔄 Re-record</button>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Preview & Confirm</h3>
+      <p>Green border, play preview, re-record option. Parent saves card normally with the green Save button.</p>
+    </div>
+  </div>
+</div>
+
+<style>
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+</style>
+
+<div style="margin-top: 32px; padding: 20px; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); border-radius: 12px;">
+  <h3 style="color: #22c55e; margin-top: 0;">How it fits in the Edit Screen</h3>
+  <p>The recorder widget replaces the current single "Tap to select audio file" button. The three states above cycle in place — no modals, no navigation. The existing Save button in the header saves the card with the recorded audio, same as it does today with picked files.</p>
+</div>

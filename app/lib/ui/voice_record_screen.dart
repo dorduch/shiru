@@ -301,6 +301,19 @@ class _VoiceRecordScreenState extends ConsumerState<VoiceRecordScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildHeader('Recording...', 2),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF3F3),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0x40EF4444)),
+          ),
+          child: const Text(
+            _guidedScript,
+            style: TextStyle(fontSize: 15, height: 1.6, color: Color(0xFF374151)),
+          ),
+        ),
         const Spacer(),
         Center(
           child: Text(

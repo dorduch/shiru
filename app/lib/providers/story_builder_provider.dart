@@ -26,9 +26,10 @@ class StoryBuilderNotifier extends StateNotifier<StoryBuilderState> {
     );
   }
 
-  void selectVoice(String voiceId) {
+  void selectVoice(String voiceId, {String? voiceName}) {
     state = state.copyWith(
       selectedVoiceId: voiceId,
+      selectedVoiceName: voiceName,
       step: StoryBuilderStep.lengthSelection,
     );
   }
@@ -69,7 +70,12 @@ class StoryBuilderNotifier extends StateNotifier<StoryBuilderState> {
       );
       state = state.copyWith(generatedStoryText: story.text, progress: 0.5);
 
-      final audioPath = await StoryBuilderService.generateAudio(story.text, voiceId: state.selectedVoiceId!);
+      final audioPath = await StoryBuilderService.generateAudio(
+        story.text,
+        voiceId: state.selectedVoiceId!,
+        speed: 0.9,
+        volume: 1.0,
+      );
       state = state.copyWith(generatedAudioPath: audioPath, progress: 0.9);
 
       final heroLabel = storyHeroes

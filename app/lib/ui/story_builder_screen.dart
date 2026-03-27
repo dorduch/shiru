@@ -258,7 +258,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
                                   label: profile.name,
                                   onTap: () {
                                     HapticFeedback.mediumImpact();
-                                    notifier.selectVoice(profile.voiceId);
+                                    notifier.selectVoice(profile.voiceId, voiceName: profile.name);
                                   },
                                 ),
                               );
@@ -306,7 +306,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
                         label: voice['name']!,
                         onTap: () {
                           HapticFeedback.mediumImpact();
-                          notifier.selectVoice(voice['id']!);
+                          notifier.selectVoice(voice['id']!, voiceName: voice['name']);
                         },
                       );
                     },
@@ -323,6 +323,52 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
 
   // ─── Screen 4: Length selection ───────────────────────────────────────────
 
+  Widget _buildGenerationConfig(StoryBuilderState state) {
+    final heroLabel = storyHeroes
+        .firstWhere((h) => h['id'] == state.selectedHero, orElse: () => {})['label'] ?? '';
+    final heroEmoji = storyHeroes
+        .firstWhere((h) => h['id'] == state.selectedHero, orElse: () => {})['emoji'] ?? '';
+    final themeLabel = storyThemes
+        .firstWhere((t) => t['id'] == state.selectedTheme, orElse: () => {})['label'] ?? '';
+    final themeEmoji = storyThemes
+        .firstWhere((t) => t['id'] == state.selectedTheme, orElse: () => {})['emoji'] ?? '';
+    final voiceName = state.selectedVoiceName ?? 'Voice';
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F0FF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFDDD6FE)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Your Story',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF7C3AED),
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              _ConfigChip(emoji: heroEmoji, label: heroLabel),
+              const SizedBox(width: 8),
+              _ConfigChip(emoji: themeEmoji, label: themeLabel),
+              const SizedBox(width: 8),
+              _ConfigChip(emoji: '🎤', label: voiceName),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildLengthSelection(StoryBuilderState state) {
     final notifier = ref.read(storyBuilderProvider.notifier);
 
@@ -337,6 +383,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
             notifier.goBack();
           },
         ),
+        _buildGenerationConfig(state),
         Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -669,6 +716,40 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ConfigChip extends StatelessWidget {
+  final String emoji;
+  final String label;
+
+  const _ConfigChip({required this.emoji, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFDDD6FE)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 14)),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF374151),
+            ),
+          ),
+        ],
       ),
     );
   }

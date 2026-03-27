@@ -1,0 +1,1657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Story TTS Pipeline Playground</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0d0f;
+      --surface:   #16181c;
+      --surface2:  #1e2128;
+      --border:    #2a2d35;
+      --border2:   #373b46;
+      --accent:    #4f8ef7;
+      --accent-dk: #3a6fd8;
+      --green:     #34d17a;
+      --red:       #f75454;
+      --yellow:    #f7c948;
+      --text:      #e2e4ea;
+      --text-dim:  #8891a4;
+      --text-dimmer: #545d6e;
+      --radius:    10px;
+      --radius-sm: 6px;
+    }
+
+    html { font-size: 14px; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 24px 16px 64px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      margin-bottom: 36px;
+    }
+
+    .pipeline {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    /* connector between steps */
+    .connector {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 32px;
+      color: var(--border2);
+      font-size: 18px;
+      user-select: none;
+    }
+
+    /* ── Step card ── */
+    .step-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .step-card.active  { border-color: var(--accent); }
+    .step-card.done    { border-color: var(--green); }
+    .step-card.locked  { opacity: 0.45; pointer-events: none; }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      user-select: none;
+    }
+
+    .step-badge {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--border2);
+      color: var(--text-dim);
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .step-card.active  .step-badge { background: var(--accent);  color: #fff; }
+    .step-card.done    .step-badge { background: var(--green);   color: #fff; }
+
+    .step-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .step-status {
+      margin-left: auto;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      background: var(--border);
+      padding: 2px 8px;
+      border-radius: 99px;
+    }
+    .step-card.done .step-status {
+      background: color-mix(in srgb, var(--green) 18%, transparent);
+      color: var(--green);
+    }
+    .step-card.active .step-status {
+      background: color-mix(in srgb, var(--accent) 18%, transparent);
+      color: var(--accent);
+    }
+
+    .step-body {
+      padding: 20px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* ── Generic layout helpers ── */
+    .label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    /* ── Grid cards (hero / theme) ── */
+    .pick-grid {
+      display: grid;
+      gap: 8px;
+    }
+    .pick-grid.heroes { grid-template-columns: repeat(4, 1fr); }
+    .pick-grid.themes { grid-template-columns: repeat(3, 1fr); }
+
+    @media (max-width: 600px) {
+      .pick-grid.heroes { grid-template-columns: repeat(2, 1fr); }
+      .pick-grid.themes { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .pick-card {
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      -webkit-user-select: none; user-select: none;
+    }
+
+    .pick-card:hover { border-color: var(--border2); background: #22252e; }
+
+    .pick-card.selected {
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 12%, var(--surface2));
+    }
+
+    .pick-card .emoji { font-size: 1.6rem; display: block; line-height: 1.3; }
+    .pick-card .name  { font-size: 0.78rem; color: var(--text-dim); margin-top: 3px; }
+    .pick-card.selected .name { color: var(--text); }
+
+    /* ── Toggle buttons ── */
+    .toggle-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 9px 14px;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+      text-align: center;
+      -webkit-user-select: none; user-select: none;
+    }
+
+    .toggle-btn:hover { border-color: var(--border2); color: var(--text); }
+    .toggle-btn.selected {
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 12%, var(--surface2));
+      color: var(--text);
+    }
+
+    .provider-blurb {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+
+    .provider-limit {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-top: 6px;
+      font-size: 0.78rem;
+      color: var(--text-dimmer);
+    }
+
+    .provider-panel {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      background: color-mix(in srgb, var(--surface2) 90%, transparent);
+    }
+
+    .provider-panel + .provider-panel { margin-top: 16px; }
+
+    /* ── Text inputs / textareas ── */
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.88rem;
+      padding: 8px 10px;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus,
+    textarea:focus { border-color: var(--accent); }
+
+    textarea { resize: vertical; line-height: 1.55; }
+    textarea.mono { font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace; font-size: 0.82rem; }
+
+    select option { background: var(--surface2); }
+
+    /* ── Range slider ── */
+    .range-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      flex: 1;
+      height: 4px;
+      background: var(--border2);
+      border-radius: 99px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    input[type="range"]:hover::-webkit-slider-thumb { background: var(--accent-dk); }
+
+    .range-val {
+      min-width: 36px;
+      text-align: right;
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Controls row ── */
+    .controls-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .ctrl-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .ctrl-label {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      font-weight: 500;
+    }
+
+    .ctrl-field input { width: auto; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 9px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: background 0.15s, opacity 0.15s, transform 0.1s;
+      -webkit-user-select: none; user-select: none;
+    }
+
+    .btn:active:not(:disabled) { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-dk); }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1.5px solid var(--border2);
+    }
+    .btn-secondary:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+
+    .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+
+    /* ── Spinner ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+
+    /* ── Details / collapsible JSON ── */
+    details {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    summary {
+      padding: 9px 12px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      list-style: none;
+      -webkit-user-select: none; user-select: none;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+
+    summary::before {
+      content: "▶";
+      font-size: 0.6rem;
+      transition: transform 0.15s;
+    }
+
+    details[open] summary::before { transform: rotate(90deg); }
+
+    details pre {
+      padding: 12px;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      white-space: pre-wrap;
+      word-break: break-all;
+      border-top: 1px solid var(--border);
+      max-height: 320px;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+
+    /* ── Result / output blocks ── */
+    .result-block {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      animation: fadeIn 0.25s ease;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+    .result-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.78rem;
+      color: var(--text-dimmer);
+    }
+
+    .result-meta .tag {
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .tag-ok   { background: color-mix(in srgb, var(--green)  18%, transparent); color: var(--green); }
+    .tag-err  { background: color-mix(in srgb, var(--red)    18%, transparent); color: var(--red); }
+    .tag-time { background: var(--surface2); color: var(--text-dim); }
+    .tag-provider { background: color-mix(in srgb, var(--accent) 20%, transparent); color: var(--accent); }
+
+    .story-title-display {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text);
+      padding: 10px 14px;
+      background: color-mix(in srgb, var(--accent) 8%, var(--surface2));
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--accent);
+    }
+
+    /* ── Toggle switch ── */
+    .switch-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 42px; height: 24px;
+      flex-shrink: 0;
+    }
+
+    .switch input { opacity: 0; width: 0; height: 0; }
+
+    .slider {
+      position: absolute;
+      inset: 0;
+      background: var(--border2);
+      border-radius: 99px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .slider::before {
+      content: "";
+      position: absolute;
+      width: 18px; height: 18px;
+      left: 3px; top: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+
+    .switch input:checked + .slider { background: var(--accent); }
+    .switch input:checked + .slider::before { transform: translateX(18px); }
+
+    /* ── Diff highlights ── */
+    .diff-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 620px) {
+      .diff-container { grid-template-columns: 1fr; }
+    }
+
+    /* ── Audio player area ── */
+    .audio-result {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    audio {
+      width: 100%;
+      border-radius: var(--radius-sm);
+      accent-color: var(--accent);
+    }
+
+    /* ── Quick-select voice buttons ── */
+    .pinned-voices {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .voice-pin-btn {
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-dim);
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 0.75rem;
+      padding: 5px 10px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .voice-pin-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .voice-pin-btn.selected { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface2)); }
+
+    /* ── Error message ── */
+    .error-box {
+      background: color-mix(in srgb, var(--red) 10%, var(--surface2));
+      border: 1px solid color-mix(in srgb, var(--red) 40%, transparent);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 0.83rem;
+      color: var(--red);
+    }
+
+    /* ── Divider ── */
+    hr.subtle { border: none; border-top: 1px solid var(--border); }
+
+    /* hidden helper */
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<h1>Story TTS Pipeline</h1>
+<p class="subtitle">Debug &amp; iterate on children's story generation → Cartesia TTS</p>
+
+<div class="pipeline">
+
+  <!-- ════════════════════════════════════════════
+       STEP 1 — Story Configuration
+  ════════════════════════════════════════════ -->
+  <div class="step-card active" id="step1">
+    <div class="step-header">
+      <div class="step-badge">1</div>
+      <div class="step-title">Story Configuration</div>
+      <div class="step-status" id="step1-status">Configure</div>
+    </div>
+    <div class="step-body">
+
+      <!-- Hero -->
+      <div>
+        <div class="label">Hero</div>
+        <div class="pick-grid heroes" id="hero-grid">
+          <div class="pick-card" data-value="astronaut"><span class="emoji">🧑‍🚀</span><span class="name">Astronaut</span></div>
+          <div class="pick-card" data-value="princess"><span class="emoji">👸</span><span class="name">Princess</span></div>
+          <div class="pick-card" data-value="dragon"><span class="emoji">🐉</span><span class="name">Dragon</span></div>
+          <div class="pick-card" data-value="robot"><span class="emoji">🤖</span><span class="name">Robot</span></div>
+          <div class="pick-card" data-value="wizard"><span class="emoji">🧙</span><span class="name">Wizard</span></div>
+          <div class="pick-card" data-value="cat"><span class="emoji">🐱</span><span class="name">Cat</span></div>
+          <div class="pick-card" data-value="pirate"><span class="emoji">🏴‍☠️</span><span class="name">Pirate</span></div>
+          <div class="pick-card" data-value="fairy"><span class="emoji">🧚</span><span class="name">Fairy</span></div>
+        </div>
+      </div>
+
+      <!-- Theme -->
+      <div>
+        <div class="label">Theme</div>
+        <div class="pick-grid themes" id="theme-grid">
+          <div class="pick-card" data-value="space"><span class="emoji">🚀</span><span class="name">Space Adventure</span></div>
+          <div class="pick-card" data-value="underwater"><span class="emoji">🐠</span><span class="name">Underwater</span></div>
+          <div class="pick-card" data-value="forest"><span class="emoji">🌳</span><span class="name">Enchanted Forest</span></div>
+          <div class="pick-card" data-value="treasure"><span class="emoji">🗺️</span><span class="name">Treasure Hunt</span></div>
+          <div class="pick-card" data-value="time_travel"><span class="emoji">⏰</span><span class="name">Time Travel</span></div>
+          <div class="pick-card" data-value="candy_land"><span class="emoji">🍭</span><span class="name">Candy Land</span></div>
+        </div>
+      </div>
+
+      <!-- Length -->
+      <div>
+        <div class="label">Length</div>
+        <div class="toggle-group" id="length-group">
+          <div class="toggle-btn selected" data-value="short" data-words="150" data-tokens="500">Short <span style="color:var(--text-dimmer);font-weight:400">(~150 words)</span></div>
+          <div class="toggle-btn" data-value="medium" data-words="400" data-tokens="1200">Medium <span style="color:var(--text-dimmer);font-weight:400">(~400 words)</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="connector">↓</div>
+
+  <!-- ════════════════════════════════════════════
+       STEP 2 — OpenAI Story Generation
+  ════════════════════════════════════════════ -->
+  <div class="step-card" id="step2">
+    <div class="step-header">
+      <div class="step-badge">2</div>
+      <div class="step-title">OpenAI Story Generation</div>
+      <div class="step-status" id="step2-status">Waiting</div>
+    </div>
+    <div class="step-body">
+
+      <!-- System prompt -->
+      <div>
+        <div class="label">System Prompt <span style="color:var(--text-dimmer);font-weight:400;text-transform:none;letter-spacing:0">(editable — {HERO}, {THEME}, {WORD_COUNT} are replaced on send)</span></div>
+        <textarea id="system-prompt" class="mono" rows="20"></textarea>
+      </div>
+
+      <hr class="subtle" />
+
+      <!-- Model controls -->
+      <div class="controls-row">
+        <div class="ctrl-field" style="flex:2 1 160px">
+          <span class="ctrl-label">Model</span>
+          <input type="text" id="oai-model" value="gpt-4o" />
+        </div>
+        <div class="ctrl-field" style="flex:1 1 90px">
+          <span class="ctrl-label">Temperature</span>
+          <input type="number" id="oai-temp" value="0.9" step="0.1" min="0" max="2" style="width:90px" />
+        </div>
+        <div class="ctrl-field" style="flex:1 1 110px">
+          <span class="ctrl-label">Max Tokens</span>
+          <input type="number" id="oai-tokens" value="500" step="50" min="100" style="width:110px" />
+        </div>
+        <button class="btn btn-primary" id="btn-generate-story" style="margin-left:auto;white-space:nowrap">
+          ✦ Generate Story
+          <kbd style="font-size:0.7rem;opacity:0.7;background:rgba(255,255,255,0.15);padding:1px 5px;border-radius:3px">Ctrl+↵</kbd>
+        </button>
+      </div>
+
+      <!-- Story output -->
+      <div id="story-output" class="hidden">
+        <div class="result-block">
+          <div class="result-meta" id="story-meta"></div>
+          <details id="story-req-details">
+            <summary>Request JSON</summary>
+            <pre id="story-req-pre"></pre>
+          </details>
+          <details id="story-res-details">
+            <summary>Response JSON</summary>
+            <pre id="story-res-pre"></pre>
+          </details>
+          <div class="story-title-display" id="story-title-display"></div>
+          <div class="label" style="margin-bottom:4px">Story Text <span style="color:var(--text-dimmer);font-weight:400;text-transform:none;letter-spacing:0">(editable — this feeds into Step 3/4)</span></div>
+          <textarea id="story-text" rows="14"></textarea>
+        </div>
+      </div>
+
+      <div id="story-error" class="error-box hidden"></div>
+
+    </div>
+  </div>
+
+  <div class="connector">↓</div>
+
+  <!-- ════════════════════════════════════════════
+       STEP 3 — Text Sanitization
+  ════════════════════════════════════════════ -->
+  <div class="step-card locked" id="step3">
+    <div class="step-header">
+      <div class="step-badge">3</div>
+      <div class="step-title">Text Sanitization</div>
+      <div class="step-status" id="step3-status">Waiting</div>
+    </div>
+    <div class="step-body">
+
+      <div class="switch-row">
+        <label class="switch">
+          <input type="checkbox" id="sanitize-toggle" />
+          <span class="slider"></span>
+        </label>
+        <span style="font-size:0.88rem;color:var(--text-dim)">Enable Sanitization</span>
+        <span style="font-size:0.78rem;color:var(--text-dimmer);margin-left:4px">(strips markdown, emotion tags, stage directions)</span>
+      </div>
+
+      <div id="sanitize-off-msg" style="font-size:0.82rem;color:var(--text-dimmer)">
+        Sanitization is OFF — story text passes through unchanged.
+      </div>
+
+      <div id="sanitize-on-panel" class="hidden">
+        <div class="diff-container">
+          <div>
+            <div class="label">Original</div>
+            <textarea id="sanitize-original" class="mono" rows="12" readonly></textarea>
+          </div>
+          <div>
+            <div class="label">Sanitized <span style="color:var(--text-dimmer);font-weight:400;text-transform:none;letter-spacing:0">(editable)</span></div>
+            <textarea id="sanitize-result" class="mono" rows="12"></textarea>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="connector">↓</div>
+
+  <!-- ════════════════════════════════════════════
+       STEP 4 — Text-to-Speech Output
+  ════════════════════════════════════════════ -->
+  <div class="step-card locked" id="step4">
+    <div class="step-header">
+      <div class="step-badge">4</div>
+      <div class="step-title">Text-to-Speech Output</div>
+      <div class="step-status" id="step4-status">Waiting</div>
+    </div>
+    <div class="step-body">
+
+      <div>
+        <div class="label">Provider</div>
+        <div class="toggle-group provider-toggle" id="provider-toggle">
+          <div class="toggle-btn selected" data-provider="cartesia">Cartesia</div>
+          <div class="toggle-btn" data-provider="elevenlabs">ElevenLabs</div>
+        </div>
+        <p class="provider-blurb" id="provider-blurb">Cartesia sonic-3 voices support fast neural rendering, speed + volume controls, and long-form transcripts.</p>
+        <div class="provider-limit">
+          <span id="provider-limit-text">Cartesia sonic-3 handles roughly 5,000 characters comfortably.</span>
+          <span id="tts-char-count"></span>
+        </div>
+      </div>
+
+      <div id="cartesia-controls" class="provider-panel">
+      <!-- Voice selection -->
+      <div>
+        <div class="label">Voice</div>
+
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <button class="btn btn-secondary btn-sm" id="btn-load-voices">Load Voices</button>
+          <select id="voice-dropdown" style="flex:1" disabled>
+            <option value="">— load voices first —</option>
+          </select>
+        </div>
+
+        <div class="label" style="margin-top:8px">Pinned Voices</div>
+        <div class="pinned-voices">
+          <button class="voice-pin-btn" data-id="e13cae5c-ec59-4f71-b0a6-266df3c9bb8e">e13cae5c</button>
+          <button class="voice-pin-btn" data-id="a33f7a4c-100f-41cf-a1fd-5822e8fc253f">a33f7a4c</button>
+        </div>
+
+        <div style="margin-top:10px">
+          <div class="ctrl-label" style="margin-bottom:5px">Custom Voice ID <span style="color:var(--text-dimmer)">(overrides dropdown &amp; pinned)</span></div>
+          <input type="text" id="voice-custom" placeholder="paste voice UUID…" />
+        </div>
+      </div>
+
+      <hr class="subtle" />
+
+      <!-- Generation controls -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+
+        <div>
+          <div class="label">Speed</div>
+          <div class="range-row">
+            <input type="range" id="tts-speed" min="0.6" max="1.5" step="0.05" value="0.9" />
+            <span class="range-val" id="tts-speed-val">0.90</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="label">Volume</div>
+          <div class="range-row">
+            <input type="range" id="tts-volume" min="0.5" max="2.0" step="0.05" value="1.0" />
+            <span class="range-val" id="tts-volume-val">1.0</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div>
+        <div class="label" style="display:flex;align-items:center;gap:10px">
+          Emotion
+          <label style="display:flex;align-items:center;gap:6px;font-size:0.78rem;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-dimmer);cursor:pointer">
+            <input type="checkbox" id="tts-emotion-enabled" style="width:auto" />
+            Include in request <span style="color:var(--yellow)">(app does NOT send this today)</span>
+          </label>
+        </div>
+        <select id="tts-emotion" disabled>
+          <option value="neutral">neutral</option>
+          <option value="calm">calm</option>
+          <option value="content" selected>content</option>
+          <option value="happy">happy</option>
+          <option value="excited">excited</option>
+          <option value="elated">elated</option>
+          <option value="euphoric">euphoric</option>
+          <option value="peaceful">peaceful</option>
+          <option value="serene">serene</option>
+          <option value="grateful">grateful</option>
+          <option value="angry">angry</option>
+          <option value="annoyed">annoyed</option>
+          <option value="frustrated">frustrated</option>
+          <option value="irritated">irritated</option>
+          <option value="sad">sad</option>
+          <option value="melancholic">melancholic</option>
+          <option value="disappointed">disappointed</option>
+          <option value="lonely">lonely</option>
+          <option value="scared">scared</option>
+          <option value="anxious">anxious</option>
+          <option value="panicked">panicked</option>
+          <option value="worried">worried</option>
+          <option value="surprised">surprised</option>
+          <option value="amazed">amazed</option>
+          <option value="confused">confused</option>
+          <option value="disgusted">disgusted</option>
+          <option value="contemptuous">contemptuous</option>
+          <option value="jealous">jealous</option>
+          <option value="envious">envious</option>
+          <option value="proud">proud</option>
+          <option value="confident">confident</option>
+          <option value="determined">determined</option>
+          <option value="hopeful">hopeful</option>
+          <option value="optimistic">optimistic</option>
+          <option value="pessimistic">pessimistic</option>
+          <option value="skeptical">skeptical</option>
+          <option value="curious">curious</option>
+          <option value="interested">interested</option>
+          <option value="bored">bored</option>
+          <option value="nostalgic">nostalgic</option>
+          <option value="sarcastic">sarcastic</option>
+          <option value="playful">playful</option>
+          <option value="mischievous">mischievous</option>
+          <option value="flirtatious">flirtatious</option>
+          <option value="romantic">romantic</option>
+          <option value="tender">tender</option>
+          <option value="sympathetic">sympathetic</option>
+          <option value="compassionate">compassionate</option>
+          <option value="apologetic">apologetic</option>
+          <option value="guilty">guilty</option>
+          <option value="ashamed">ashamed</option>
+          <option value="embarrassed">embarrassed</option>
+          <option value="relieved">relieved</option>
+          <option value="satisfied">satisfied</option>
+        </select>
+      </div>
+      </div>
+
+      <div id="elevenlabs-controls" class="provider-panel hidden">
+        <div>
+          <div class="label">Voice</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+            <button class="btn btn-secondary btn-sm" id="btn-load-eleven-voices">Load Voices</button>
+            <select id="eleven-voice-dropdown" style="flex:1" disabled>
+              <option value="">— load voices first —</option>
+            </select>
+          </div>
+          <div class="label" style="margin-top:8px">Pinned Voices</div>
+          <div class="pinned-voices" id="elevenlabs-pins">
+            <button class="voice-pin-btn" data-id="21m00Tcm4TlvDq8ikWAM">Rachel</button>
+            <button class="voice-pin-btn" data-id="EXAVITQu4vr4xnSDxMaL">Bella</button>
+          </div>
+          <div style="margin-top:10px">
+            <div class="ctrl-label" style="margin-bottom:5px">Custom Voice ID <span style="color:var(--text-dimmer)">(overrides dropdown &amp; pinned)</span></div>
+            <input type="text" id="eleven-voice-custom" placeholder="voice ID from ElevenLabs…" />
+          </div>
+        </div>
+
+        <hr class="subtle" style="margin:16px 0" />
+
+        <div class="controls-row">
+          <div class="ctrl-field" style="flex:1 1 200px">
+            <span class="ctrl-label">Model</span>
+            <input type="text" id="eleven-model" value="eleven_multilingual_v2" />
+          </div>
+          <div class="ctrl-field" style="flex:1 1 180px">
+            <span class="ctrl-label">Optimize Streaming Latency</span>
+            <select id="eleven-latency">
+              <option value="0">0 (highest quality)</option>
+              <option value="1">1</option>
+              <option value="2" selected>2 (balanced)</option>
+              <option value="3">3</option>
+              <option value="4">4 (fastest)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:12px">
+          <div>
+            <div class="label">Stability</div>
+            <div class="range-row">
+              <input type="range" id="eleven-stability" min="0" max="1" step="0.05" value="0.5" />
+              <span class="range-val" id="eleven-stability-val">0.50</span>
+            </div>
+          </div>
+          <div>
+            <div class="label">Clarity / Similarity</div>
+            <div class="range-row">
+              <input type="range" id="eleven-similarity" min="0" max="1" step="0.05" value="0.7" />
+              <span class="range-val" id="eleven-similarity-val">0.70</span>
+            </div>
+          </div>
+          <div>
+            <div class="label">Style Exaggeration</div>
+            <div class="range-row">
+              <input type="range" id="eleven-style" min="0" max="1" step="0.05" value="0.2" />
+              <span class="range-val" id="eleven-style-val">0.20</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="switch-row" style="margin-top:12px">
+          <label class="switch">
+            <input type="checkbox" id="eleven-speaker-boost" checked />
+            <span class="slider"></span>
+          </label>
+          <span style="font-size:0.85rem;color:var(--text-dim)">Use speaker boost</span>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn btn-primary" id="btn-generate-audio" style="white-space:nowrap">
+          ▶ Generate Audio
+          <kbd style="font-size:0.7rem;opacity:0.7;background:rgba(255,255,255,0.15);padding:1px 5px;border-radius:3px">Ctrl+↵</kbd>
+        </button>
+      </div>
+
+      <!-- TTS output -->
+      <div id="tts-output" class="hidden">
+        <div class="result-block">
+          <div class="result-meta" id="tts-meta"></div>
+          <details id="tts-req-details">
+            <summary>Request JSON</summary>
+            <pre id="tts-req-pre"></pre>
+          </details>
+          <div class="audio-result">
+            <audio id="tts-audio" controls></audio>
+            <div style="display:flex;gap:8px;align-items:center">
+              <a id="tts-download" class="btn btn-secondary btn-sm" download="story.mp3">↓ Download MP3</a>
+              <span id="tts-file-info" style="font-size:0.78rem;color:var(--text-dimmer)"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tts-error" class="error-box hidden"></div>
+
+    </div>
+  </div>
+
+</div><!-- /pipeline -->
+
+<script>
+// ═══════════════════════════════════════════════════
+// DEFAULT SYSTEM PROMPT
+// ═══════════════════════════════════════════════════
+const DEFAULT_PROMPT = `You are a warm, loving grandparent sitting with a child at bedtime, telling them a story out loud. Speak naturally — the way you would actually talk to a small child.
+
+# The Story
+- Hero: {HERO}
+- Theme: {THEME}
+- About {WORD_COUNT} words
+- Simple words a four-year-old understands. Short sentences. Conversational tone.
+
+# Structure
+- Opening: Introduce the hero and their world warmly
+- Middle: A fun adventure with a surprising challenge
+- Climax: A suspenseful moment before the resolution
+- Ending: A happy resolution with a gentle positive message
+
+# How to Write for Spoken Delivery
+This text will be read aloud by a text-to-speech voice. Write it exactly as it should be spoken — no formatting, no markup except where noted below.
+
+Use natural punctuation to control rhythm and pacing:
+- Commas for small pauses and breathing rhythm
+- Ellipses for suspense and dramatic pauses: "And then..."
+- Dashes for interruptions and sudden shifts: "He reached for the door — and it opened!"
+- Exclamation marks sparingly, for genuine excitement
+- Question marks for rhetorical questions that draw the child in
+
+Use repetition and recurring phrases children love:
+- "And guess what happened next?"
+- "Can you believe it?"
+- Repeated refrains or catchphrases for the hero
+
+Use <break time="1s"/> ONLY between major story sections — two or three times in the entire story, no more. Do not use break tags anywhere else.
+
+When something is genuinely funny, you may write [laughter] to insert a natural laugh.
+
+Write sound effects as normal words woven into sentences: "There was a big boom" not "BOOM!"
+
+Give characters their own speaking style through word choice and sentence rhythm, not through stage directions.
+
+# Rules
+- First line: a short creative title (just the text, no label)
+- Second line: ---
+- Then the story
+- Spell out all numbers as words
+- No scary or violent content
+- No markdown formatting (no **, no *, no #, no backticks)
+- No XML tags other than <break> (no <emotion>, no <speed>, no other tags)
+- No stage directions in parentheses like (whispering) or (softly)
+- No words in ALL CAPS
+- No asterisks or special characters around words`;
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+const state = {
+  hero: null,
+  theme: null,
+  length: 'short',
+  wordCount: 150,
+  storyTitle: '',
+  storyText: '',
+  finalText: '',
+  activeStep: 1,
+  provider: localStorage.getItem('story_tts_provider') || 'cartesia',
+};
+
+// ═══════════════════════════════════════════════════
+// INIT — system prompt from localStorage
+// ═══════════════════════════════════════════════════
+(function init() {
+  const saved = localStorage.getItem('story_system_prompt');
+  document.getElementById('system-prompt').value = saved || DEFAULT_PROMPT;
+})();
+
+document.getElementById('system-prompt').addEventListener('input', function() {
+  localStorage.setItem('story_system_prompt', this.value);
+});
+
+// ═══════════════════════════════════════════════════
+// STEP STATE MANAGEMENT
+// ═══════════════════════════════════════════════════
+function setStepState(n, state_) {
+  // state_: 'active' | 'done' | 'locked'
+  const el = document.getElementById('step' + n);
+  const badge = el.querySelector('.step-badge');
+  const status = document.getElementById('step' + n + '-status');
+
+  el.classList.remove('active', 'done', 'locked');
+  el.classList.add(state_);
+
+  const labels = { active: 'Active', done: 'Done ✓', locked: 'Waiting' };
+  if (status) status.textContent = labels[state_] || '';
+}
+
+// ═══════════════════════════════════════════════════
+// STEP 1 — Hero / Theme / Length picks
+// ═══════════════════════════════════════════════════
+function handlePick(grid, selected) {
+  grid.querySelectorAll('.pick-card').forEach(c => c.classList.remove('selected'));
+  selected.classList.add('selected');
+}
+
+document.getElementById('hero-grid').addEventListener('click', e => {
+  const card = e.target.closest('.pick-card');
+  if (!card) return;
+  handlePick(document.getElementById('hero-grid'), card);
+  state.hero = card.dataset.value;
+  checkStep1();
+});
+
+document.getElementById('theme-grid').addEventListener('click', e => {
+  const card = e.target.closest('.pick-card');
+  if (!card) return;
+  handlePick(document.getElementById('theme-grid'), card);
+  state.theme = card.dataset.value;
+  checkStep1();
+});
+
+document.getElementById('length-group').addEventListener('click', e => {
+  const btn = e.target.closest('.toggle-btn');
+  if (!btn) return;
+  document.querySelectorAll('#length-group .toggle-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  state.length = btn.dataset.value;
+  state.wordCount = parseInt(btn.dataset.words);
+  document.getElementById('oai-tokens').value = btn.dataset.tokens;
+  checkStep1();
+});
+
+function checkStep1() {
+  if (state.hero && state.theme) {
+    setStepState(1, 'done');
+    setStepState(2, 'active');
+    document.getElementById('step2').classList.remove('locked');
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════
+function setLoading(btn, loading, defaultLabel) {
+  btn.disabled = loading;
+  btn.innerHTML = loading
+    ? `<span class="spinner"></span> Generating…`
+    : defaultLabel;
+}
+
+function fmtTime(ms) {
+  return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(2)}s`;
+}
+
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+function hideError(id) {
+  document.getElementById(id).classList.add('hidden');
+}
+
+// ═══════════════════════════════════════════════════
+// STEP 2 — Generate Story
+// ═══════════════════════════════════════════════════
+document.getElementById('btn-generate-story').addEventListener('click', generateStory);
+
+async function generateStory() {
+  if (!state.hero || !state.theme) {
+    showError('story-error', 'Please select a hero and theme in Step 1 first.');
+    return;
+  }
+
+  hideError('story-error');
+  const btn = document.getElementById('btn-generate-story');
+  const btnLabel = '✦ Generate Story <kbd style="font-size:0.7rem;opacity:0.7;background:rgba(255,255,255,0.15);padding:1px 5px;border-radius:3px">Ctrl+↵</kbd>';
+  setLoading(btn, true, btnLabel);
+
+  const heroLabel = { astronaut:'Astronaut', princess:'Princess', dragon:'Dragon', robot:'Robot', wizard:'Wizard', cat:'Cat', pirate:'Pirate', fairy:'Fairy' };
+  const themeLabel = { space:'Space Adventure', underwater:'Underwater', forest:'Enchanted Forest', treasure:'Treasure Hunt', time_travel:'Time Travel', candy_land:'Candy Land' };
+
+  const rawPrompt = document.getElementById('system-prompt').value;
+  const filledPrompt = rawPrompt
+    .replace(/\{HERO\}/g, heroLabel[state.hero] || state.hero)
+    .replace(/\{THEME\}/g, themeLabel[state.theme] || state.theme)
+    .replace(/\{WORD_COUNT\}/g, state.wordCount);
+
+  const body = {
+    model: document.getElementById('oai-model').value.trim() || 'gpt-4o',
+    messages: [
+      { role: 'system', content: filledPrompt },
+      { role: 'user', content: 'Write the story' },
+    ],
+    temperature: parseFloat(document.getElementById('oai-temp').value) || 0.9,
+    max_tokens: parseInt(document.getElementById('oai-tokens').value) || 500,
+  };
+
+  const t0 = Date.now();
+  let resp, data;
+
+  try {
+    resp = await fetch('/api/generate-story', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    data = await resp.json();
+  } catch (err) {
+    setLoading(btn, false, btnLabel);
+    showError('story-error', 'Network error: ' + err.message);
+    return;
+  }
+
+  const elapsed = Date.now() - t0;
+  setLoading(btn, false, btnLabel);
+
+  // Show request
+  document.getElementById('story-req-pre').textContent = JSON.stringify(body, null, 2);
+
+  // Show response
+  document.getElementById('story-res-pre').textContent = JSON.stringify(data, null, 2);
+
+  if (!resp.ok || data.error) {
+    const errMsg = data?.error?.message || data?.error || `HTTP ${resp.status}`;
+    showError('story-error', 'OpenAI error: ' + errMsg);
+    document.getElementById('story-output').classList.remove('hidden');
+    return;
+  }
+
+  // Extract content
+  const content = data?.choices?.[0]?.message?.content || '';
+  const sepIdx = content.indexOf('\n---');
+  let title = '', body_text = '';
+
+  if (sepIdx !== -1) {
+    title = content.slice(0, sepIdx).trim();
+    body_text = content.slice(sepIdx + 4).replace(/^\n/, '').trim();
+  } else {
+    title = '';
+    body_text = content.trim();
+  }
+
+  state.storyTitle = title;
+  state.storyText = body_text;
+
+  // Update UI
+  document.getElementById('story-title-display').textContent = title || '(no title detected)';
+  document.getElementById('story-text').value = body_text;
+
+  const usage = data?.usage;
+  const usageStr = usage ? ` · ${usage.prompt_tokens}→${usage.completion_tokens} tokens` : '';
+  document.getElementById('story-meta').innerHTML =
+    `<span class="tag tag-ok">200 OK</span>` +
+    `<span class="tag tag-time">${fmtTime(elapsed)}${usageStr}</span>`;
+
+  document.getElementById('story-output').classList.remove('hidden');
+
+  // Advance pipeline
+  setStepState(2, 'done');
+  setStepState(3, 'active');
+  document.getElementById('step3').classList.remove('locked');
+
+  updateStep3();
+  updateStep4CharCount();
+}
+
+// live-edit story text cascades downstream
+document.getElementById('story-text').addEventListener('input', function() {
+  state.storyText = this.value;
+  updateStep3();
+  updateStep4CharCount();
+});
+
+// ═══════════════════════════════════════════════════
+// STEP 3 — Sanitization
+// ═══════════════════════════════════════════════════
+document.getElementById('sanitize-toggle').addEventListener('change', function() {
+  const on = this.checked;
+  document.getElementById('sanitize-off-msg').classList.toggle('hidden', on);
+  document.getElementById('sanitize-on-panel').classList.toggle('hidden', !on);
+  updateStep3();
+});
+
+function sanitize(text) {
+  let t = text;
+  // Strip emotion tags
+  t = t.replace(/<emotion[^>]*\/?>/gi, '');
+  // Strip break tags
+  t = t.replace(/<break[^>]*\/?>/gi, '');
+  // Strip remaining XML-style tags
+  t = t.replace(/<[^>]+>/g, '');
+  // Strip markdown bold/italic
+  t = t.replace(/\*\*|__|_|\*/g, '');
+  // Strip markdown headers
+  t = t.replace(/^#{1,6}\s*/gm, '');
+  // Strip backticks
+  t = t.replace(/`/g, '');
+  // Remove parenthetical stage directions like (whispering), (softly), etc.
+  t = t.replace(/\([a-z ]+\)\s*/gi, '');
+  // Collapse 3+ newlines to 2
+  t = t.replace(/\n{3,}/g, '\n\n');
+  // Trim lines
+  t = t.split('\n').map(l => l.trimEnd()).join('\n');
+  t = t.trim();
+  return t;
+}
+
+function updateStep3() {
+  const raw = state.storyText;
+  const on = document.getElementById('sanitize-toggle').checked;
+
+  document.getElementById('sanitize-original').value = raw;
+
+  if (on) {
+    const clean = sanitize(raw);
+    document.getElementById('sanitize-result').value = clean;
+    state.finalText = clean;
+  } else {
+    state.finalText = raw;
+  }
+
+  updateStep4CharCount();
+
+  if (raw) {
+    setStepState(3, 'done');
+    setStepState(4, 'active');
+    document.getElementById('step4').classList.remove('locked');
+  }
+}
+
+// let user edit sanitized text too
+document.getElementById('sanitize-result').addEventListener('input', function() {
+  state.finalText = this.value;
+  updateStep4CharCount();
+});
+
+const PROVIDER_INFO = {
+  cartesia: {
+    blurb: 'Cartesia sonic-3 voices support fast neural rendering, speed + volume controls, and long-form transcripts.',
+    limit: 'Cartesia sonic-3 handles roughly 5,000 characters comfortably.',
+  },
+  elevenlabs: {
+    blurb: 'ElevenLabs voices excel at expressive instant speech with stability + similarity tuning and instant stock voices.',
+    limit: 'ElevenLabs recommends ~2,500 characters per request for instant speech.',
+  },
+};
+
+function setProvider(provider) {
+  if (!PROVIDER_INFO[provider]) provider = 'cartesia';
+  state.provider = provider;
+  localStorage.setItem('story_tts_provider', provider);
+
+  document.querySelectorAll('#provider-toggle .toggle-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.provider === provider);
+  });
+
+  document.getElementById('cartesia-controls').classList.toggle('hidden', provider !== 'cartesia');
+  document.getElementById('elevenlabs-controls').classList.toggle('hidden', provider !== 'elevenlabs');
+
+  const info = PROVIDER_INFO[provider];
+  if (info) {
+    document.getElementById('provider-blurb').textContent = info.blurb;
+    document.getElementById('provider-limit-text').textContent = info.limit;
+  }
+
+  updateStep4CharCount();
+}
+
+document.getElementById('provider-toggle').addEventListener('click', e => {
+  const btn = e.target.closest('.toggle-btn');
+  if (!btn) return;
+  setProvider(btn.dataset.provider);
+});
+
+setProvider(state.provider);
+
+// ═══════════════════════════════════════════════════
+// STEP 4 — Providers & TTS
+// ═══════════════════════════════════════════════════
+
+// Emotion toggle
+document.getElementById('tts-emotion-enabled').addEventListener('change', function() {
+  document.getElementById('tts-emotion').disabled = !this.checked;
+});
+
+// Sliders
+['speed', 'volume'].forEach(key => {
+  const slider = document.getElementById(`tts-${key}`);
+  const display = document.getElementById(`tts-${key}-val`);
+  slider.addEventListener('input', () => { display.textContent = parseFloat(slider.value).toFixed(2); });
+});
+
+['stability', 'similarity', 'style'].forEach(key => {
+  const slider = document.getElementById(`eleven-${key}`);
+  if (!slider) return;
+  const display = document.getElementById(`eleven-${key}-val`);
+  slider.addEventListener('input', () => { display.textContent = parseFloat(slider.value).toFixed(2); });
+});
+
+function updateStep4CharCount() {
+  const text = getFinalText() || '';
+  const el = document.getElementById('tts-char-count');
+  if (!el) return;
+  if (!text) {
+    el.textContent = '';
+    el.style.color = 'var(--text-dimmer)';
+    return;
+  }
+  const limit = state.provider === 'elevenlabs' ? 2500 : 5000;
+  const over = text.length > limit;
+  el.textContent = `${text.length.toLocaleString()} chars${over ? ' · over provider guidance' : ''}`;
+  el.style.color = over ? 'var(--yellow)' : 'var(--text-dimmer)';
+}
+
+function getFinalText() {
+  const on = document.getElementById('sanitize-toggle').checked;
+  if (on) return document.getElementById('sanitize-result').value;
+  return document.getElementById('story-text').value;
+}
+
+// Load voices
+document.getElementById('btn-load-voices').addEventListener('click', async function() {
+  const btn = this;
+  btn.disabled = true;
+  btn.textContent = 'Loading…';
+
+  try {
+    const resp = await fetch('/api/voices?language=en&limit=20');
+    const data = await resp.json();
+    const voices = Array.isArray(data) ? data : (data.voices || data.data || []);
+
+    const sel = document.getElementById('voice-dropdown');
+    sel.innerHTML = '<option value="">— select a voice —</option>';
+    voices.forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v.id;
+      opt.textContent = `${v.name} — ${v.id}`;
+      sel.appendChild(opt);
+    });
+    sel.disabled = false;
+    btn.textContent = `Loaded (${voices.length})`;
+  } catch (err) {
+    btn.textContent = 'Error — retry';
+    btn.disabled = false;
+    console.error(err);
+  }
+});
+
+document.getElementById('btn-load-eleven-voices').addEventListener('click', async function() {
+  const btn = this;
+  btn.disabled = true;
+  btn.textContent = 'Loading…';
+
+  try {
+    const resp = await fetch('/api/elevenlabs/voices');
+    const data = await resp.json();
+    const voices = Array.isArray(data?.voices) ? data.voices : (data?.data || []);
+
+    const sel = document.getElementById('eleven-voice-dropdown');
+    sel.innerHTML = '<option value="">— select a voice —</option>';
+    voices.forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v.voice_id || v.id;
+      opt.textContent = `${v.name} — ${opt.value}`;
+      sel.appendChild(opt);
+    });
+    sel.disabled = false;
+    btn.textContent = `Loaded (${voices.length})`;
+  } catch (err) {
+    btn.textContent = 'Error — retry';
+    btn.disabled = false;
+    console.error(err);
+  }
+});
+
+function clearPinGroup(containerId) {
+  const group = document.getElementById(containerId);
+  if (!group) return;
+  group.querySelectorAll('.voice-pin-btn').forEach(btn => btn.classList.remove('selected'));
+}
+
+function setupVoicePinGroup(containerId, dropdownId, customInputId) {
+  const group = document.getElementById(containerId);
+  if (!group) return;
+  group.querySelectorAll('.voice-pin-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      clearPinGroup(containerId);
+      this.classList.add('selected');
+      const input = document.getElementById(customInputId);
+      if (input) input.value = '';
+      const dropdown = document.getElementById(dropdownId);
+      if (dropdown) dropdown.value = '';
+    });
+  });
+}
+
+setupVoicePinGroup('cartesia-pins', 'voice-dropdown', 'voice-custom');
+setupVoicePinGroup('elevenlabs-pins', 'eleven-voice-dropdown', 'eleven-voice-custom');
+
+// Clicking dropdown clears pinned + custom
+document.getElementById('voice-dropdown').addEventListener('change', function() {
+  if (this.value) {
+    clearPinGroup('cartesia-pins');
+    document.getElementById('voice-custom').value = '';
+  }
+});
+
+document.getElementById('eleven-voice-dropdown').addEventListener('change', function() {
+  if (this.value) {
+    clearPinGroup('elevenlabs-pins');
+    document.getElementById('eleven-voice-custom').value = '';
+  }
+});
+
+// Typing custom clears pinned + dropdown
+document.getElementById('voice-custom').addEventListener('input', function() {
+  if (this.value.trim()) {
+    clearPinGroup('cartesia-pins');
+    document.getElementById('voice-dropdown').value = '';
+  }
+});
+
+document.getElementById('eleven-voice-custom').addEventListener('input', function() {
+  if (this.value.trim()) {
+    clearPinGroup('elevenlabs-pins');
+    document.getElementById('eleven-voice-dropdown').value = '';
+  }
+});
+
+function getSelectedVoiceId(provider = state.provider) {
+  if (provider === 'elevenlabs') {
+    const custom = document.getElementById('eleven-voice-custom').value.trim();
+    if (custom) return custom;
+    const pinned = document.querySelector('#elevenlabs-pins .voice-pin-btn.selected');
+    if (pinned) return pinned.dataset.id;
+    const dd = document.getElementById('eleven-voice-dropdown').value;
+    if (dd) return dd;
+    return null;
+  }
+
+  const custom = document.getElementById('voice-custom').value.trim();
+  if (custom) return custom;
+  const pinned = document.querySelector('#cartesia-pins .voice-pin-btn.selected');
+  if (pinned) return pinned.dataset.id;
+  const dd = document.getElementById('voice-dropdown').value;
+  if (dd) return dd;
+  return null;
+}
+
+// Generate audio
+document.getElementById('btn-generate-audio').addEventListener('click', generateAudio);
+
+async function generateAudio() {
+  const transcript = getFinalText();
+  if (!transcript) {
+    showError('tts-error', 'No story text to synthesize. Complete Step 2 first.');
+    return;
+  }
+
+  const provider = state.provider;
+  const providerLabel = provider === 'elevenlabs' ? 'ElevenLabs' : 'Cartesia';
+  const voiceId = getSelectedVoiceId(provider);
+  if (!voiceId) {
+    showError('tts-error', `Please select a ${providerLabel} voice (pinned, dropdown, or custom ID).`);
+    return;
+  }
+
+  hideError('tts-error');
+  const btn = document.getElementById('btn-generate-audio');
+  const btnLabel = '▶ Generate Audio <kbd style="font-size:0.7rem;opacity:0.7;background:rgba(255,255,255,0.15);padding:1px 5px;border-radius:3px">Ctrl+↵</kbd>';
+  setLoading(btn, true, btnLabel);
+
+  let body;
+  let endpoint;
+
+  if (provider === 'elevenlabs') {
+    body = {
+      voice_id: voiceId,
+      text: transcript,
+      model_id: document.getElementById('eleven-model').value.trim() || 'eleven_multilingual_v2',
+      optimize_streaming_latency: parseInt(document.getElementById('eleven-latency').value, 10) || 0,
+      voice_settings: {
+        stability: parseFloat(document.getElementById('eleven-stability').value),
+        similarity_boost: parseFloat(document.getElementById('eleven-similarity').value),
+        style: parseFloat(document.getElementById('eleven-style').value),
+        use_speaker_boost: document.getElementById('eleven-speaker-boost').checked,
+      },
+    };
+    endpoint = '/api/elevenlabs/generate-audio';
+  } else {
+    const genConfig = {
+      speed: parseFloat(document.getElementById('tts-speed').value),
+      volume: parseFloat(document.getElementById('tts-volume').value),
+    };
+    if (document.getElementById('tts-emotion-enabled').checked) {
+      genConfig.emotion = document.getElementById('tts-emotion').value;
+    }
+
+    body = {
+      transcript,
+      model_id: 'sonic-3',
+      voice: { mode: 'id', id: voiceId },
+      output_format: {
+        container: 'mp3',
+        bit_rate: 128000,
+        sample_rate: 44100,
+      },
+      language: 'en',
+      generation_config: genConfig,
+    };
+    endpoint = '/api/generate-audio';
+  }
+
+  document.getElementById('tts-req-pre').textContent = JSON.stringify({ provider, ...body }, null, 2);
+
+  const t0 = Date.now();
+  let resp;
+
+  try {
+    resp = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  } catch (err) {
+    setLoading(btn, false, btnLabel);
+    showError('tts-error', `${providerLabel} network error: ${err.message}`);
+    return;
+  }
+
+  const elapsed = Date.now() - t0;
+  setLoading(btn, false, btnLabel);
+
+  if (!resp.ok) {
+    let errText = `HTTP ${resp.status}`;
+    try { const j = await resp.json(); errText += ': ' + (j.error?.message || j.message || JSON.stringify(j)); } catch {}
+    showError('tts-error', `${providerLabel} error: ` + errText);
+    document.getElementById('tts-output').classList.remove('hidden');
+    return;
+  }
+
+  const blob = await resp.blob();
+  const url = URL.createObjectURL(blob);
+
+  const audio = document.getElementById('tts-audio');
+  audio.src = url;
+  audio.play().catch(() => {});
+
+  const dl = document.getElementById('tts-download');
+  dl.href = url;
+
+  const kb = (blob.size / 1024).toFixed(1);
+  document.getElementById('tts-file-info').textContent = `${kb} KB · MP3`;
+
+  document.getElementById('tts-meta').innerHTML =
+    `<span class="tag tag-ok">${resp.status} OK</span>` +
+    `<span class="tag tag-time">${fmtTime(elapsed)} · ${kb} KB</span>` +
+    `<span class="tag tag-provider">${providerLabel}</span>`;
+
+  document.getElementById('tts-output').classList.remove('hidden');
+  setStepState(4, 'done');
+}
+
+// ═══════════════════════════════════════════════════
+// KEYBOARD SHORTCUT — Ctrl+Enter
+// ═══════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && (e.key === 'Enter' || e.keyCode === 13)) {
+    e.preventDefault();
+
+    // Find active step and trigger its primary action
+    const active = document.querySelector('.step-card.active');
+    if (!active) return;
+
+    const id = active.id;
+    if (id === 'step2') document.getElementById('btn-generate-story').click();
+    else if (id === 'step4') document.getElementById('btn-generate-audio').click();
+  }
+});
+
+// ═══════════════════════════════════════════════════
+// INITIAL STATE — step 2–4 locked
+// ═══════════════════════════════════════════════════
+(function setupInitialState() {
+  setStepState(2, 'locked');
+  setStepState(3, 'locked');
+  setStepState(4, 'locked');
+  // step1 starts active (set in HTML via class, re-apply cleanly)
+  setStepState(1, 'active');
+})();
+</script>
+
+</body>
+</html>
