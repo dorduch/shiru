@@ -25,6 +25,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
         child: switch (state.step) {
           StoryBuilderStep.heroSelection => _buildHeroSelection(state),
           StoryBuilderStep.themeSelection => _buildThemeSelection(state),
+          StoryBuilderStep.languageSelection => _buildLanguageSelection(state),
           StoryBuilderStep.providerSelection => _buildProviderSelection(state),
           StoryBuilderStep.voiceSelection => _buildVoiceSelection(state),
           StoryBuilderStep.lengthSelection => _buildLengthSelection(state),
@@ -41,7 +42,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
   Widget _buildStepDots(int activeIndex) {
     return Row(
       mainAxisSize: MainAxisSize.min,
-      children: List.generate(5, (i) {
+      children: List.generate(6, (i) {
         final isActive = i == activeIndex;
         return AnimatedContainer(
           duration: const Duration(milliseconds: 250),
@@ -206,7 +207,69 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
     );
   }
 
-  // ─── Screen 3: Provider selection ────────────────────────────────────────
+  // ─── Screen 3: Language selection ────────────────────────────────────────
+
+  Widget _buildLanguageSelection(StoryBuilderState state) {
+    final notifier = ref.read(storyBuilderProvider.notifier);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildHeader(
+          title: '🌍 Choose Language',
+          dotIndex: 2,
+          onBack: () {
+            HapticFeedback.mediumImpact();
+            notifier.goBack();
+          },
+        ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              children: [
+                Expanded(
+                  child: StoryOptionCard(
+                    emoji: '🇺🇸',
+                    label: 'English',
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      notifier.selectLanguage(StoryLanguage.english);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: StoryOptionCard(
+                    emoji: '🇪🇸',
+                    label: 'Spanish',
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      notifier.selectLanguage(StoryLanguage.spanish);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: StoryOptionCard(
+                    emoji: '🇮🇱',
+                    label: 'Hebrew',
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      notifier.selectLanguage(StoryLanguage.hebrew);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  // ─── Screen 4: Provider selection ────────────────────────────────────────
 
   Widget _buildProviderSelection(StoryBuilderState state) {
     final notifier = ref.read(storyBuilderProvider.notifier);
@@ -216,7 +279,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
       children: [
         _buildHeader(
           title: '🔧 Choose Voice Engine',
-          dotIndex: 2,
+          dotIndex: 3,
           onBack: () {
             HapticFeedback.mediumImpact();
             notifier.goBack();
@@ -269,7 +332,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
       children: [
         _buildHeader(
           title: '🎤 Choose Voice',
-          dotIndex: 3,
+          dotIndex: 4,
           onBack: () {
             HapticFeedback.mediumImpact();
             notifier.goBack();
@@ -335,7 +398,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                ref.watch(stockVoicesProvider(state.selectedProvider!)).when(
+                ref.watch(stockVoicesProvider((provider: state.selectedProvider!, language: state.selectedLanguage!))).when(
                   loading: () => const Center(
                     child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 24),
@@ -385,7 +448,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
       children: [
         _buildHeader(
           title: '📖 Choose Length',
-          dotIndex: 4,
+          dotIndex: 5,
           onBack: () {
             HapticFeedback.mediumImpact();
             notifier.goBack();
