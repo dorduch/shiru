@@ -111,7 +111,7 @@ The text will be read aloud by a text-to-speech system. You must include the fol
             'voice': {'mode': 'id', 'id': voiceId},
             'output_format': {
               'container': 'mp3',
-              'bit_rate': 128,
+              'bit_rate': 128000,
               'sample_rate': 44100,
             },
             'language': 'en',

@@ -92,9 +92,17 @@ class DatabaseService {
       legacyCategories = await legacyDb.query('categories');
       await legacyDb.close();
     } catch (e) {
-      throw Exception(
-        'DatabaseService: cannot open DB as encrypted or unencrypted. '
-        'Underlying error: $e',
+      // DB exists but can't be opened as encrypted or unencrypted.
+      // This happens in development when the APK is reinstalled (wiping
+      // flutter_secure_storage) while the DB file survives. Recover by
+      // deleting the inaccessible file and starting fresh.
+      await dbFile.delete();
+      return await openDatabase(
+        path,
+        version: 4,
+        password: password,
+        onCreate: _createDB,
+        onUpgrade: _upgradeDB,
       );
     }
 

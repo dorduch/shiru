@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../models/audio_card.dart';
@@ -92,6 +93,7 @@ class StoryBuilderNotifier extends StateNotifier<StoryBuilderState> {
 
       ref.read(audioServiceProvider).playCard(card);
     } catch (e) {
+      debugPrint('Story generation error: $e');
       state = state.copyWith(
         step: StoryBuilderStep.error,
         errorMessage: 'An error occurred while creating the story. Please try again.',
