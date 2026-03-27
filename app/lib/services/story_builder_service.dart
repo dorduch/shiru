@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
@@ -15,6 +16,8 @@ class StoryBuilderService {
     required String hero,
     required String theme,
     required StoryLength length,
+    required TtsProvider provider,
+    required StoryLanguage language,
   }) async {
     if (_openAiApiKey.isEmpty) {
       throw Exception('OPENAI_API_KEY not configured. Pass it via --dart-define=OPENAI_API_KEY=...');
@@ -22,7 +25,26 @@ class StoryBuilderService {
     final heroLabel = storyHeroes.firstWhere((h) => h['id'] == hero)['label']!;
     final themeLabel = storyThemes.firstWhere((t) => t['id'] == theme)['label']!;
     final wordCount = length == StoryLength.short ? 150 : 400;
-    final maxTokens = length == StoryLength.short ? 500 : 1200;
+    final maxTokens = length == StoryLength.short ? 4000 : 8000;
+
+    final speakingInstructions = provider == TtsProvider.cartesia
+        ? '''# Speaking Instructions (required!)
+The text will be read aloud by a text-to-speech system. You must include the following instructions within the text:
+- <break time="300ms"/> — after every important sentence, to let the child absorb it
+- <break time="700ms"/> — before a surprising or suspenseful moment ("And suddenly..." <break time="700ms"/>)
+- <break time="1.2s"/> — between story sections (opening→adventure, adventure→climax)
+- When a character speaks in a whisper, write it in parentheses: (whispering) "Let's get out of here..."
+- When there is a shout or excitement, use an exclamation mark: "Hooray! We did it!"
+- When there is a sound or effect, write it as a single word followed by a pause: BOOM! <break time="500ms"/>'''
+        : '''# Speaking Instructions (required!)
+The text will be read aloud by a text-to-speech system that responds best to natural punctuation. Do NOT use any XML or SSML tags. Instead:
+- Use ellipses (...) for natural pauses after important sentences, to let the child absorb them
+- Use em-dashes (—) for dramatic pauses before surprising or suspenseful moments ("And suddenly—")
+- Insert a blank line between story sections (opening→adventure, adventure→climax) for longer pauses
+- When a character whispers, write it in parentheses: (whispering) "Let's get out of here..."
+- When there is a shout or excitement, use CAPS and exclamation marks: "HOORAY! We did it!"
+- For sounds and effects, use CAPS followed by an ellipsis: BOOM...
+- Use commas generously to control pacing and rhythm''';
 
     final systemPrompt = '''You are a warm and engaging storyteller for children ages 3–10. You tell stories like a loving grandparent telling a bedtime story — with a warm voice, expressive language, and lots of emotion.
 
@@ -30,7 +52,7 @@ class StoryBuilderService {
 - Main hero: $heroLabel
 - Theme: $themeLabel
 - Length: approximately $wordCount words
-- Write in simple, clear English. Short sentences. Words a 4-year-old can understand.
+- ${language.promptInstruction}
 
 # Structure
 - Opening: Introduce the hero and their world in an inviting way
@@ -44,14 +66,7 @@ class StoryBuilderService {
 - Give characters short, lively dialogues
 - Use rhetorical questions that draw the child in: "And what do you think he did?"
 
-# Speaking Instructions (required!)
-The text will be read aloud by a text-to-speech system. You must include the following instructions within the text:
-- <break time="300ms"/> — after every important sentence, to let the child absorb it
-- <break time="700ms"/> — before a surprising or suspenseful moment ("And suddenly..." <break time="700ms"/>)
-- <break time="1.2s"/> — between story sections (opening→adventure, adventure→climax)
-- When a character speaks in a whisper, write it in parentheses: (whispering) "Let's get out of here..."
-- When there is a shout or excitement, use an exclamation mark: "Hooray! We did it!"
-- When there is a sound or effect, write it as a single word followed by a pause: BOOM! <break time="500ms"/>
+$speakingInstructions
 
 # Rules
 - On the first line write a short, creative title for the story (no numbering, no "Title:", just the text).
@@ -68,23 +83,25 @@ The text will be read aloud by a text-to-speech system. You must include the fol
             'Content-Type': 'application/json',
           },
           body: jsonEncode({
-            'model': 'gpt-4o',
+            'model': 'gpt-5.4-mini',
             'messages': [
               {'role': 'system', 'content': systemPrompt},
               {'role': 'user', 'content': 'Write the story'},
             ],
             'temperature': 0.9,
-            'max_tokens': maxTokens,
+            'max_completion_tokens': maxTokens,
           }),
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(const Duration(seconds: 60));
 
     if (response.statusCode != 200) {
-      throw Exception('Error generating story: ${response.statusCode}');
+      throw Exception('Error generating story: ${response.statusCode} ${response.body}');
     }
 
     final data = jsonDecode(response.body) as Map<String, dynamic>;
-    final content = data['choices'][0]['message']['content'] as String;
+    debugPrint('DEBUG OpenAI raw content: ${data['choices'][0]['message']['content']}');
+    debugPrint('DEBUG OpenAI finish_reason: ${data['choices'][0]['finish_reason']}');
+    final content = (data['choices'][0]['message']['content'] as String?) ?? '';
     final separatorIndex = content.indexOf('---');
     if (separatorIndex != -1) {
       final title = content.substring(0, separatorIndex).trim();
@@ -98,6 +115,7 @@ The text will be read aloud by a text-to-speech system. You must include the fol
     String storyText, {
     required String voiceId,
     required TtsProvider provider,
+    required StoryLanguage language,
   }) async {
     final http.Response response;
     if (provider == TtsProvider.elevenlabs) {
@@ -140,14 +158,14 @@ The text will be read aloud by a text-to-speech system. You must include the fol
                 'bit_rate': 128000,
                 'sample_rate': 44100,
               },
-              'language': 'en',
+              'language': language.cartesiaCode,
             }),
           )
           .timeout(const Duration(seconds: 60));
     }
 
     if (response.statusCode != 200) {
-      throw Exception('Error generating audio: ${response.statusCode}');
+      throw Exception('Error generating audio: ${response.statusCode} ${response.body}');
     }
 
     final dir = await getApplicationDocumentsDirectory();
@@ -160,7 +178,7 @@ The text will be read aloud by a text-to-speech system. You must include the fol
   /// Returns stock voices for the given provider.
   /// For ElevenLabs returns the hardcoded list; for Cartesia fetches dynamically.
   /// Returns an empty list on any failure so callers degrade gracefully.
-  static Future<List<Map<String, String>>> loadStockVoices(TtsProvider provider) async {
+  static Future<List<Map<String, String>>> loadStockVoices(TtsProvider provider, {required StoryLanguage language}) async {
     if (provider == TtsProvider.elevenlabs) {
       return List<Map<String, String>>.from(elevenLabsStockVoices);
     }
@@ -168,7 +186,7 @@ The text will be read aloud by a text-to-speech system. You must include the fol
     if (_cartesiaApiKey.isEmpty) return [];
     try {
       final response = await http.get(
-        Uri.parse('https://api.cartesia.ai/voices?language=en&limit=6'),
+        Uri.parse('https://api.cartesia.ai/voices?language=${language.cartesiaCode}&limit=6'),
         headers: {
           'Authorization': 'Bearer $_cartesiaApiKey',
           'Cartesia-Version': _cartesiaVersion,

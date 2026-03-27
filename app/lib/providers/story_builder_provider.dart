@@ -22,6 +22,13 @@ class StoryBuilderNotifier extends StateNotifier<StoryBuilderState> {
   void selectTheme(String themeId) {
     state = state.copyWith(
       selectedTheme: themeId,
+      step: StoryBuilderStep.languageSelection,
+    );
+  }
+
+  void selectLanguage(StoryLanguage language) {
+    state = state.copyWith(
+      selectedLanguage: language,
       step: StoryBuilderStep.providerSelection,
     );
   }
@@ -49,8 +56,10 @@ class StoryBuilderNotifier extends StateNotifier<StoryBuilderState> {
     switch (state.step) {
       case StoryBuilderStep.themeSelection:
         state = state.copyWith(step: StoryBuilderStep.heroSelection);
-      case StoryBuilderStep.providerSelection:
+      case StoryBuilderStep.languageSelection:
         state = state.copyWith(step: StoryBuilderStep.themeSelection);
+      case StoryBuilderStep.providerSelection:
+        state = state.copyWith(step: StoryBuilderStep.languageSelection);
       case StoryBuilderStep.voiceSelection:
         state = state.copyWith(step: StoryBuilderStep.providerSelection);
       case StoryBuilderStep.lengthSelection:
@@ -75,13 +84,19 @@ class StoryBuilderNotifier extends StateNotifier<StoryBuilderState> {
         hero: state.selectedHero!,
         theme: state.selectedTheme!,
         length: state.selectedLength!,
+        provider: state.selectedProvider!,
+        language: state.selectedLanguage!,
       );
       state = state.copyWith(generatedStoryText: story.text, progress: 0.5);
+      debugPrint('DEBUG story.title=[${story.title}]');
+      debugPrint('DEBUG story.text length=${story.text.length}');
+      debugPrint('DEBUG story.text=[${story.text}]');
 
       final audioPath = await StoryBuilderService.generateAudio(
         story.text,
         voiceId: state.selectedVoiceId!,
         provider: state.selectedProvider!,
+        language: state.selectedLanguage!,
       );
       state = state.copyWith(generatedAudioPath: audioPath, progress: 0.9);
 
@@ -120,8 +135,8 @@ final storyBuilderProvider =
   (ref) => StoryBuilderNotifier(ref),
 );
 
-/// Fetches stock voices for the given TTS provider.
+/// Fetches stock voices for the given TTS provider and language.
 final stockVoicesProvider =
-    FutureProvider.family<List<Map<String, String>>, TtsProvider>((ref, provider) {
-  return StoryBuilderService.loadStockVoices(provider);
+    FutureProvider.family<List<Map<String, String>>, ({TtsProvider provider, StoryLanguage language})>((ref, params) {
+  return StoryBuilderService.loadStockVoices(params.provider, language: params.language);
 });

@@ -2,9 +2,12 @@ enum StoryLength { short, medium }
 
 enum TtsProvider { elevenlabs, cartesia }
 
+enum StoryLanguage { english, spanish, hebrew }
+
 enum StoryBuilderStep {
   heroSelection,
   themeSelection,
+  languageSelection,
   providerSelection,
   voiceSelection,
   lengthSelection,
@@ -53,10 +56,37 @@ const Map<String, String> heroColors = {
   'fairy': '#F0FDF4',
 };
 
+const List<Map<String, String>> storyLanguages = [
+  {'id': 'english', 'label': 'English', 'emoji': '🇺🇸'},
+  {'id': 'spanish', 'label': 'Spanish', 'emoji': '🇪🇸'},
+  {'id': 'hebrew', 'label': 'Hebrew', 'emoji': '🇮🇱'},
+];
+
+extension StoryLanguageExt on StoryLanguage {
+  String get cartesiaCode => switch (this) {
+    StoryLanguage.english => 'en',
+    StoryLanguage.spanish => 'es',
+    StoryLanguage.hebrew => 'he',
+  };
+
+  String get displayName => switch (this) {
+    StoryLanguage.english => 'English',
+    StoryLanguage.spanish => 'Spanish',
+    StoryLanguage.hebrew => 'Hebrew',
+  };
+
+  String get promptInstruction => switch (this) {
+    StoryLanguage.english => 'Write in simple, clear English. Short sentences. Words a 4-year-old can understand.',
+    StoryLanguage.spanish => 'Write in simple, clear Spanish. Short sentences. Words a 4-year-old can understand.',
+    StoryLanguage.hebrew => 'Write in simple, clear Hebrew. Short sentences. Words a 4-year-old can understand.',
+  };
+}
+
 class StoryBuilderState {
   final StoryBuilderStep step;
   final String? selectedHero;
   final String? selectedTheme;
+  final StoryLanguage? selectedLanguage;
   final TtsProvider? selectedProvider;
   final String? selectedVoiceId;
   final StoryLength? selectedLength;
@@ -69,6 +99,7 @@ class StoryBuilderState {
     this.step = StoryBuilderStep.heroSelection,
     this.selectedHero,
     this.selectedTheme,
+    this.selectedLanguage,
     this.selectedProvider,
     this.selectedVoiceId,
     this.selectedLength,
@@ -82,6 +113,7 @@ class StoryBuilderState {
     StoryBuilderStep? step,
     String? selectedHero,
     String? selectedTheme,
+    StoryLanguage? selectedLanguage,
     TtsProvider? selectedProvider,
     String? selectedVoiceId,
     StoryLength? selectedLength,
@@ -94,6 +126,7 @@ class StoryBuilderState {
       step: step ?? this.step,
       selectedHero: selectedHero ?? this.selectedHero,
       selectedTheme: selectedTheme ?? this.selectedTheme,
+      selectedLanguage: selectedLanguage ?? this.selectedLanguage,
       selectedProvider: selectedProvider ?? this.selectedProvider,
       selectedVoiceId: selectedVoiceId ?? this.selectedVoiceId,
       selectedLength: selectedLength ?? this.selectedLength,
