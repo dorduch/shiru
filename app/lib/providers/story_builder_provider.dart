@@ -22,6 +22,13 @@ class StoryBuilderNotifier extends StateNotifier<StoryBuilderState> {
   void selectTheme(String themeId) {
     state = state.copyWith(
       selectedTheme: themeId,
+      step: StoryBuilderStep.providerSelection,
+    );
+  }
+
+  void selectProvider(TtsProvider provider) {
+    state = state.copyWith(
+      selectedProvider: provider,
       step: StoryBuilderStep.voiceSelection,
     );
   }
@@ -42,8 +49,10 @@ class StoryBuilderNotifier extends StateNotifier<StoryBuilderState> {
     switch (state.step) {
       case StoryBuilderStep.themeSelection:
         state = state.copyWith(step: StoryBuilderStep.heroSelection);
-      case StoryBuilderStep.voiceSelection:
+      case StoryBuilderStep.providerSelection:
         state = state.copyWith(step: StoryBuilderStep.themeSelection);
+      case StoryBuilderStep.voiceSelection:
+        state = state.copyWith(step: StoryBuilderStep.providerSelection);
       case StoryBuilderStep.lengthSelection:
         state = state.copyWith(step: StoryBuilderStep.voiceSelection);
       default:
@@ -69,7 +78,11 @@ class StoryBuilderNotifier extends StateNotifier<StoryBuilderState> {
       );
       state = state.copyWith(generatedStoryText: story.text, progress: 0.5);
 
-      final audioPath = await StoryBuilderService.generateAudio(story.text, voiceId: state.selectedVoiceId!);
+      final audioPath = await StoryBuilderService.generateAudio(
+        story.text,
+        voiceId: state.selectedVoiceId!,
+        provider: state.selectedProvider!,
+      );
       state = state.copyWith(generatedAudioPath: audioPath, progress: 0.9);
 
       final heroLabel = storyHeroes
@@ -107,8 +120,8 @@ final storyBuilderProvider =
   (ref) => StoryBuilderNotifier(ref),
 );
 
-/// Fetches Cartesia stock voices once and caches for the app session.
-final stockVoicesProvider = FutureProvider<List<Map<String, String>>>((ref) {
-  ref.keepAlive();
-  return StoryBuilderService.loadStockVoices();
+/// Fetches stock voices for the given TTS provider.
+final stockVoicesProvider =
+    FutureProvider.family<List<Map<String, String>>, TtsProvider>((ref, provider) {
+  return StoryBuilderService.loadStockVoices(provider);
 });

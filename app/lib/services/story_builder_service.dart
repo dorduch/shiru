@@ -9,6 +9,7 @@ class StoryBuilderService {
   static const _openAiApiKey = String.fromEnvironment('OPENAI_API_KEY');
   static const _cartesiaApiKey = String.fromEnvironment('CARTESIA_API_KEY');
   static const _cartesiaVersion = '2025-04-16';
+  static const _elevenLabsApiKey = String.fromEnvironment('ELEVENLABS_API_KEY');
 
   static Future<({String title, String text})> generateStory({
     required String hero,
@@ -93,31 +94,57 @@ The text will be read aloud by a text-to-speech system. You must include the fol
     return (title: '', text: content);
   }
 
-  static Future<String> generateAudio(String storyText, {required String voiceId}) async {
-    if (_cartesiaApiKey.isEmpty) {
-      throw Exception('CARTESIA_API_KEY not configured. Pass it via --dart-define=CARTESIA_API_KEY=...');
-    }
-    final response = await http
-        .post(
-          Uri.parse('https://api.cartesia.ai/tts/bytes'),
-          headers: {
-            'Authorization': 'Bearer $_cartesiaApiKey',
-            'Cartesia-Version': _cartesiaVersion,
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode({
-            'transcript': storyText,
-            'model_id': 'sonic-3',
-            'voice': {'mode': 'id', 'id': voiceId},
-            'output_format': {
-              'container': 'mp3',
-              'bit_rate': 128000,
-              'sample_rate': 44100,
+  static Future<String> generateAudio(
+    String storyText, {
+    required String voiceId,
+    required TtsProvider provider,
+  }) async {
+    final http.Response response;
+    if (provider == TtsProvider.elevenlabs) {
+      if (_elevenLabsApiKey.isEmpty) {
+        throw Exception('ELEVENLABS_API_KEY not configured. Pass it via --dart-define=ELEVENLABS_API_KEY=...');
+      }
+      response = await http
+          .post(
+            Uri.parse('https://api.elevenlabs.io/v1/text-to-speech/$voiceId'),
+            headers: {
+              'xi-api-key': _elevenLabsApiKey,
+              'Content-Type': 'application/json',
+              'Accept': 'audio/mpeg',
             },
-            'language': 'en',
-          }),
-        )
-        .timeout(const Duration(seconds: 60));
+            body: jsonEncode({
+              'text': storyText,
+              'model_id': 'eleven_v3',
+              'voice_settings': {'stability': 0.5, 'similarity_boost': 0.75},
+            }),
+          )
+          .timeout(const Duration(seconds: 60));
+    } else {
+      if (_cartesiaApiKey.isEmpty) {
+        throw Exception('CARTESIA_API_KEY not configured. Pass it via --dart-define=CARTESIA_API_KEY=...');
+      }
+      response = await http
+          .post(
+            Uri.parse('https://api.cartesia.ai/tts/bytes'),
+            headers: {
+              'Authorization': 'Bearer $_cartesiaApiKey',
+              'Cartesia-Version': _cartesiaVersion,
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({
+              'transcript': storyText,
+              'model_id': 'sonic-3',
+              'voice': {'mode': 'id', 'id': voiceId},
+              'output_format': {
+                'container': 'mp3',
+                'bit_rate': 128000,
+                'sample_rate': 44100,
+              },
+              'language': 'en',
+            }),
+          )
+          .timeout(const Duration(seconds: 60));
+    }
 
     if (response.statusCode != 200) {
       throw Exception('Error generating audio: ${response.statusCode}');
@@ -130,9 +157,14 @@ The text will be read aloud by a text-to-speech system. You must include the fol
     return file.path;
   }
 
-  /// Fetches up to 6 English voices from Cartesia's public voice library.
+  /// Returns stock voices for the given provider.
+  /// For ElevenLabs returns the hardcoded list; for Cartesia fetches dynamically.
   /// Returns an empty list on any failure so callers degrade gracefully.
-  static Future<List<Map<String, String>>> loadStockVoices() async {
+  static Future<List<Map<String, String>>> loadStockVoices(TtsProvider provider) async {
+    if (provider == TtsProvider.elevenlabs) {
+      return List<Map<String, String>>.from(elevenLabsStockVoices);
+    }
+
     if (_cartesiaApiKey.isEmpty) return [];
     try {
       final response = await http.get(

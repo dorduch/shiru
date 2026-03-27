@@ -1,14 +1,26 @@
 enum StoryLength { short, medium }
 
+enum TtsProvider { elevenlabs, cartesia }
+
 enum StoryBuilderStep {
   heroSelection,
   themeSelection,
+  providerSelection,
   voiceSelection,
   lengthSelection,
   generating,
   done,
   error,
 }
+
+const List<Map<String, String>> elevenLabsStockVoices = [
+  {'id': 'EXAVITQu4vr4xnSDxMaL', 'name': 'Sarah', 'emoji': '👩'},
+  {'id': '21m00Tcm4TlvDq8ikWAM', 'name': 'Rachel', 'emoji': '👩‍🦰'},
+  {'id': 'ErXwobaYiN019PkySvjV', 'name': 'Antoni', 'emoji': '👨'},
+  {'id': 'TxGEqnHWrfWFTfGW9XjX', 'name': 'Josh', 'emoji': '👨‍🦱'},
+  {'id': 'onwK4e9ZLuTAKqWW03F9', 'name': 'Daniel', 'emoji': '👨'},
+  {'id': 'XB0fDUnXU5powFXDhCwa', 'name': 'Charlotte', 'emoji': '👩‍🦳'},
+];
 
 const List<Map<String, String>> storyHeroes = [
   {'id': 'astronaut', 'label': 'Astronaut', 'emoji': '🧑‍🚀'},
@@ -45,6 +57,7 @@ class StoryBuilderState {
   final StoryBuilderStep step;
   final String? selectedHero;
   final String? selectedTheme;
+  final TtsProvider? selectedProvider;
   final String? selectedVoiceId;
   final StoryLength? selectedLength;
   final String? generatedStoryText;
@@ -56,6 +69,7 @@ class StoryBuilderState {
     this.step = StoryBuilderStep.heroSelection,
     this.selectedHero,
     this.selectedTheme,
+    this.selectedProvider,
     this.selectedVoiceId,
     this.selectedLength,
     this.generatedStoryText,
@@ -68,6 +82,7 @@ class StoryBuilderState {
     StoryBuilderStep? step,
     String? selectedHero,
     String? selectedTheme,
+    TtsProvider? selectedProvider,
     String? selectedVoiceId,
     StoryLength? selectedLength,
     String? generatedStoryText,
@@ -79,6 +94,7 @@ class StoryBuilderState {
       step: step ?? this.step,
       selectedHero: selectedHero ?? this.selectedHero,
       selectedTheme: selectedTheme ?? this.selectedTheme,
+      selectedProvider: selectedProvider ?? this.selectedProvider,
       selectedVoiceId: selectedVoiceId ?? this.selectedVoiceId,
       selectedLength: selectedLength ?? this.selectedLength,
       generatedStoryText: generatedStoryText ?? this.generatedStoryText,
