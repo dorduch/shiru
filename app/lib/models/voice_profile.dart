@@ -4,6 +4,7 @@ class VoiceProfile {
   final String voiceId;
   final String? samplePath;
   final int createdAt;
+  final String provider;
 
   VoiceProfile({
     required this.id,
@@ -11,6 +12,7 @@ class VoiceProfile {
     required this.voiceId,
     this.samplePath,
     required this.createdAt,
+    required this.provider,
   });
 
   factory VoiceProfile.fromMap(Map<String, dynamic> map) {
@@ -20,6 +22,7 @@ class VoiceProfile {
       voiceId: map['voice_id'],
       samplePath: map['sample_path'],
       createdAt: map['created_at'],
+      provider: map['provider'] ?? 'cartesia',
     );
   }
 
@@ -30,6 +33,7 @@ class VoiceProfile {
       'voice_id': voiceId,
       'sample_path': samplePath,
       'created_at': createdAt,
+      'provider': provider,
     };
   }
 
@@ -37,6 +41,7 @@ class VoiceProfile {
     String? name,
     String? voiceId,
     String? samplePath,
+    String? provider,
   }) {
     return VoiceProfile(
       id: id,
@@ -44,6 +49,7 @@ class VoiceProfile {
       voiceId: voiceId ?? this.voiceId,
       samplePath: samplePath ?? this.samplePath,
       createdAt: createdAt,
+      provider: provider ?? this.provider,
     );
   }
 }

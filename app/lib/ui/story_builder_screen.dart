@@ -25,6 +25,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
         child: switch (state.step) {
           StoryBuilderStep.heroSelection => _buildHeroSelection(state),
           StoryBuilderStep.themeSelection => _buildThemeSelection(state),
+          StoryBuilderStep.providerSelection => _buildProviderSelection(state),
           StoryBuilderStep.voiceSelection => _buildVoiceSelection(state),
           StoryBuilderStep.lengthSelection => _buildLengthSelection(state),
           StoryBuilderStep.generating => _buildGenerating(state),
@@ -40,7 +41,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
   Widget _buildStepDots(int activeIndex) {
     return Row(
       mainAxisSize: MainAxisSize.min,
-      children: List.generate(4, (i) {
+      children: List.generate(5, (i) {
         final isActive = i == activeIndex;
         return AnimatedContainer(
           duration: const Duration(milliseconds: 250),
@@ -205,18 +206,70 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
     );
   }
 
-  // ─── Screen 3: Voice selection ────────────────────────────────────────────
+  // ─── Screen 3: Provider selection ────────────────────────────────────────
+
+  Widget _buildProviderSelection(StoryBuilderState state) {
+    final notifier = ref.read(storyBuilderProvider.notifier);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildHeader(
+          title: '🔧 Choose Voice Engine',
+          dotIndex: 2,
+          onBack: () {
+            HapticFeedback.mediumImpact();
+            notifier.goBack();
+          },
+        ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              children: [
+                Expanded(
+                  child: StoryOptionCard(
+                    emoji: '🔊',
+                    label: 'ElevenLabs',
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      notifier.selectProvider(TtsProvider.elevenlabs);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: StoryOptionCard(
+                    emoji: '🎵',
+                    label: 'Cartesia',
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      notifier.selectProvider(TtsProvider.cartesia);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  // ─── Screen 4: Voice selection ────────────────────────────────────────────
 
   Widget _buildVoiceSelection(StoryBuilderState state) {
     final notifier = ref.read(storyBuilderProvider.notifier);
     final profilesAsync = ref.watch(voiceProfilesProvider);
+    final providerKey = state.selectedProvider == TtsProvider.elevenlabs ? 'elevenlabs' : 'cartesia';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildHeader(
           title: '🎤 Choose Voice',
-          dotIndex: 2,
+          dotIndex: 3,
           onBack: () {
             HapticFeedback.mediumImpact();
             notifier.goBack();
@@ -230,7 +283,8 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
               children: [
                 profilesAsync.when(
                   data: (profiles) {
-                    if (profiles.isEmpty) return const SizedBox.shrink();
+                    final filtered = profiles.where((p) => p.provider == providerKey).toList();
+                    if (filtered.isEmpty) return const SizedBox.shrink();
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -247,10 +301,10 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
                           height: 120,
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
-                            itemCount: profiles.length,
+                            itemCount: filtered.length,
                             separatorBuilder: (_, __) => const SizedBox(width: 12),
                             itemBuilder: (context, index) {
-                              final profile = profiles[index];
+                              final profile = filtered[index];
                               return SizedBox(
                                 width: 100,
                                 child: StoryOptionCard(
@@ -281,7 +335,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                ref.watch(stockVoicesProvider).when(
+                ref.watch(stockVoicesProvider(state.selectedProvider!)).when(
                   loading: () => const Center(
                     child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 24),
@@ -321,7 +375,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
     );
   }
 
-  // ─── Screen 4: Length selection ───────────────────────────────────────────
+  // ─── Screen 5: Length selection ───────────────────────────────────────────
 
   Widget _buildLengthSelection(StoryBuilderState state) {
     final notifier = ref.read(storyBuilderProvider.notifier);
@@ -331,7 +385,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
       children: [
         _buildHeader(
           title: '📖 Choose Length',
-          dotIndex: 3,
+          dotIndex: 4,
           onBack: () {
             HapticFeedback.mediumImpact();
             notifier.goBack();

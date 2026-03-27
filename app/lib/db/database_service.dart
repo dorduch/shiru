@@ -56,7 +56,7 @@ class DatabaseService {
     if (!fileExists) {
       return await openDatabase(
         path,
-        version: 4,
+        version: 5,
         password: password,
         onCreate: _createDB,
         onUpgrade: _upgradeDB,
@@ -67,7 +67,7 @@ class DatabaseService {
     try {
       return await openDatabase(
         path,
-        version: 4,
+        version: 5,
         password: password,
         onCreate: _createDB,
         onUpgrade: _upgradeDB,
@@ -99,7 +99,7 @@ class DatabaseService {
       await dbFile.delete();
       return await openDatabase(
         path,
-        version: 4,
+        version: 5,
         password: password,
         onCreate: _createDB,
         onUpgrade: _upgradeDB,
@@ -110,7 +110,7 @@ class DatabaseService {
 
     final newDb = await openDatabase(
       path,
-      version: 4,
+      version: 5,
       password: password,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
@@ -163,7 +163,8 @@ CREATE TABLE voice_profiles (
   name TEXT NOT NULL,
   voice_id TEXT NOT NULL,
   sample_path TEXT,
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  provider TEXT NOT NULL DEFAULT 'cartesia'
 )
 ''');
   }
@@ -209,6 +210,9 @@ FROM voice_profiles
         await txn.execute('DROP TABLE voice_profiles');
         await txn.execute('ALTER TABLE voice_profiles_new RENAME TO voice_profiles');
       });
+    }
+    if (oldVersion < 5) {
+      await db.execute("ALTER TABLE voice_profiles ADD COLUMN provider TEXT NOT NULL DEFAULT 'cartesia'");
     }
   }
 

@@ -226,10 +226,32 @@ class _VoiceProfileRowState extends ConsumerState<_VoiceProfileRow> {
                 Text(widget.profile.name,
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 2),
-                Text('Created ${_formatDate(widget.profile.createdAt)}',
-                    style: const TextStyle(
-                        fontSize: 13, color: Color(0xFF9CA3AF))),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: widget.profile.provider == 'elevenlabs'
+                            ? const Color(0xFFEEF2FF)
+                            : const Color(0xFFEDE9FE),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        widget.profile.provider == 'elevenlabs' ? 'ElevenLabs' : 'Cartesia',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF4B5563),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text('Created ${_formatDate(widget.profile.createdAt)}',
+                        style: const TextStyle(
+                            fontSize: 12, color: Color(0xFF9CA3AF))),
+                  ],
+                ),
               ],
             ),
           ),

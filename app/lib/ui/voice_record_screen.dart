@@ -5,11 +5,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:just_audio/just_audio.dart';
+import '../models/story_builder_state.dart';
 import '../providers/voice_profiles_provider.dart';
 import '../providers/audio_player_provider.dart';
 import '../services/recording_service.dart';
+import 'widgets/story_option_card.dart';
 
-enum _Step { nameInput, recording, preview, processing, done, error }
+enum _Step { providerSelection, nameInput, recording, preview, processing, done, error }
 
 const _guidedScript =
     'Hello! My name is [your name] and I love telling stories. '
@@ -25,11 +27,12 @@ class VoiceRecordScreen extends ConsumerStatefulWidget {
 }
 
 class _VoiceRecordScreenState extends ConsumerState<VoiceRecordScreen> {
-  _Step _step = _Step.nameInput;
+  _Step _step = _Step.providerSelection;
   final _nameController = TextEditingController();
   final _recordingService = RecordingService();
 
   String? _recordedPath;
+  TtsProvider? _selectedProvider;
   Duration _elapsed = Duration.zero;
   double _amplitude = 0;
   String? _errorMessage;
@@ -142,6 +145,7 @@ class _VoiceRecordScreenState extends ConsumerState<VoiceRecordScreen> {
       await ref.read(voiceProfilesProvider.notifier).addProfile(
             _nameController.text.trim(),
             _recordedPath!,
+            _selectedProvider!,
           );
       setState(() => _step = _Step.done);
     } catch (e) {
@@ -166,6 +170,7 @@ class _VoiceRecordScreenState extends ConsumerState<VoiceRecordScreen> {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: switch (_step) {
+            _Step.providerSelection => _buildProviderSelection(),
             _Step.nameInput => _buildNameInput(),
             _Step.recording => _buildRecording(),
             _Step.preview => _buildPreview(),
@@ -193,7 +198,7 @@ class _VoiceRecordScreenState extends ConsumerState<VoiceRecordScreen> {
                 style: const TextStyle(
                     fontSize: 28, fontWeight: FontWeight.w800)),
             const Spacer(),
-            _StepDots(active: activeDot, total: 3),
+            _StepDots(active: activeDot, total: 4),
           ],
         ),
         const Divider(),
@@ -202,11 +207,54 @@ class _VoiceRecordScreenState extends ConsumerState<VoiceRecordScreen> {
     );
   }
 
+  Widget _buildProviderSelection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildHeader('Choose Engine', 1),
+        Expanded(
+          child: Row(
+            children: [
+              Expanded(
+                child: StoryOptionCard(
+                  emoji: '🔊',
+                  label: 'ElevenLabs',
+                  onTap: () {
+                    HapticFeedback.mediumImpact();
+                    setState(() {
+                      _selectedProvider = TtsProvider.elevenlabs;
+                      _step = _Step.nameInput;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: StoryOptionCard(
+                  emoji: '🎵',
+                  label: 'Cartesia',
+                  onTap: () {
+                    HapticFeedback.mediumImpact();
+                    setState(() {
+                      _selectedProvider = TtsProvider.cartesia;
+                      _step = _Step.nameInput;
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
   Widget _buildNameInput() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildHeader('Record Voice', 1),
+        _buildHeader('Record Voice', 2),
         const SizedBox(height: 24),
         const Text('Voice Name',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
@@ -300,7 +348,7 @@ class _VoiceRecordScreenState extends ConsumerState<VoiceRecordScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildHeader('Recording...', 2),
+        _buildHeader('Recording...', 3),
         const Spacer(),
         Center(
           child: Text(
@@ -348,7 +396,7 @@ class _VoiceRecordScreenState extends ConsumerState<VoiceRecordScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildHeader('Preview', 2),
+        _buildHeader('Preview', 3),
         const Spacer(),
         Center(
           child: GestureDetector(
@@ -539,10 +587,11 @@ class _VoiceRecordScreenState extends ConsumerState<VoiceRecordScreen> {
           onTap: () {
             HapticFeedback.lightImpact();
             setState(() {
-              _step = _Step.nameInput;
+              _step = _Step.providerSelection;
               _errorMessage = null;
               _recordedPath = null;
               _elapsed = Duration.zero;
+              _selectedProvider = null;
             });
           },
           child: Container(
@@ -617,7 +666,7 @@ class _WaveformBar extends StatelessWidget {
             width: 4,
             height: 80 * heightFactor,
             decoration: BoxDecoration(
-              color: const Color(0xFFEF4444).withOpacity(0.7 + 0.3 * amplitude),
+              color: Color.fromRGBO(239, 68, 68, 0.7 + 0.3 * amplitude),
               borderRadius: BorderRadius.circular(2),
             ),
           );
