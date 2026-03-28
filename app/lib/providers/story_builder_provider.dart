@@ -40,9 +40,18 @@ class StoryBuilderNotifier extends StateNotifier<StoryBuilderState> {
     );
   }
 
-  void selectVoice(String voiceId) {
+  void selectStockVoice(String voiceId) {
     state = state.copyWith(
       selectedVoiceId: voiceId,
+      selectedSamplePath: null,
+      step: StoryBuilderStep.lengthSelection,
+    );
+  }
+
+  void selectCustomVoice(String samplePath) {
+    state = state.copyWith(
+      selectedSamplePath: samplePath,
+      selectedVoiceId: null,
       step: StoryBuilderStep.lengthSelection,
     );
   }
@@ -94,7 +103,8 @@ class StoryBuilderNotifier extends StateNotifier<StoryBuilderState> {
 
       final audioPath = await StoryBuilderService.generateAudio(
         story.text,
-        voiceId: state.selectedVoiceId!,
+        voiceId: state.selectedVoiceId,
+        samplePath: state.selectedSamplePath,
         provider: state.selectedProvider!,
         language: state.selectedLanguage!,
       );

@@ -1,9 +1,9 @@
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import '../models/voice_profile.dart';
-import '../models/story_builder_state.dart';
 import '../db/database_service.dart';
-import '../services/voice_clone_service.dart';
 
 class VoiceProfilesNotifier extends StateNotifier<AsyncValue<List<VoiceProfile>>> {
   VoiceProfilesNotifier() : super(const AsyncValue.loading()) {
@@ -19,19 +19,16 @@ class VoiceProfilesNotifier extends StateNotifier<AsyncValue<List<VoiceProfile>>
     }
   }
 
-  Future<void> addProfile(String name, String audioFilePath, TtsProvider provider) async {
-    final voiceId = await VoiceCloneService.cloneVoice(
-      name: name,
-      audioFilePath: audioFilePath,
-      provider: provider,
-    );
+  Future<void> addProfile(String name, String audioFilePath) async {
+    final dir = await getApplicationDocumentsDirectory();
+    final ext = audioFilePath.split('.').last;
+    final destPath = '${dir.path}/voice_${const Uuid().v4()}.$ext';
+    await File(audioFilePath).copy(destPath);
     final profile = VoiceProfile(
       id: const Uuid().v4(),
       name: name,
-      voiceId: voiceId,
-      samplePath: audioFilePath,
+      samplePath: destPath,
       createdAt: DateTime.now().millisecondsSinceEpoch,
-      provider: provider == TtsProvider.elevenlabs ? 'elevenlabs' : 'cartesia',
     );
     await DatabaseService.instance.createVoiceProfile(profile);
     await loadProfiles();
@@ -40,10 +37,7 @@ class VoiceProfilesNotifier extends StateNotifier<AsyncValue<List<VoiceProfile>>
   Future<void> deleteProfile(String id) async {
     final profiles = state.value ?? [];
     final profile = profiles.firstWhere((p) => p.id == id);
-    final ttsProvider = profile.provider == 'elevenlabs'
-        ? TtsProvider.elevenlabs
-        : TtsProvider.cartesia;
-    await VoiceCloneService.deleteVoice(profile.voiceId, provider: ttsProvider);
+    try { await File(profile.samplePath).delete(); } catch (_) {}
     await DatabaseService.instance.deleteVoiceProfile(id);
     await loadProfiles();
   }

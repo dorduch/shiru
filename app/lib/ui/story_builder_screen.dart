@@ -325,7 +325,6 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
   Widget _buildVoiceSelection(StoryBuilderState state) {
     final notifier = ref.read(storyBuilderProvider.notifier);
     final profilesAsync = ref.watch(voiceProfilesProvider);
-    final providerKey = state.selectedProvider == TtsProvider.elevenlabs ? 'elevenlabs' : 'cartesia';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -346,8 +345,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
               children: [
                 profilesAsync.when(
                   data: (profiles) {
-                    final filtered = profiles.where((p) => p.provider == providerKey).toList();
-                    if (filtered.isEmpty) return const SizedBox.shrink();
+                    if (profiles.isEmpty) return const SizedBox.shrink();
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -364,10 +362,10 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
                           height: 120,
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
-                            itemCount: filtered.length,
+                            itemCount: profiles.length,
                             separatorBuilder: (_, __) => const SizedBox(width: 12),
                             itemBuilder: (context, index) {
-                              final profile = filtered[index];
+                              final profile = profiles[index];
                               return SizedBox(
                                 width: 100,
                                 child: StoryOptionCard(
@@ -375,7 +373,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
                                   label: profile.name,
                                   onTap: () {
                                     HapticFeedback.mediumImpact();
-                                    notifier.selectVoice(profile.voiceId);
+                                    notifier.selectCustomVoice(profile.samplePath);
                                   },
                                 ),
                               );
@@ -423,7 +421,7 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
                         label: voice['name']!,
                         onTap: () {
                           HapticFeedback.mediumImpact();
-                          notifier.selectVoice(voice['id']!);
+                          notifier.selectStockVoice(voice['id']!);
                         },
                       );
                     },
