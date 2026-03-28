@@ -12,19 +12,14 @@ import 'ui/story_builder_screen.dart';
 import 'ui/change_pin_screen.dart';
 import 'ui/voice_profiles_screen.dart';
 import 'ui/voice_record_screen.dart';
+import 'ui/bulk_import_screen.dart';
 
 GoRouter createRouter(WidgetRef ref) {
   return GoRouter(
     initialLocation: '/',
     routes: [
-      GoRoute(
-        path: '/',
-        builder: (context, state) => const KidHomeScreen(),
-      ),
-      GoRoute(
-        path: '/pin',
-        builder: (context, state) => const PinGateScreen(),
-      ),
+      GoRoute(path: '/', builder: (context, state) => const KidHomeScreen()),
+      GoRoute(path: '/pin', builder: (context, state) => const PinGateScreen()),
       GoRoute(
         path: '/story-builder',
         builder: (context, state) => const StoryBuilderScreen(),
@@ -43,11 +38,15 @@ GoRouter createRouter(WidgetRef ref) {
             builder: (context, state) {
               final cardId = state.extra as String?;
               return ParentEditScreen(cardId: cardId);
-            }
+            },
           ),
           GoRoute(
             path: 'change-pin',
             builder: (context, state) => const ChangePinScreen(),
+          ),
+          GoRoute(
+            path: 'bulk-import',
+            builder: (context, state) => const BulkImportScreen(),
           ),
           GoRoute(
             path: 'categories',
@@ -72,7 +71,7 @@ GoRouter createRouter(WidgetRef ref) {
               ),
             ],
           ),
-        ]
+        ],
       ),
     ],
   );
