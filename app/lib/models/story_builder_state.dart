@@ -83,12 +83,15 @@ extension StoryLanguageExt on StoryLanguage {
 }
 
 class StoryBuilderState {
+  static const _sentinel = Object();
+
   final StoryBuilderStep step;
   final String? selectedHero;
   final String? selectedTheme;
   final StoryLanguage? selectedLanguage;
   final TtsProvider? selectedProvider;
   final String? selectedVoiceId;
+  final String? selectedSamplePath;
   final StoryLength? selectedLength;
   final String? generatedStoryText;
   final String? generatedAudioPath;
@@ -102,6 +105,7 @@ class StoryBuilderState {
     this.selectedLanguage,
     this.selectedProvider,
     this.selectedVoiceId,
+    this.selectedSamplePath,
     this.selectedLength,
     this.generatedStoryText,
     this.generatedAudioPath,
@@ -115,7 +119,8 @@ class StoryBuilderState {
     String? selectedTheme,
     StoryLanguage? selectedLanguage,
     TtsProvider? selectedProvider,
-    String? selectedVoiceId,
+    Object? selectedVoiceId = _sentinel,
+    Object? selectedSamplePath = _sentinel,
     StoryLength? selectedLength,
     String? generatedStoryText,
     String? generatedAudioPath,
@@ -128,7 +133,12 @@ class StoryBuilderState {
       selectedTheme: selectedTheme ?? this.selectedTheme,
       selectedLanguage: selectedLanguage ?? this.selectedLanguage,
       selectedProvider: selectedProvider ?? this.selectedProvider,
-      selectedVoiceId: selectedVoiceId ?? this.selectedVoiceId,
+      selectedVoiceId: selectedVoiceId == _sentinel
+          ? this.selectedVoiceId
+          : selectedVoiceId as String?,
+      selectedSamplePath: selectedSamplePath == _sentinel
+          ? this.selectedSamplePath
+          : selectedSamplePath as String?,
       selectedLength: selectedLength ?? this.selectedLength,
       generatedStoryText: generatedStoryText ?? this.generatedStoryText,
       generatedAudioPath: generatedAudioPath ?? this.generatedAudioPath,

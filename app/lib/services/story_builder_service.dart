@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import '../models/story_builder_state.dart';
+import 'voice_clone_service.dart';
 
 class StoryBuilderService {
   static const _openAiApiKey = String.fromEnvironment('OPENAI_API_KEY');
@@ -113,6 +114,22 @@ $speakingInstructions
 
   static Future<String> generateAudio(
     String storyText, {
+    String? voiceId,
+    String? samplePath,
+    required TtsProvider provider,
+    required StoryLanguage language,
+  }) async {
+    assert(voiceId != null || samplePath != null, 'Either voiceId or samplePath must be provided');
+
+    if (samplePath != null) {
+      return _generateAudioWithSample(storyText, samplePath: samplePath, provider: provider, language: language);
+    }
+    return _generateAudioWithVoiceId(storyText, voiceId: voiceId!, provider: provider, language: language);
+  }
+
+  /// Generate audio using a stock voice ID (direct API call).
+  static Future<String> _generateAudioWithVoiceId(
+    String storyText, {
     required String voiceId,
     required TtsProvider provider,
     required StoryLanguage language,
@@ -168,10 +185,118 @@ $speakingInstructions
       throw Exception('Error generating audio: ${response.statusCode} ${response.body}');
     }
 
+    return _saveResponseToFile(response.bodyBytes);
+  }
+
+  /// Generate audio using a local voice sample (ephemeral cloning).
+  /// - Cartesia: inline clip mode (no cloud voice created)
+  /// - ElevenLabs: clone → TTS → delete
+  static Future<String> _generateAudioWithSample(
+    String storyText, {
+    required String samplePath,
+    required TtsProvider provider,
+    required StoryLanguage language,
+  }) async {
+    if (provider == TtsProvider.elevenlabs) {
+      return _generateAudioElevenLabsEphemeral(storyText, samplePath: samplePath);
+    } else {
+      return _generateAudioCartesiaClip(storyText, samplePath: samplePath, language: language);
+    }
+  }
+
+  /// ElevenLabs ephemeral: clone voice → TTS → delete voice.
+  static Future<String> _generateAudioElevenLabsEphemeral(
+    String storyText, {
+    required String samplePath,
+  }) async {
+    if (_elevenLabsApiKey.isEmpty) {
+      throw Exception('ELEVENLABS_API_KEY not configured. Pass it via --dart-define=ELEVENLABS_API_KEY=...');
+    }
+
+    final tempVoiceId = await VoiceCloneService.cloneVoice(
+      name: 'ephemeral-${const Uuid().v4()}',
+      audioFilePath: samplePath,
+      provider: TtsProvider.elevenlabs,
+    );
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse('https://api.elevenlabs.io/v1/text-to-speech/$tempVoiceId'),
+            headers: {
+              'xi-api-key': _elevenLabsApiKey,
+              'Content-Type': 'application/json',
+              'Accept': 'audio/mpeg',
+            },
+            body: jsonEncode({
+              'text': storyText,
+              'model_id': 'eleven_v3',
+              'voice_settings': {'stability': 0.5, 'similarity_boost': 0.75},
+            }),
+          )
+          .timeout(const Duration(seconds: 60));
+
+      if (response.statusCode != 200) {
+        throw Exception('Error generating audio: ${response.statusCode} ${response.body}');
+      }
+
+      return _saveResponseToFile(response.bodyBytes);
+    } finally {
+      try {
+        await VoiceCloneService.deleteVoice(tempVoiceId, provider: TtsProvider.elevenlabs);
+      } catch (e) {
+        debugPrint('Warning: failed to delete ephemeral voice $tempVoiceId: $e');
+      }
+    }
+  }
+
+  /// Cartesia inline clip mode: send audio sample directly in TTS request.
+  static Future<String> _generateAudioCartesiaClip(
+    String storyText, {
+    required String samplePath,
+    required StoryLanguage language,
+  }) async {
+    if (_cartesiaApiKey.isEmpty) {
+      throw Exception('CARTESIA_API_KEY not configured. Pass it via --dart-define=CARTESIA_API_KEY=...');
+    }
+
+    final clipBytes = await File(samplePath).readAsBytes();
+    final clipBase64 = base64Encode(clipBytes);
+
+    final response = await http
+        .post(
+          Uri.parse('https://api.cartesia.ai/tts/bytes'),
+          headers: {
+            'Authorization': 'Bearer $_cartesiaApiKey',
+            'Cartesia-Version': _cartesiaVersion,
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'transcript': storyText,
+            'model_id': 'sonic-3',
+            'voice': {'mode': 'clip', 'clip': clipBase64},
+            'output_format': {
+              'container': 'mp3',
+              'bit_rate': 128000,
+              'sample_rate': 44100,
+            },
+            'language': language.cartesiaCode,
+          }),
+        )
+        .timeout(const Duration(seconds: 120));
+
+    if (response.statusCode != 200) {
+      throw Exception('Error generating audio: ${response.statusCode} ${response.body}');
+    }
+
+    return _saveResponseToFile(response.bodyBytes);
+  }
+
+  static Future<String> _saveResponseToFile(List<int> bytes) async {
     final dir = await getApplicationDocumentsDirectory();
     final fileName = '${const Uuid().v4()}.mp3';
     final file = File('${dir.path}/$fileName');
-    await file.writeAsBytes(response.bodyBytes);
+    await file.writeAsBytes(bytes);
     return file.path;
   }
 

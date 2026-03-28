@@ -169,9 +169,6 @@ class _VoiceProfileRowState extends ConsumerState<_VoiceProfileRow> {
   }
 
   Future<void> _toggleSample() async {
-    final samplePath = widget.profile.samplePath;
-    if (samplePath == null) return;
-
     HapticFeedback.lightImpact();
     final player = ref.read(audioPlayerProvider);
 
@@ -181,7 +178,7 @@ class _VoiceProfileRowState extends ConsumerState<_VoiceProfileRow> {
     } else {
       setState(() => _isPlaying = true);
       try {
-        await player.setFilePath(samplePath);
+        await player.setFilePath(widget.profile.samplePath);
         await player.play();
         player.playerStateStream.firstWhere(
           (s) => s.processingState == ProcessingState.completed,
@@ -227,36 +224,12 @@ class _VoiceProfileRowState extends ConsumerState<_VoiceProfileRow> {
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: widget.profile.provider == 'elevenlabs'
-                            ? const Color(0xFFEEF2FF)
-                            : const Color(0xFFEDE9FE),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        widget.profile.provider == 'elevenlabs' ? 'ElevenLabs' : 'Cartesia',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF4B5563),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text('Created ${_formatDate(widget.profile.createdAt)}',
-                        style: const TextStyle(
-                            fontSize: 12, color: Color(0xFF9CA3AF))),
-                  ],
-                ),
+                Text('Created ${_formatDate(widget.profile.createdAt)}',
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
               ],
             ),
           ),
-          if (widget.profile.samplePath != null)
-            IconButton(
+          IconButton(
               icon: Icon(
                 _isPlaying ? Icons.stop_circle : Icons.play_circle,
                 color: const Color(0xFF22C55E),
