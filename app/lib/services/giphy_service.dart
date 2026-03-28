@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 class GiphyService {
@@ -14,7 +15,7 @@ class GiphyService {
       // We search for "pixel art" + the card title, and filter for stickers (transparent background)
       final encodedQuery = Uri.encodeComponent('pixel art $query');
       final url = Uri.parse('https://api.giphy.com/v1/stickers/search?api_key=$_apiKey&q=$encodedQuery&limit=1&rating=g');
-      final response = await http.get(url).timeout(const Duration(seconds: 10));
+      final response = await http.get(url).timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -24,6 +25,8 @@ class GiphyService {
           return gifUrl;
         }
       }
+    } on TimeoutException {
+      print('Giphy API timeout: request exceeded 5 seconds');
     } catch (e) {
       print('Giphy API error: $e');
     }

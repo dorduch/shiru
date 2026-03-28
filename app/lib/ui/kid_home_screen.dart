@@ -10,6 +10,7 @@ import '../providers/categories_provider.dart';
 import '../models/category.dart' as cat_model;
 import 'package:flutter/services.dart';
 import '../services/audio_service.dart';
+import '../theme/app_responsive.dart';
 import 'pixel_sprite.dart';
 import 'giphy_sprite.dart';
 
@@ -72,23 +73,27 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                       ),
                     ],
                   ),
-                  InkWell(
-                    onTap: () => context.push('/pin'),
-                    child: Container(
-                      width: 48,
-                      height: 48,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 12,
-                            offset: Offset(0, 4),
-                          )
-                        ],
+                  Semantics(
+                    label: 'Parent settings',
+                    button: true,
+                    child: InkWell(
+                      onTap: () => context.push('/pin'),
+                      child: Container(
+                        width: 56,
+                        height: 56,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 12,
+                              offset: Offset(0, 4),
+                            )
+                          ],
+                        ),
+                        child: const Icon(Icons.lock, color: Colors.grey),
                       ),
-                      child: const Icon(Icons.lock, color: Colors.grey),
                     ),
                   )
                 ],
@@ -148,7 +153,7 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
 
               const SizedBox(height: 24),
               if (currentlyPlayingId != null)
-                 _buildPlayerPill(ref, currentlyPlayingId, isPlaying)
+                 _buildPlayerPill(context, ref, currentlyPlayingId, isPlaying)
             ]
           )
         )
@@ -181,9 +186,13 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
   }
 
   Widget _buildTab({required String label, required bool isActive, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
+    return Semantics(
+      label: 'Category: $label',
+      button: true,
+      selected: isActive,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
         height: 44,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
@@ -202,87 +211,125 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
-  Widget _buildPlayerPill(WidgetRef ref, String playingId, bool isPlayingGlobal) {
+  Widget _buildPlayerPill(BuildContext context, WidgetRef ref, String playingId, bool isPlayingGlobal) {
     final cardsAsync = ref.read(cardsProvider);
     final card = cardsAsync.value?.firstWhere((c) => c.id == playingId);
     if (card == null) return const SizedBox.shrink();
 
     final spriteDef = autoAssignSprite(card.title);
+    final player = ref.read(audioPlayerProvider);
 
     return Container(
-      height: 88,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(44),
         boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 24, offset: Offset(0, 12))]
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-              child: Row(
-                children: [
-                  Container(
-                    width: 64, height: 64,
-                    decoration: BoxDecoration(color: hexOrFallback(card.color), shape: BoxShape.circle),
-                    alignment: Alignment.center,
-                    child: FittedBox(
-                        child: GiphySprite(title: card.spriteKey != null && card.spriteKey!.isNotEmpty ? card.spriteKey! : card.title, fallbackSprite: spriteDef, state: isPlayingGlobal ? SpriteState.active : SpriteState.idle, scale: 3.5)
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(44),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: SizedBox(
+                height: 64,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 64, height: 64,
+                              decoration: BoxDecoration(color: hexOrFallback(card.color), shape: BoxShape.circle),
+                              alignment: Alignment.center,
+                              child: FittedBox(
+                                  child: GiphySprite(title: card.spriteKey != null && card.spriteKey!.isNotEmpty ? card.spriteKey! : card.title, fallbackSprite: spriteDef, state: isPlayingGlobal ? SpriteState.active : SpriteState.idle, scale: 3.5)
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      card.title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF1A1A1A)),
+                                      textDirection: intl.Bidi.detectRtlDirectionality(card.title) ? TextDirection.rtl : TextDirection.ltr,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(isPlayingGlobal ? "Now Playing" : "Paused", maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isPlayingGlobal ? const Color(0xFF22C55E) : const Color(0xFF6B7280))),
+                                  ],
+                                )
+                            )
+                          ],
+                        ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            card.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF1A1A1A)),
-                            textDirection: intl.Bidi.detectRtlDirectionality(card.title) ? TextDirection.rtl : TextDirection.ltr,
+                    const SizedBox(width: 8),
+                    Row(
+                      children: [
+                        Semantics(
+                          label: 'Stop playback',
+                          button: true,
+                          child: GestureDetector(
+                            onTap: () => ref.read(audioServiceProvider).stop(),
+                            child: Container(
+                              width: 56, height: 56,
+                              decoration: const BoxDecoration(color: Color(0xFFF6F7F8), shape: BoxShape.circle),
+                              child: const Icon(Icons.stop_rounded, size: 28, color: Color(0xFF1A1A1A)),
+                            ),
                           ),
-                          const SizedBox(height: 2),
-                          Text(isPlayingGlobal ? "Now Playing" : "Paused", maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isPlayingGlobal ? const Color(0xFF22C55E) : const Color(0xFF6B7280))),
-                        ],
+                        ),
+                        const SizedBox(width: 12),
+                        Semantics(
+                          label: isPlayingGlobal ? 'Pause' : 'Play',
+                          button: true,
+                          child: GestureDetector(
+                            onTap: () => ref.read(audioServiceProvider).playCard(card),
+                            child: Container(
+                              width: 64, height: 64,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFFF6B6B),
+                                shape: BoxShape.circle,
+                                boxShadow: [BoxShadow(color: Color(0x40FF6B6B), blurRadius: 12, offset: Offset(0, 4))]
+                            ),
+                            child: Icon(isPlayingGlobal ? Icons.pause_rounded : Icons.play_arrow_rounded, size: 36, color: Colors.white),
+                          ),
+                        ),
                       )
-                  )
-                ],
-              ),
-          ),
-          const SizedBox(width: 8),
-          Row(
-            children: [
-              GestureDetector(
-                onTap: () => ref.read(audioServiceProvider).stop(),
-                child: Container(
-                  width: 56, height: 56,
-                  decoration: const BoxDecoration(color: Color(0xFFF6F7F8), shape: BoxShape.circle),
-                  child: const Icon(Icons.stop_rounded, size: 28, color: Color(0xFF1A1A1A)),
+                    ],
+                    )
+                  ],
                 ),
               ),
-              const SizedBox(width: 12),
-              GestureDetector(
-                onTap: () => ref.read(audioServiceProvider).playCard(card),
-                child: Container(
-                  width: 64, height: 64,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFF6B6B),
-                    shape: BoxShape.circle,
-                    boxShadow: [BoxShadow(color: Color(0x40FF6B6B), blurRadius: 12, offset: Offset(0, 4))]
-                  ),
-                  child: Icon(isPlayingGlobal ? Icons.pause_rounded : Icons.play_arrow_rounded, size: 36, color: Colors.white),
-                ),
-              )
-            ],
-          )
-        ],
-      )
+            ),
+            StreamBuilder<Duration>(
+              stream: player.positionStream,
+              builder: (context, snapshot) {
+                final pos = snapshot.data ?? Duration.zero;
+                final dur = player.duration ?? Duration.zero;
+                final progress = dur.inMilliseconds > 0
+                    ? (pos.inMilliseconds / dur.inMilliseconds).clamp(0.0, 1.0)
+                    : 0.0;
+                return LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 3,
+                  backgroundColor: const Color(0xFFE5E7EB),
+                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFF6B6B)),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -355,7 +402,11 @@ class _AudioCardTileState extends ConsumerState<AudioCardTile> with SingleTicker
     final scale = _isPressed ? 0.93 : 1.0;
     final opacity = widget.isAnotherPlaying ? 0.6 : 1.0;
     
-    return AnimatedOpacity(
+    return Semantics(
+      label: '${widget.card.title}, tap to play',
+      button: true,
+      enabled: !widget.isAnotherPlaying,
+      child: AnimatedOpacity(
       duration: const Duration(milliseconds: 300),
       opacity: opacity,
       child: GestureDetector(
@@ -414,7 +465,7 @@ class _AudioCardTileState extends ConsumerState<AudioCardTile> with SingleTicker
                       child: FittedBox(
                         child: Padding(
                           padding: const EdgeInsets.all(16),
-                          child: GiphySprite(title: widget.card.spriteKey != null && widget.card.spriteKey!.isNotEmpty ? widget.card.spriteKey! : widget.card.title, fallbackSprite: spriteDef, state: state, scale: 6.0),
+                          child: GiphySprite(title: widget.card.spriteKey != null && widget.card.spriteKey!.isNotEmpty ? widget.card.spriteKey! : widget.card.title, fallbackSprite: spriteDef, state: state, scale: AppResponsive.spriteScale(context)),
                         ),
                       ),
                     ),
@@ -434,7 +485,8 @@ class _AudioCardTileState extends ConsumerState<AudioCardTile> with SingleTicker
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }
 

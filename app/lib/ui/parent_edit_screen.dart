@@ -14,6 +14,7 @@ import '../models/audio_card.dart';
 import '../providers/cards_provider.dart';
 import '../providers/categories_provider.dart';
 import '../models/sprites.dart';
+import '../theme/app_responsive.dart';
 import 'pixel_sprite.dart';
 import 'giphy_sprite.dart';
 
@@ -154,29 +155,37 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                 children: [
                   Row(
                     children: [
-                      IconButton(icon: const Icon(Icons.arrow_back_ios_new, size: 32), onPressed: () => context.pop()),
+                      Semantics(
+                        label: 'Go back',
+                        button: true,
+                        child: IconButton(icon: const Icon(Icons.arrow_back_ios_new, size: 32), onPressed: () => context.pop()),
+                      ),
                       const SizedBox(width: 16),
                       Text(widget.cardId == null ? 'New Card' : 'Edit Card', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800)),
                     ]
                   ),
-                  GestureDetector(
-                    onTap: _save,
-                    child: Container(
-                      height: 56,
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF22C55E),
-                        borderRadius: BorderRadius.circular(28),
-                        boxShadow: const [BoxShadow(color: Color(0x4022C55E), blurRadius: 16, offset: Offset(0, 8))]
+                  Semantics(
+                    label: 'Save card',
+                    button: true,
+                    child: GestureDetector(
+                      onTap: _save,
+                      child: Container(
+                        height: 56,
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF22C55E),
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: const [BoxShadow(color: Color(0x4022C55E), blurRadius: 16, offset: Offset(0, 8))]
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.check, color: Colors.white),
+                            SizedBox(width: 8),
+                            Text('Save', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white))
+                          ]
+                        )
                       ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.check, color: Colors.white),
-                          SizedBox(width: 8),
-                          Text('Save', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white))
-                        ]
-                      )
-                    )
+                    ),
                   )
                 ]
               ),
@@ -186,14 +195,22 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                 runSpacing: 32,
                 children: [
                   _buildPreview(spriteDef),
-                  Container(
-                    width: 400,
-                    child: Column(
+                  Builder(
+                    builder: (context) {
+                      final screenWidth = MediaQuery.of(context).size.width;
+                      final formWidth = AppResponsive.isTablet(context)
+                          ? 500.0
+                          : screenWidth * 0.55;
+                      return Container(
+                        width: formWidth,
+                        child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text('Title', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
-                        TextField(
+                        Semantics(
+                          label: 'Card title',
+                          child: TextField(
                           controller: _titleController,
                           onChanged: (v) {
                             if (_debounce?.isActive ?? false) _debounce!.cancel();
@@ -208,8 +225,9 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                             filled: true, fillColor: Colors.white,
                             contentPadding: const EdgeInsets.all(16),
                             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 2)),
-                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFFF6B6B), width: 2)),
+                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 2)),
                           ),
+                        ),
                         ),
                         const SizedBox(height: 24),
                         const Text('Category', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
@@ -251,24 +269,27 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                         const SizedBox(height: 24),
                         const Text('Custom GIF search (optional)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
-                        TextField(
-                          controller: _spriteKeyController,
-                          onChanged: (v) {
-                            if (_debounce?.isActive ?? false) _debounce!.cancel();
-                            _debounce = Timer(const Duration(milliseconds: 700), () {
-                              if (mounted) setState(() {});
-                            });
-                          },
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-                          textDirection: intl.Bidi.detectRtlDirectionality(_spriteKeyController.text) ? TextDirection.rtl : TextDirection.ltr,
-                          textAlign: intl.Bidi.detectRtlDirectionality(_spriteKeyController.text) ? TextAlign.right : TextAlign.left,
-                          decoration: InputDecoration(
-                            hintText: 'e.g.: running cat',
-                            hintStyle: const TextStyle(color: Colors.black38),
-                            filled: true, fillColor: Colors.white,
-                            contentPadding: const EdgeInsets.all(16),
-                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 2)),
-                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFFF6B6B), width: 2)),
+                        Semantics(
+                          label: 'Custom GIF search keyword',
+                          child: TextField(
+                            controller: _spriteKeyController,
+                            onChanged: (v) {
+                              if (_debounce?.isActive ?? false) _debounce!.cancel();
+                              _debounce = Timer(const Duration(milliseconds: 700), () {
+                                if (mounted) setState(() {});
+                              });
+                            },
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                            textDirection: intl.Bidi.detectRtlDirectionality(_spriteKeyController.text) ? TextDirection.rtl : TextDirection.ltr,
+                            textAlign: intl.Bidi.detectRtlDirectionality(_spriteKeyController.text) ? TextAlign.right : TextAlign.left,
+                            decoration: InputDecoration(
+                              hintText: 'e.g.: running cat',
+                              hintStyle: const TextStyle(color: Colors.black38),
+                              filled: true, fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.all(16),
+                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 2)),
+                              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 2)),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -287,7 +308,9 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                           },
                         )
                       ]
-                    )
+                    ),
+                  );
+                    },
                   )
                 ]
               )

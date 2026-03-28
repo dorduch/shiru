@@ -193,7 +193,9 @@ class _VoiceProfileRowState extends ConsumerState<_VoiceProfileRow> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Semantics(
+      label: 'Voice profile: ${widget.profile.name}',
+      child: Container(
       height: 80,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
@@ -212,7 +214,14 @@ class _VoiceProfileRowState extends ConsumerState<_VoiceProfileRow> {
               color: widget.avatarColor,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.mic, color: Color(0xFF6B7280), size: 24),
+            child: Text(
+              widget.profile.name.isNotEmpty ? widget.profile.name[0].toUpperCase() : '?',
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF6B7280),
+              ),
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -229,7 +238,10 @@ class _VoiceProfileRowState extends ConsumerState<_VoiceProfileRow> {
               ],
             ),
           ),
-          IconButton(
+          Semantics(
+            label: _isPlaying ? 'Stop sample' : 'Play sample',
+            button: true,
+            child: IconButton(
               icon: Icon(
                 _isPlaying ? Icons.stop_circle : Icons.play_circle,
                 color: const Color(0xFF22C55E),
@@ -237,12 +249,18 @@ class _VoiceProfileRowState extends ConsumerState<_VoiceProfileRow> {
               ),
               onPressed: _toggleSample,
             ),
-          IconButton(
-            icon: const Icon(Icons.delete, color: Colors.redAccent, size: 24),
-            onPressed: widget.onDelete,
+          ),
+          Semantics(
+            label: 'Delete ${widget.profile.name}',
+            button: true,
+            child: IconButton(
+              icon: const Icon(Icons.delete, color: Colors.redAccent, size: 24),
+              onPressed: widget.onDelete,
+            ),
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 }
