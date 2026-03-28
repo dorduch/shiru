@@ -30,6 +30,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
   RecordingState _recState = RecordingState.idle;
   Duration _elapsed = Duration.zero;
   bool _isPreviewPlaying = false;
+  static bool _activePickerExists = false;
 
   late final AnimationController _pulseController;
   StreamSubscription? _stateSub;
@@ -74,19 +75,45 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
   }
 
   Future<void> _pickAudio() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.audio);
-    if (result != null && result.files.single.path != null) {
-      const maxBytes = 200 * 1024 * 1024; // 200 MB
-      final fileSize = result.files.single.size;
-      if (fileSize > maxBytes) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('File is too large. Maximum size is 200 MB.')),
-          );
+    debugPrint('[_AudioRecorderWidgetState] _pickAudio called. Global _activePickerExists: $_activePickerExists');
+    if (_activePickerExists) {
+      debugPrint('[_AudioRecorderWidgetState] _pickAudio ignored - already picking.');
+      return;
+    }
+    setState(() => _activePickerExists = true);
+
+    try {
+      debugPrint('[_AudioRecorderWidgetState] Calling FilePicker.platform.pickFiles...');
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['mp3', 'wav', 'm4a', 'aac'],
+      );
+      debugPrint('[_AudioRecorderWidgetState] FilePicker returned. success: ${result != null}');
+      if (result != null && result.files.single.path != null) {
+        const maxBytes = 200 * 1024 * 1024; // 200 MB
+        final fileSize = result.files.single.size;
+        if (fileSize > maxBytes) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('File is too large. Maximum size is 200 MB.')),
+            );
+          }
+          return;
         }
-        return;
+        widget.onAudioSelected(result.files.single.path!);
       }
-      widget.onAudioSelected(result.files.single.path!);
+    } catch (e) {
+      debugPrint('[_AudioRecorderWidgetState] Caught error in _pickAudio: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking file: $e')),
+        );
+      }
+    } finally {
+      debugPrint('[_AudioRecorderWidgetState] Finishing _pickAudio, waiting 500ms before unlocking...');
+      await Future.delayed(const Duration(milliseconds: 500));
+      debugPrint('[_AudioRecorderWidgetState] Timer finished, resetting _activePickerExists');
+      setState(() => _activePickerExists = false);
     }
   }
 
@@ -256,59 +283,65 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
   }
 
   Widget _buildSourceSelection() {
-    return Row(
-      children: [
-        Expanded(
-          child: GestureDetector(
-            onTap: _pickAudio,
-            child: Container(
-              height: 140,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF6F7F8),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE5E7EB), width: 2, strokeAlign: BorderSide.strokeAlignInside),
-              ),
-              child: const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.folder_open, color: Color(0xFF6B7280), size: 32),
-                  SizedBox(height: 8),
-                  Text('Choose File', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF1A1A1A))),
-                  SizedBox(height: 4),
-                  Text('Import Audio', style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: GestureDetector(
-            onTap: _startRecording,
-            child: Container(
-              height: 140,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+    return AbsorbPointer(
+      absorbing: _activePickerExists,
+      child: Opacity(
+        opacity: _activePickerExists ? 0.6 : 1.0,
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: _pickAudio,
+                child: Container(
+                  height: 140,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF6F7F8),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE5E7EB), width: 2, strokeAlign: BorderSide.strokeAlignInside),
+                  ),
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.folder_open, color: Color(0xFF6B7280), size: 32),
+                      SizedBox(height: 8),
+                      Text('Choose File', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF1A1A1A))),
+                      SizedBox(height: 4),
+                      Text('Import Audio', style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
+                    ],
+                  ),
                 ),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.mic, color: Colors.white, size: 32),
-                  SizedBox(height: 8),
-                  Text('Record', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
-                  SizedBox(height: 4),
-                  Text('Use Microphone', style: TextStyle(fontSize: 12, color: Color(0xFFFECACA))),
-                ],
               ),
             ),
-          ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: GestureDetector(
+                onTap: _startRecording,
+                child: Container(
+                  height: 140,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.mic, color: Colors.white, size: 32),
+                      SizedBox(height: 8),
+                      Text('Record', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
+                      SizedBox(height: 4),
+                      Text('Use Microphone', style: TextStyle(fontSize: 12, color: Color(0xFFFECACA))),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
