@@ -34,71 +34,94 @@ class ParentListScreen extends ConsumerWidget {
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () => context.push('/parent/change-pin'),
-                            child: Container(
-                              height: 48,
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(color: const Color(0xFFE5E7EB), width: 2),
-                              ),
-                              child: const Row(
-                                children: [
-                                  Icon(Icons.lock_outline, color: Color(0xFF6B7280), size: 20),
-                                  SizedBox(width: 8),
-                                  Text('Change PIN', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          GestureDetector(
-                            onTap: () => context.push('/parent/categories'),
-                            child: Container(
-                              height: 48,
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(color: const Color(0xFFE5E7EB), width: 2),
-                              ),
-                              child: const Row(
-                                children: [
-                                  Icon(Icons.category, color: Color(0xFF6B7280), size: 20),
-                                  SizedBox(width: 8),
-                                  Text('Categories', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
-                                ],
+                    child: ShaderMask(
+                      shaderCallback: (bounds) => const LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [Colors.white, Colors.white, Colors.transparent],
+                        stops: [0.0, 0.75, 1.0],
+                      ).createShader(bounds),
+                      blendMode: BlendMode.dstIn,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                          Semantics(
+                            label: 'Change PIN',
+                            button: true,
+                            child: GestureDetector(
+                              onTap: () => context.push('/parent/change-pin'),
+                              child: Container(
+                                height: 48,
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(24),
+                                  border: Border.all(color: const Color(0xFFE5E7EB), width: 2),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Icon(Icons.lock_outline, color: Color(0xFF6B7280), size: 20),
+                                    SizedBox(width: 8),
+                                    Text('Change PIN', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                           const SizedBox(width: 12),
-                          GestureDetector(
-                            onTap: () => context.push('/parent/voices'),
-                            child: Container(
-                              height: 48,
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(color: const Color(0xFFE5E7EB), width: 2),
-                              ),
-                              child: const Row(
-                                children: [
-                                  Icon(Icons.mic, color: Color(0xFF6B7280), size: 20),
-                                  SizedBox(width: 8),
-                                  Text('Voices', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
-                                ],
+                          Semantics(
+                            label: 'Categories',
+                            button: true,
+                            child: GestureDetector(
+                              onTap: () => context.push('/parent/categories'),
+                              child: Container(
+                                height: 48,
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(24),
+                                  border: Border.all(color: const Color(0xFFE5E7EB), width: 2),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Icon(Icons.category, color: Color(0xFF6B7280), size: 20),
+                                    SizedBox(width: 8),
+                                    Text('Categories', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                           const SizedBox(width: 12),
-                          GestureDetector(
+                          Semantics(
+                            label: 'Voices',
+                            button: true,
+                            child: GestureDetector(
+                              onTap: () => context.push('/parent/voices'),
+                              child: Container(
+                                height: 48,
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(24),
+                                  border: Border.all(color: const Color(0xFFE5E7EB), width: 2),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Icon(Icons.mic, color: Color(0xFF6B7280), size: 20),
+                                    SizedBox(width: 8),
+                                    Text('Voices', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Semantics(
+                            label: 'Story Builder',
+                            button: true,
+                            child: GestureDetector(
                             onTap: () => context.push('/story-builder'),
                             child: Container(
                               height: 48,
@@ -119,29 +142,35 @@ class ParentListScreen extends ConsumerWidget {
                               ),
                             ),
                           ),
+                          ),
                           const SizedBox(width: 12),
-                          GestureDetector(
-                            onTap: () => context.go('/parent/edit'),
-                            child: Container(
-                              height: 48,
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFF6B6B),
-                                borderRadius: BorderRadius.circular(24),
-                                boxShadow: const [BoxShadow(color: Color(0x40FF6B6B), blurRadius: 12, offset: Offset(0, 4))]
+                          Semantics(
+                            label: 'Add Card',
+                            button: true,
+                            child: GestureDetector(
+                              onTap: () => context.go('/parent/edit'),
+                              child: Container(
+                                height: 48,
+                                padding: const EdgeInsets.symmetric(horizontal: 20),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFF6B6B),
+                                  borderRadius: BorderRadius.circular(24),
+                                  boxShadow: const [BoxShadow(color: Color(0x40FF6B6B), blurRadius: 12, offset: Offset(0, 4))]
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Icon(Icons.add, color: Colors.white, size: 20),
+                                    SizedBox(width: 8),
+                                    Text('Add Card', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white))
+                                  ]
+                                )
                               ),
-                              child: const Row(
-                                children: [
-                                  Icon(Icons.add, color: Colors.white, size: 20),
-                                  SizedBox(width: 8),
-                                  Text('Add Card', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white))
-                                ]
-                              )
-                            )
+                            ),
                           ),
                         ],
                       ),
                     ),
+                  )
                   )
                 ]
               ),
@@ -182,15 +211,25 @@ class ParentListScreen extends ConsumerWidget {
                                   textDirection: intl.Bidi.detectRtlDirectionality(card.title) ? TextDirection.rtl : TextDirection.ltr,
                                 )
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.edit, color: Colors.grey),
-                                onPressed: () => context.go('/parent/edit', extra: card.id)
+                              Semantics(
+                                label: 'Edit ${card.title}',
+                                button: true,
+                                child: IconButton(
+                                  constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                                  icon: const Icon(Icons.edit, color: Colors.grey),
+                                  onPressed: () => context.go('/parent/edit', extra: card.id),
+                                ),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.redAccent),
-                                onPressed: () {
-                                  ref.read(cardsProvider.notifier).deleteCard(card.id);
-                                }
+                              Semantics(
+                                label: 'Delete ${card.title}',
+                                button: true,
+                                child: IconButton(
+                                  constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                                  icon: const Icon(Icons.delete, color: Colors.redAccent),
+                                  onPressed: () {
+                                    ref.read(cardsProvider.notifier).deleteCard(card.id);
+                                  },
+                                ),
                               )
                             ],
                           )

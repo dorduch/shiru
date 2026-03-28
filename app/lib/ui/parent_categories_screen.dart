@@ -159,7 +159,9 @@ class _CategoryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Semantics(
+      label: '${category.emoji} ${category.name}',
+      child: Container(
       height: 80,
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -173,7 +175,14 @@ class _CategoryRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.drag_handle, color: Colors.grey),
+          Semantics(
+            label: 'Reorder ${category.name}',
+            child: SizedBox(
+              width: 44,
+              height: 44,
+              child: Center(child: Icon(Icons.drag_handle, color: Colors.grey, size: 36)),
+            ),
+          ),
           const SizedBox(width: 12),
           Text(category.emoji, style: const TextStyle(fontSize: 28)),
           const SizedBox(width: 12),
@@ -182,16 +191,27 @@ class _CategoryRow extends StatelessWidget {
                 style: const TextStyle(
                     fontSize: 20, fontWeight: FontWeight.w700)),
           ),
-          IconButton(
-            icon: const Icon(Icons.edit, color: Colors.grey),
-            onPressed: onEdit,
+          Semantics(
+            label: 'Edit ${category.name}',
+            button: true,
+            child: IconButton(
+              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+              icon: const Icon(Icons.edit, color: Colors.grey),
+              onPressed: onEdit,
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.delete, color: Colors.redAccent),
-            onPressed: onDelete,
+          Semantics(
+            label: 'Delete ${category.name}',
+            button: true,
+            child: IconButton(
+              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+              icon: const Icon(Icons.delete, color: Colors.redAccent),
+              onPressed: onDelete,
+            ),
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 }

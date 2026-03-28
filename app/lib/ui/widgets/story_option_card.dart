@@ -24,7 +24,10 @@ class _StoryOptionCardState extends State<StoryOptionCard> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return Semantics(
+      label: '${widget.emoji} ${widget.label}',
+      button: true,
+      child: GestureDetector(
       onTapDown: (_) {
         HapticFeedback.lightImpact();
         setState(() => _isPressed = true);
@@ -86,6 +89,7 @@ class _StoryOptionCardState extends State<StoryOptionCard> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }

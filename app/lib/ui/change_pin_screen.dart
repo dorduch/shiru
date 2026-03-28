@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/pin_provider.dart';
+import '../theme/app_responsive.dart';
 
 enum _ChangePinStep { enterCurrent, enterNew, confirmNew }
 
@@ -16,6 +19,26 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
   _ChangePinStep _step = _ChangePinStep.enterCurrent;
   String _input = '';
   String _newPin = '';
+  int _failedAttempts = 0;
+  DateTime? _lockedUntil;
+  Timer? _lockTimer;
+
+  bool get _isLocked => _lockedUntil != null && DateTime.now().isBefore(_lockedUntil!);
+  int get _secondsRemaining => _lockedUntil == null ? 0 : _lockedUntil!.difference(DateTime.now()).inSeconds.clamp(0, 30);
+
+  @override
+  void dispose() {
+    _lockTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startLockTimer() {
+    _lockTimer?.cancel();
+    _lockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+      if (!_isLocked) _lockTimer?.cancel();
+    });
+  }
 
   String get _title {
     switch (_step) {
@@ -40,6 +63,8 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
   }
 
   void _onKeyPress(String key, String currentPin) {
+    if (_isLocked) return;
+    HapticFeedback.lightImpact();
     if (key == 'DEL') {
       if (_input.isNotEmpty) {
         setState(() => _input = _input.substring(0, _input.length - 1));
@@ -60,15 +85,22 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
     switch (_step) {
       case _ChangePinStep.enterCurrent:
         if (_input == currentPin) {
+          _failedAttempts = 0;
           setState(() {
             _step = _ChangePinStep.enterNew;
             _input = '';
           });
         } else {
+          _failedAttempts++;
           setState(() => _input = '');
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Wrong code')),
-          );
+          if (_failedAttempts >= 5) {
+            setState(() => _lockedUntil = DateTime.now().add(const Duration(seconds: 30)));
+            _startLockTimer();
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Wrong code')),
+            );
+          }
         }
         break;
 
@@ -163,15 +195,19 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: List.generate(4, (index) {
-                        return Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 10),
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: index < _input.length
-                                ? const Color(0xFF1A1A1A)
-                                : const Color(0xFFD1D5DB),
-                            shape: BoxShape.circle,
+                        final filled = index < _input.length;
+                        return Semantics(
+                          label: 'PIN digit ${index + 1} of 4, ${filled ? "entered" : "empty"}',
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 10),
+                            width: 20,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              color: filled
+                                  ? const Color(0xFF1A1A1A)
+                                  : const Color(0xFFD1D5DB),
+                              shape: BoxShape.circle,
+                            ),
                           ),
                         );
                       }),
@@ -183,7 +219,7 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
             // Right side — keypad
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-              child: _buildKeypad(currentPin),
+              child: _buildKeypad(currentPin, context),
             ),
           ],
         ),
@@ -191,37 +227,68 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
     );
   }
 
-  Widget _buildKeypad(String currentPin) {
+  Widget _buildKeypad(String currentPin, BuildContext context) {
+    final keySize = AppResponsive.isTablet(context) ? 80.0 : (MediaQuery.of(context).size.width < 600 ? 64.0 : 72.0);
+    if (_isLocked) {
+      return SizedBox(
+        width: 280,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.lock_clock, size: 48, color: Color(0xFF9CA3AF)),
+            const SizedBox(height: 16),
+            Text(
+              'Too many attempts.\nTry again in ${_secondsRemaining}s.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)),
+            ),
+          ],
+        ),
+      );
+    }
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _buildKeyRow(['1', '2', '3'], currentPin),
+        _buildKeyRow(['1', '2', '3'], currentPin, keySize),
         const SizedBox(height: 16),
-        _buildKeyRow(['4', '5', '6'], currentPin),
+        _buildKeyRow(['4', '5', '6'], currentPin, keySize),
         const SizedBox(height: 16),
-        _buildKeyRow(['7', '8', '9'], currentPin),
+        _buildKeyRow(['7', '8', '9'], currentPin, keySize),
         const SizedBox(height: 16),
-        _buildKeyRow(['', '0', 'DEL'], currentPin),
+        _buildKeyRow(['', '0', 'DEL'], currentPin, keySize),
       ],
     );
   }
 
-  Widget _buildKeyRow(List<String> keys, String currentPin) {
+  Widget _buildKeyRow(List<String> keys, String currentPin, double keySize) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: keys.map((k) {
         if (k.isEmpty) {
-          return const SizedBox(width: 72, height: 72);
+          return SizedBox(width: keySize, height: keySize);
         }
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: GestureDetector(
-            onTap: () => _onKeyPress(k, currentPin),
+        return Semantics(
+          label: k == 'DEL' ? 'Delete' : k,
+          button: true,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: GestureDetector(
+              onTap: () => _onKeyPress(k, currentPin),
             child: Container(
-              width: 72,
-              height: 72,
+              width: keySize,
+              height: keySize,
               decoration: k == 'DEL'
-                  ? null
+                  ? const BoxDecoration(
+                      color: Color(0xFFF3F4F6),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 12,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    )
                   : const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
@@ -250,7 +317,8 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
                     ),
             ),
           ),
-        );
+        ),
+      );
       }).toList(),
     );
   }

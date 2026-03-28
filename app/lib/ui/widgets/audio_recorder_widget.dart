@@ -30,7 +30,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
   RecordingState _recState = RecordingState.idle;
   Duration _elapsed = Duration.zero;
   bool _isPreviewPlaying = false;
-  static bool _activePickerExists = false;
+  bool _isPickerOpen = false;
 
   late final AnimationController _pulseController;
   StreamSubscription? _stateSub;
@@ -75,20 +75,15 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
   }
 
   Future<void> _pickAudio() async {
-    debugPrint('[_AudioRecorderWidgetState] _pickAudio called. Global _activePickerExists: $_activePickerExists');
-    if (_activePickerExists) {
-      debugPrint('[_AudioRecorderWidgetState] _pickAudio ignored - already picking.');
-      return;
-    }
-    setState(() => _activePickerExists = true);
+    if (_isPickerOpen) return;
+    _isPickerOpen = true;
+    if (mounted) setState(() {});
 
     try {
-      debugPrint('[_AudioRecorderWidgetState] Calling FilePicker.platform.pickFiles...');
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['mp3', 'wav', 'm4a', 'aac'],
       );
-      debugPrint('[_AudioRecorderWidgetState] FilePicker returned. success: ${result != null}');
       if (result != null && result.files.single.path != null) {
         const maxBytes = 200 * 1024 * 1024; // 200 MB
         final fileSize = result.files.single.size;
@@ -100,7 +95,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
           }
           return;
         }
-        widget.onAudioSelected(result.files.single.path!);
+        if (mounted) widget.onAudioSelected(result.files.single.path!);
       }
     } catch (e) {
       debugPrint('[_AudioRecorderWidgetState] Caught error in _pickAudio: $e');
@@ -110,10 +105,9 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
         );
       }
     } finally {
-      debugPrint('[_AudioRecorderWidgetState] Finishing _pickAudio, waiting 500ms before unlocking...');
-      await Future.delayed(const Duration(milliseconds: 500));
-      debugPrint('[_AudioRecorderWidgetState] Timer finished, resetting _activePickerExists');
-      setState(() => _activePickerExists = false);
+      // Always reset — even if widget is disposed or picker threw.
+      _isPickerOpen = false;
+      if (mounted) setState(() {});
     }
   }
 
@@ -284,9 +278,9 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
 
   Widget _buildSourceSelection() {
     return AbsorbPointer(
-      absorbing: _activePickerExists,
+      absorbing: _isPickerOpen,
       child: Opacity(
-        opacity: _activePickerExists ? 0.6 : 1.0,
+        opacity: _isPickerOpen ? 0.6 : 1.0,
         child: Row(
           children: [
             Expanded(

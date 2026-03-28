@@ -40,28 +40,46 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
   // ─── Step indicators ──────────────────────────────────────────────────────
 
   Widget _buildStepDots(int activeIndex) {
-    return Row(
+    return Column(
       mainAxisSize: MainAxisSize.min,
-      children: List.generate(6, (i) {
-        final isActive = i == activeIndex;
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: isActive ? 20 : 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: isActive ? const Color(0xFF8B5CF6) : const Color(0xFFE5E7EB),
-            borderRadius: BorderRadius.circular(4),
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(6, (i) {
+            final isActive = i == activeIndex;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: isActive ? 20 : 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: isActive ? const Color(0xFF8B5CF6) : const Color(0xFFE5E7EB),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            );
+          }),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Step ${activeIndex + 1} of 6',
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF9CA3AF),
           ),
-        );
-      }),
+        ),
+      ],
     );
   }
 
   // ─── Back button ─────────────────────────────────────────────────────────
 
   Widget _buildBackButton({required VoidCallback onTap}) {
-    return GestureDetector(
+    return Semantics(
+      label: 'Go back',
+      button: true,
+      child: GestureDetector(
       onTap: onTap,
       child: Container(
         width: 36,
@@ -83,7 +101,8 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
           color: Color(0xFF374151),
         ),
       ),
-    );
+    ),
+  );
   }
 
   // ─── Shared header ────────────────────────────────────────────────────────
@@ -136,8 +155,8 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: GridView.builder(
               itemCount: storyHeroes.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 200,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
                 childAspectRatio: 1.1,
@@ -182,8 +201,8 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: GridView.builder(
               itemCount: storyThemes.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 200,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
                 childAspectRatio: 1.2,
@@ -408,8 +427,8 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: voices.length,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
+                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 200,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
                       childAspectRatio: 1.2,
