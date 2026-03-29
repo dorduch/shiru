@@ -1,0 +1,215 @@
+<h2>Library Screen — Two Layout Approaches</h2>
+<p class="subtitle">Both use: two-column grid, settings gear menu, rich card items, guided empty state. The difference is how the creation actions are presented.</p>
+
+<div class="cards">
+
+  <!-- APPROACH A -->
+  <div class="card" data-choice="a-top-actions" onclick="toggleSelect(this)" style="width:100%;">
+    <div class="card-body" style="padding:0;">
+      <h3>A — Top Action Bar</h3>
+      <p style="margin-bottom:16px;color:#666;">Primary creation actions as buttons in the header row. Clean and conventional.</p>
+
+      <div style="background:#F6F7F8;border-radius:16px;overflow:hidden;padding:20px;">
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:32px;height:32px;background:#e5e7eb;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#666;font-size:14px;">←</div>
+            <span style="font-size:24px;font-weight:800;color:#1a1a1a;">Library</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <div style="background:#fff;border:1.5px solid #e5e7eb;border-radius:20px;padding:8px 14px;font-size:12px;font-weight:600;color:#374151;display:flex;align-items:center;gap:4px;">📁 Bulk Import</div>
+            <div style="background:linear-gradient(135deg,#8B5CF6,#6D28D9);border-radius:20px;padding:8px 14px;font-size:12px;font-weight:600;color:#fff;display:flex;align-items:center;gap:4px;">✨ Story Builder <span style="background:rgba(255,255,255,0.25);font-size:9px;padding:1px 5px;border-radius:4px;margin-left:2px;">PRO</span></div>
+            <div style="background:#FF6B6B;border-radius:20px;padding:8px 14px;font-size:12px;font-weight:600;color:#fff;display:flex;align-items:center;gap:4px;">+ Add Card</div>
+            <div style="width:36px;height:36px;background:#fff;border:1.5px solid #e5e7eb;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#666;font-size:16px;">⚙</div>
+          </div>
+        </div>
+
+        <!-- Two-column grid -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <!-- Card 1 -->
+          <div style="background:#fff;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+            <div style="width:48px;height:48px;background:#FEF3C7;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🐱</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:14px;font-weight:700;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Space Cat's Big Adventure</div>
+              <div style="display:flex;gap:6px;align-items:center;margin-top:3px;">
+                <span style="background:#EDE9FE;color:#7C3AED;font-size:9px;font-weight:600;padding:1px 6px;border-radius:4px;">Stories</span>
+                <span style="color:#999;font-size:10px;">3:42</span>
+                <span style="color:#ccc;font-size:10px;">·</span>
+                <span style="color:#999;font-size:10px;">Mar 15</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <div style="width:28px;height:28px;background:#DCFCE7;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#16A34A;font-size:10px;">▶</div>
+              <div style="width:28px;height:28px;background:#f5f5f5;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#999;font-size:10px;">✏️</div>
+              <div style="width:28px;height:28px;background:#FEF2F2;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#EF4444;font-size:10px;">🗑</div>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div style="background:#fff;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+            <div style="width:48px;height:48px;background:#DBEAFE;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🚀</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:14px;font-weight:700;color:#1a1a1a;direction:rtl;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">האסטרונאוט והכוכב הקטן</div>
+              <div style="display:flex;gap:6px;align-items:center;margin-top:3px;justify-content:flex-end;">
+                <span style="background:#DCFCE7;color:#16A34A;font-size:9px;font-weight:600;padding:1px 6px;border-radius:4px;">Adventures</span>
+                <span style="color:#999;font-size:10px;">5:18</span>
+                <span style="color:#ccc;font-size:10px;">·</span>
+                <span style="color:#999;font-size:10px;">Mar 12</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <div style="width:28px;height:28px;background:#DCFCE7;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#16A34A;font-size:10px;">▶</div>
+              <div style="width:28px;height:28px;background:#f5f5f5;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#999;font-size:10px;">✏️</div>
+              <div style="width:28px;height:28px;background:#FEF2F2;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#EF4444;font-size:10px;">🗑</div>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div style="background:#fff;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+            <div style="width:48px;height:48px;background:#FCE7F3;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🧚</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:14px;font-weight:700;color:#1a1a1a;">The Fairy Garden</div>
+              <div style="display:flex;gap:6px;align-items:center;margin-top:3px;">
+                <span style="background:#FEF3C7;color:#D97706;font-size:9px;font-weight:600;padding:1px 6px;border-radius:4px;">Bedtime</span>
+                <span style="color:#999;font-size:10px;">7:15</span>
+                <span style="color:#ccc;font-size:10px;">·</span>
+                <span style="color:#999;font-size:10px;">Mar 10</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <div style="width:28px;height:28px;background:#DCFCE7;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#16A34A;font-size:10px;">▶</div>
+              <div style="width:28px;height:28px;background:#f5f5f5;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#999;font-size:10px;">✏️</div>
+              <div style="width:28px;height:28px;background:#FEF2F2;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#EF4444;font-size:10px;">🗑</div>
+            </div>
+          </div>
+
+          <!-- Card 4 -->
+          <div style="background:#fff;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+            <div style="width:48px;height:48px;background:#D1FAE5;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🐉</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:14px;font-weight:700;color:#1a1a1a;">Dragon's Lullaby</div>
+              <div style="display:flex;gap:6px;align-items:center;margin-top:3px;">
+                <span style="background:#EDE9FE;color:#7C3AED;font-size:9px;font-weight:600;padding:1px 6px;border-radius:4px;">Stories</span>
+                <span style="color:#999;font-size:10px;">2:30</span>
+                <span style="color:#ccc;font-size:10px;">·</span>
+                <span style="color:#999;font-size:10px;">Mar 8</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <div style="width:28px;height:28px;background:#DCFCE7;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#16A34A;font-size:10px;">▶</div>
+              <div style="width:28px;height:28px;background:#f5f5f5;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#999;font-size:10px;">✏️</div>
+              <div style="width:28px;height:28px;background:#FEF2F2;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#EF4444;font-size:10px;">🗑</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPROACH B -->
+  <div class="card" data-choice="b-fab-actions" onclick="toggleSelect(this)" style="width:100%;">
+    <div class="card-body" style="padding:0;">
+      <h3>B — Floating Action Button (FAB) Menu</h3>
+      <p style="margin-bottom:16px;color:#666;">Minimal header with just title + gear. A FAB in the corner expands to reveal Add Card / Story Builder / Bulk Import.</p>
+
+      <div style="background:#F6F7F8;border-radius:16px;overflow:hidden;padding:20px;position:relative;">
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:32px;height:32px;background:#e5e7eb;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#666;font-size:14px;">←</div>
+            <span style="font-size:24px;font-weight:800;color:#1a1a1a;">Library</span>
+            <span style="background:#e5e7eb;color:#666;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;">4 cards</span>
+          </div>
+          <div style="width:36px;height:36px;background:#fff;border:1.5px solid #e5e7eb;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#666;font-size:16px;">⚙</div>
+        </div>
+
+        <!-- Two-column grid -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <!-- Card 1 -->
+          <div style="background:#fff;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+            <div style="width:48px;height:48px;background:#FEF3C7;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🐱</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:14px;font-weight:700;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Space Cat's Big Adventure</div>
+              <div style="display:flex;gap:6px;align-items:center;margin-top:3px;">
+                <span style="background:#EDE9FE;color:#7C3AED;font-size:9px;font-weight:600;padding:1px 6px;border-radius:4px;">Stories</span>
+                <span style="color:#999;font-size:10px;">3:42</span>
+                <span style="color:#ccc;font-size:10px;">·</span>
+                <span style="color:#999;font-size:10px;">Mar 15</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <div style="width:28px;height:28px;background:#DCFCE7;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#16A34A;font-size:10px;">▶</div>
+              <div style="width:28px;height:28px;background:#f5f5f5;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#999;font-size:10px;">✏️</div>
+              <div style="width:28px;height:28px;background:#FEF2F2;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#EF4444;font-size:10px;">🗑</div>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div style="background:#fff;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+            <div style="width:48px;height:48px;background:#DBEAFE;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🚀</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:14px;font-weight:700;color:#1a1a1a;direction:rtl;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">האסטרונאוט והכוכב הקטן</div>
+              <div style="display:flex;gap:6px;align-items:center;margin-top:3px;justify-content:flex-end;">
+                <span style="background:#DCFCE7;color:#16A34A;font-size:9px;font-weight:600;padding:1px 6px;border-radius:4px;">Adventures</span>
+                <span style="color:#999;font-size:10px;">5:18</span>
+                <span style="color:#ccc;font-size:10px;">·</span>
+                <span style="color:#999;font-size:10px;">Mar 12</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <div style="width:28px;height:28px;background:#DCFCE7;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#16A34A;font-size:10px;">▶</div>
+              <div style="width:28px;height:28px;background:#f5f5f5;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#999;font-size:10px;">✏️</div>
+              <div style="width:28px;height:28px;background:#FEF2F2;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#EF4444;font-size:10px;">🗑</div>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div style="background:#fff;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+            <div style="width:48px;height:48px;background:#FCE7F3;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🧚</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:14px;font-weight:700;color:#1a1a1a;">The Fairy Garden</div>
+              <div style="display:flex;gap:6px;align-items:center;margin-top:3px;">
+                <span style="background:#FEF3C7;color:#D97706;font-size:9px;font-weight:600;padding:1px 6px;border-radius:4px;">Bedtime</span>
+                <span style="color:#999;font-size:10px;">7:15</span>
+                <span style="color:#ccc;font-size:10px;">·</span>
+                <span style="color:#999;font-size:10px;">Mar 10</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <div style="width:28px;height:28px;background:#DCFCE7;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#16A34A;font-size:10px;">▶</div>
+              <div style="width:28px;height:28px;background:#f5f5f5;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#999;font-size:10px;">✏️</div>
+              <div style="width:28px;height:28px;background:#FEF2F2;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#EF4444;font-size:10px;">🗑</div>
+            </div>
+          </div>
+
+          <!-- Card 4 -->
+          <div style="background:#fff;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+            <div style="width:48px;height:48px;background:#D1FAE5;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🐉</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:14px;font-weight:700;color:#1a1a1a;">Dragon's Lullaby</div>
+              <div style="display:flex;gap:6px;align-items:center;margin-top:3px;">
+                <span style="background:#EDE9FE;color:#7C3AED;font-size:9px;font-weight:600;padding:1px 6px;border-radius:4px;">Stories</span>
+                <span style="color:#999;font-size:10px;">2:30</span>
+                <span style="color:#ccc;font-size:10px;">·</span>
+                <span style="color:#999;font-size:10px;">Mar 8</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <div style="width:28px;height:28px;background:#DCFCE7;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#16A34A;font-size:10px;">▶</div>
+              <div style="width:28px;height:28px;background:#f5f5f5;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#999;font-size:10px;">✏️</div>
+              <div style="width:28px;height:28px;background:#FEF2F2;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#EF4444;font-size:10px;">🗑</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAB expanded -->
+        <div style="position:absolute;bottom:16px;right:16px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+          <div style="background:#fff;border-radius:12px;padding:10px 14px;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#374151;">📁 Bulk Import</div>
+          <div style="background:#fff;border-radius:12px;padding:10px 14px;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#7C3AED;">✨ Story Builder <span style="background:#EDE9FE;font-size:9px;padding:1px 5px;border-radius:4px;">PRO</span></div>
+          <div style="width:52px;height:52px;background:#FF6B6B;border-radius:16px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;font-weight:300;box-shadow:0 4px 12px rgba(255,107,107,0.4);">+</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

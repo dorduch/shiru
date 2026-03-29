@@ -307,27 +307,39 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
         Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: StoryOptionCard(
-                    emoji: '🔊',
-                    label: 'ElevenLabs',
-                    onTap: () {
-                      HapticFeedback.mediumImpact();
-                      notifier.selectProvider(TtsProvider.elevenlabs);
-                    },
-                  ),
+                const _AiDisclosureCard(
+                  text:
+                      'Story requests are sent to OpenAI. If you choose a family voice, that voice sample may also be sent to ElevenLabs or Cartesia to generate narration. Only continue if you are an adult using a voice you are allowed to use.',
                 ),
-                const SizedBox(width: 20),
+                const SizedBox(height: 20),
                 Expanded(
-                  child: StoryOptionCard(
-                    emoji: '🎵',
-                    label: 'Cartesia',
-                    onTap: () {
-                      HapticFeedback.mediumImpact();
-                      notifier.selectProvider(TtsProvider.cartesia);
-                    },
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: StoryOptionCard(
+                          emoji: '🔊',
+                          label: 'ElevenLabs',
+                          onTap: () {
+                            HapticFeedback.mediumImpact();
+                            notifier.selectProvider(TtsProvider.elevenlabs);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: StoryOptionCard(
+                          emoji: '🎵',
+                          label: 'Cartesia',
+                          onTap: () {
+                            HapticFeedback.mediumImpact();
+                            notifier.selectProvider(TtsProvider.cartesia);
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -362,6 +374,11 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const _AiDisclosureCard(
+                  text:
+                      'Selecting a family voice means that voice sample can be sent to the chosen narration provider when you generate the story. Stock voices do not use your personal recordings.',
+                ),
+                const SizedBox(height: 20),
                 profilesAsync.when(
                   data: (profiles) {
                     if (profiles.isEmpty) return const SizedBox.shrink();
@@ -803,6 +820,42 @@ class _StoryBuilderScreenState extends ConsumerState<StoryBuilderScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _AiDisclosureCard extends StatelessWidget {
+  final String text;
+
+  const _AiDisclosureCard({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFFED7AA)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline, color: Color(0xFFEA580C)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 14,
+                height: 1.5,
+                color: Color(0xFF9A3412),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

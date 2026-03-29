@@ -5,6 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'providers/auth_provider.dart';
 import 'router.dart';
+import 'theme/app_colors.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,11 +16,7 @@ void main() async {
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   WakelockPlus.enable();
 
-  runApp(
-    const ProviderScope(
-      child: ShiruApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: ShiruApp()));
 }
 
 class ShiruApp extends ConsumerStatefulWidget {
@@ -29,7 +26,8 @@ class ShiruApp extends ConsumerStatefulWidget {
   ConsumerState<ShiruApp> createState() => _ShiruAppState();
 }
 
-class _ShiruAppState extends ConsumerState<ShiruApp> with WidgetsBindingObserver {
+class _ShiruAppState extends ConsumerState<ShiruApp>
+    with WidgetsBindingObserver {
   late final _router = createRouter(ref);
 
   @override
@@ -65,11 +63,9 @@ class _ShiruAppState extends ConsumerState<ShiruApp> with WidgetsBindingObserver
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        supportedLocales: const [
-          Locale('en', ''),
-        ],
+        supportedLocales: const [Locale('en', '')],
         theme: ThemeData(
-          scaffoldBackgroundColor: const Color(0xFFFFFBEB),
+          scaffoldBackgroundColor: AppColors.background,
           fontFamily: 'sans-serif',
         ),
         routerConfig: _router,
