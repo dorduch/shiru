@@ -29,6 +29,7 @@ class _VoiceRecordScreenState extends ConsumerState<VoiceRecordScreen> {
   final _nameController = TextEditingController();
   final _recordingService = RecordingService();
 
+  bool _acceptedDisclosure = false;
   String? _recordedPath;
   Duration _elapsed = Duration.zero;
   double _amplitude = 0;
@@ -158,6 +159,9 @@ class _VoiceRecordScreenState extends ConsumerState<VoiceRecordScreen> {
     return '$m:$s';
   }
 
+  bool get _canProvideVoiceSample =>
+      _nameController.text.trim().isNotEmpty && _acceptedDisclosure;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -243,13 +247,70 @@ class _VoiceRecordScreenState extends ConsumerState<VoiceRecordScreen> {
             style: TextStyle(fontSize: 15, height: 1.6, color: Color(0xFF374151)),
           ),
         ),
+        const SizedBox(height: 20),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF7ED),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFFED7AA)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.info_outline, color: Color(0xFFEA580C)),
+                  SizedBox(width: 8),
+                  Text(
+                    'Before you continue',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF9A3412),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'When you later use this voice to generate a story, the recording and story prompt may be sent to OpenAI, ElevenLabs, and Cartesia to create narration. Use only your own adult voice or a voice you have permission to use.',
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.5,
+                  color: Color(0xFF9A3412),
+                ),
+              ),
+              const SizedBox(height: 12),
+              CheckboxListTile(
+                value: _acceptedDisclosure,
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                activeColor: const Color(0xFFEA580C),
+                title: const Text(
+                  'I understand and confirm this is an adult voice I am allowed to use.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF7C2D12),
+                  ),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _acceptedDisclosure = value ?? false;
+                  });
+                },
+              ),
+            ],
+          ),
+        ),
         const Spacer(),
         GestureDetector(
-          onTap: _nameController.text.trim().isNotEmpty ? _startRecording : null,
+          onTap: _canProvideVoiceSample ? _startRecording : null,
           child: Container(
             height: 56,
             decoration: BoxDecoration(
-              color: _nameController.text.trim().isNotEmpty
+              color: _canProvideVoiceSample
                   ? const Color(0xFFEF4444)
                   : const Color(0xFFD1D5DB),
               borderRadius: BorderRadius.circular(28),
@@ -270,11 +331,13 @@ class _VoiceRecordScreenState extends ConsumerState<VoiceRecordScreen> {
         ),
         const SizedBox(height: 12),
         GestureDetector(
-          onTap: _uploadFile,
+          onTap: _canProvideVoiceSample ? _uploadFile : null,
           child: Container(
             height: 56,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: _canProvideVoiceSample
+                  ? Colors.white
+                  : const Color(0xFFF3F4F6),
               borderRadius: BorderRadius.circular(28),
               border: Border.all(color: const Color(0xFFE5E7EB), width: 2),
             ),

@@ -4,8 +4,8 @@ class AppColors {
   AppColors._();
 
   // ─── Backgrounds ─────────────────────────────────────────────────────────
-  /// Warm cream — kid home screen & story builder
-  static const background = Color(0xFFFFFBEB);
+  /// Warm parchment — primary Shiru canvas
+  static const background = Color(0xFFF4F1EC);
 
   /// Cool gray — parent screens & pin screen
   static const backgroundParent = Color(0xFFF6F7F8);
@@ -20,8 +20,8 @@ class AppColors {
   /// Near-black — card titles, primary body text, keypad numbers
   static const textPrimary = Color(0xFF1A1A1A);
 
-  /// Dark blue-gray — app logo "Shiru", section labels in story builder
-  static const textDark = Color(0xFF222F3E);
+  /// Deep navy — Shiru wordmark and brand ink
+  static const textDark = Color(0xFF243B67);
 
   /// Medium gray — subtitles, button labels, empty-state text hint
   static const textSecondary = Color(0xFF6B7280);
@@ -61,4 +61,11 @@ class AppColors {
   // ─── Misc ─────────────────────────────────────────────────────────────────
   /// Progress bar track background, inactive step dots
   static const progressTrack = Color(0xFFE5E7EB);
+
+  // ─── Brand ───────────────────────────────────────────────────────────────
+  /// Soft sky — header icon backdrop
+  static const logoSurface = Color(0xFFD8E9FF);
+
+  /// Mint highlight — secondary Shiru brand accent
+  static const logoMint = Color(0xFFBFF7E8);
 }

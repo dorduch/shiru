@@ -10,7 +10,9 @@ import '../providers/categories_provider.dart';
 import '../models/category.dart' as cat_model;
 import 'package:flutter/services.dart';
 import '../services/audio_service.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_responsive.dart';
+import '../theme/app_typography.dart';
 import 'pixel_sprite.dart';
 import 'giphy_sprite.dart';
 
@@ -39,7 +41,7 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFBEB),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -62,13 +64,10 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Text(
+                      Text(
                         'Shiru',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF222f3e),
-                          letterSpacing: 1.2,
+                        style: AppTypography.logoWordmark.copyWith(
+                          color: AppColors.textDark,
                         ),
                       ),
                     ],
@@ -77,7 +76,12 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                     label: 'Parent settings',
                     button: true,
                     child: InkWell(
-                      onTap: () => context.push('/pin'),
+                      onTap: () => context.push(
+                        Uri(
+                          path: '/parent-access',
+                          queryParameters: {'next': '/parent'},
+                        ).toString(),
+                      ),
                       child: Container(
                         width: 56,
                         height: 56,
@@ -89,13 +93,13 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                               color: Colors.black12,
                               blurRadius: 12,
                               offset: Offset(0, 4),
-                            )
+                            ),
                           ],
                         ),
                         child: const Icon(Icons.lock, color: Colors.grey),
                       ),
                     ),
-                  )
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -112,7 +116,11 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                     // Filter by selected category
                     final filtered = _selectedCategoryId == null
                         ? cards
-                        : cards.where((c) => c.collectionId == _selectedCategoryId).toList();
+                        : cards
+                              .where(
+                                (c) => c.collectionId == _selectedCategoryId,
+                              )
+                              .toList();
 
                     if (filtered.isEmpty) {
                       return Center(
@@ -120,23 +128,29 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                           _selectedCategoryId == null
                               ? "Ask your parents to add cards!"
                               : "No cards in this category!",
-                          style: const TextStyle(fontSize: 24, color: Colors.black54),
+                          style: const TextStyle(
+                            fontSize: 24,
+                            color: Colors.black54,
+                          ),
                         ),
                       );
                     }
                     return GridView.builder(
                       padding: const EdgeInsets.only(bottom: 24),
-                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 240,
-                        crossAxisSpacing: 24,
-                        mainAxisSpacing: 24,
-                        childAspectRatio: 0.85,
-                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 240,
+                            crossAxisSpacing: 24,
+                            mainAxisSpacing: 24,
+                            childAspectRatio: 0.85,
+                          ),
                       itemCount: filtered.length,
                       itemBuilder: (context, index) {
                         final card = filtered[index];
                         final isPlayingThis = currentlyPlayingId == card.id;
-                        final isAnotherPlaying = currentlyPlayingId != null && currentlyPlayingId != card.id;
+                        final isAnotherPlaying =
+                            currentlyPlayingId != null &&
+                            currentlyPlayingId != card.id;
                         return AudioCardTile(
                           card: card,
                           isPlayingThis: isPlayingThis,
@@ -146,18 +160,19 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                       },
                     );
                   },
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (err, stack) => Center(child: Text('Error: $err')),
-                )
+                ),
               ),
 
               const SizedBox(height: 24),
               if (currentlyPlayingId != null)
-                 _buildPlayerPill(context, ref, currentlyPlayingId, isPlaying)
-            ]
-          )
-        )
-      )
+                _buildPlayerPill(context, ref, currentlyPlayingId, isPlaying),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -166,26 +181,36 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          _buildTab(label: 'All', isActive: _selectedCategoryId == null, onTap: () {
-            setState(() => _selectedCategoryId = null);
-          }),
+          _buildTab(
+            label: 'All',
+            isActive: _selectedCategoryId == null,
+            onTap: () {
+              setState(() => _selectedCategoryId = null);
+            },
+          ),
           const SizedBox(width: 8),
-          ...categories.map((cat) => Padding(
-            padding: const EdgeInsetsDirectional.only(end: 8),
-            child: _buildTab(
-              label: '${cat.emoji} ${cat.name}',
-              isActive: _selectedCategoryId == cat.id,
-              onTap: () {
-                setState(() => _selectedCategoryId = cat.id);
-              },
+          ...categories.map(
+            (cat) => Padding(
+              padding: const EdgeInsetsDirectional.only(end: 8),
+              child: _buildTab(
+                label: '${cat.emoji} ${cat.name}',
+                isActive: _selectedCategoryId == cat.id,
+                onTap: () {
+                  setState(() => _selectedCategoryId = cat.id);
+                },
+              ),
             ),
-          )),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildTab({required String label, required bool isActive, required VoidCallback onTap}) {
+  Widget _buildTab({
+    required String label,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
     return Semantics(
       label: 'Category: $label',
       button: true,
@@ -193,29 +218,40 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-        height: 44,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF22C55E) : Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))],
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: isActive ? Colors.white : const Color(0xFF6B7280),
+          height: 44,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: BoxDecoration(
+            color: isActive ? const Color(0xFF22C55E) : Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: isActive ? Colors.white : const Color(0xFF6B7280),
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 
-  Widget _buildPlayerPill(BuildContext context, WidgetRef ref, String playingId, bool isPlayingGlobal) {
+  Widget _buildPlayerPill(
+    BuildContext context,
+    WidgetRef ref,
+    String playingId,
+    bool isPlayingGlobal,
+  ) {
     final cardsAsync = ref.read(cardsProvider);
     final card = cardsAsync.value?.firstWhere((c) => c.id == playingId);
     if (card == null) return const SizedBox.shrink();
@@ -227,7 +263,13 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(44),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 24, offset: Offset(0, 12))]
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 24,
+            offset: Offset(0, 12),
+          ),
+        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(44),
@@ -242,36 +284,71 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 64, height: 64,
-                              decoration: BoxDecoration(color: hexOrFallback(card.color), shape: BoxShape.circle),
-                              alignment: Alignment.center,
-                              child: FittedBox(
-                                  child: GiphySprite(title: card.spriteKey != null && card.spriteKey!.isNotEmpty ? card.spriteKey! : card.title, fallbackSprite: spriteDef, state: isPlayingGlobal ? SpriteState.active : SpriteState.idle, scale: 3.5)
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: hexOrFallback(card.color),
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
+                            child: FittedBox(
+                              child: GiphySprite(
+                                title:
+                                    card.spriteKey != null &&
+                                        card.spriteKey!.isNotEmpty
+                                    ? card.spriteKey!
+                                    : card.title,
+                                fallbackSprite: spriteDef,
+                                state: isPlayingGlobal
+                                    ? SpriteState.active
+                                    : SpriteState.idle,
+                                scale: 3.5,
                               ),
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      card.title,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF1A1A1A)),
-                                      textDirection: intl.Bidi.detectRtlDirectionality(card.title) ? TextDirection.rtl : TextDirection.ltr,
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(isPlayingGlobal ? "Now Playing" : "Paused", maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isPlayingGlobal ? const Color(0xFF22C55E) : const Color(0xFF6B7280))),
-                                  ],
-                                )
-                            )
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  card.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF1A1A1A),
+                                  ),
+                                  textDirection:
+                                      intl.Bidi.detectRtlDirectionality(
+                                        card.title,
+                                      )
+                                      ? TextDirection.rtl
+                                      : TextDirection.ltr,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  isPlayingGlobal ? "Now Playing" : "Paused",
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: isPlayingGlobal
+                                        ? const Color(0xFF22C55E)
+                                        : const Color(0xFF6B7280),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Row(
@@ -282,9 +359,17 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                           child: GestureDetector(
                             onTap: () => ref.read(audioServiceProvider).stop(),
                             child: Container(
-                              width: 56, height: 56,
-                              decoration: const BoxDecoration(color: Color(0xFFF6F7F8), shape: BoxShape.circle),
-                              child: const Icon(Icons.stop_rounded, size: 28, color: Color(0xFF1A1A1A)),
+                              width: 56,
+                              height: 56,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFF6F7F8),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.stop_rounded,
+                                size: 28,
+                                color: Color(0xFF1A1A1A),
+                              ),
                             ),
                           ),
                         ),
@@ -293,20 +378,34 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                           label: isPlayingGlobal ? 'Pause' : 'Play',
                           button: true,
                           child: GestureDetector(
-                            onTap: () => ref.read(audioServiceProvider).playCard(card),
+                            onTap: () =>
+                                ref.read(audioServiceProvider).playCard(card),
                             child: Container(
-                              width: 64, height: 64,
+                              width: 64,
+                              height: 64,
                               decoration: const BoxDecoration(
                                 color: Color(0xFFFF6B6B),
                                 shape: BoxShape.circle,
-                                boxShadow: [BoxShadow(color: Color(0x40FF6B6B), blurRadius: 12, offset: Offset(0, 4))]
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Color(0x40FF6B6B),
+                                    blurRadius: 12,
+                                    offset: Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                isPlayingGlobal
+                                    ? Icons.pause_rounded
+                                    : Icons.play_arrow_rounded,
+                                size: 36,
+                                color: Colors.white,
+                              ),
                             ),
-                            child: Icon(isPlayingGlobal ? Icons.pause_rounded : Icons.play_arrow_rounded, size: 36, color: Colors.white),
                           ),
                         ),
-                      )
-                    ],
-                    )
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -323,7 +422,9 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                   value: progress,
                   minHeight: 3,
                   backgroundColor: const Color(0xFFE5E7EB),
-                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFF6B6B)),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    Color(0xFFFF6B6B),
+                  ),
                 );
               },
             ),
@@ -352,7 +453,8 @@ class AudioCardTile extends ConsumerStatefulWidget {
   ConsumerState<AudioCardTile> createState() => _AudioCardTileState();
 }
 
-class _AudioCardTileState extends ConsumerState<AudioCardTile> with SingleTickerProviderStateMixin {
+class _AudioCardTileState extends ConsumerState<AudioCardTile>
+    with SingleTickerProviderStateMixin {
   bool _isPressed = false;
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
@@ -382,7 +484,10 @@ class _AudioCardTileState extends ConsumerState<AudioCardTile> with SingleTicker
       }
     } else {
       _pulseController.stop();
-      _pulseController.animateTo(0.0, duration: const Duration(milliseconds: 200));
+      _pulseController.animateTo(
+        0.0,
+        duration: const Duration(milliseconds: 200),
+      );
     }
   }
 
@@ -401,92 +506,121 @@ class _AudioCardTileState extends ConsumerState<AudioCardTile> with SingleTicker
 
     final scale = _isPressed ? 0.93 : 1.0;
     final opacity = widget.isAnotherPlaying ? 0.6 : 1.0;
-    
+
     return Semantics(
       label: '${widget.card.title}, tap to play',
       button: true,
       enabled: !widget.isAnotherPlaying,
       child: AnimatedOpacity(
-      duration: const Duration(milliseconds: 300),
-      opacity: opacity,
-      child: GestureDetector(
-        onTapDown: (_) {
-          HapticFeedback.lightImpact();
-          setState(() => _isPressed = true);
-        },
-        onTapUp: (_) {
-          setState(() => _isPressed = false);
-        },
-        onTapCancel: () {
-          setState(() => _isPressed = false);
-        },
-        onTap: () {
-          HapticFeedback.mediumImpact();
-          ref.read(audioServiceProvider).playCard(widget.card);
-        },
-        child: AnimatedScale(
-          scale: scale,
-          duration: const Duration(milliseconds: 150),
-          curve: Curves.easeOutBack,
-          child: AnimatedBuilder(
-            animation: _pulseAnimation,
-            builder: (context, child) {
-              return Transform.scale(
-                scale: widget.isPlayingThis ? _pulseAnimation.value : 1.0,
-                child: child,
-              );
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: widget.isPlayingThis
-                    ? Border.all(color: const Color(0xFFFF6B6B), width: 4)
-                    : Border.all(color: Colors.transparent, width: 4),
-                boxShadow: widget.isPlayingThis
-                    ? const [
-                        BoxShadow(color: Color(0x66FF6B6B), blurRadius: 24, spreadRadius: 4),
-                        BoxShadow(color: Colors.black12, blurRadius: 24, offset: Offset(0, 12))
-                      ]
-                    : const [BoxShadow(color: Colors.black12, blurRadius: 24, offset: Offset(0, 12))],
-              ),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: hexOrFallback(widget.card.color),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      alignment: Alignment.center,
-                      child: FittedBox(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: GiphySprite(title: widget.card.spriteKey != null && widget.card.spriteKey!.isNotEmpty ? widget.card.spriteKey! : widget.card.title, fallbackSprite: spriteDef, state: state, scale: AppResponsive.spriteScale(context)),
+        duration: const Duration(milliseconds: 300),
+        opacity: opacity,
+        child: GestureDetector(
+          onTapDown: (_) {
+            HapticFeedback.lightImpact();
+            setState(() => _isPressed = true);
+          },
+          onTapUp: (_) {
+            setState(() => _isPressed = false);
+          },
+          onTapCancel: () {
+            setState(() => _isPressed = false);
+          },
+          onTap: () {
+            HapticFeedback.mediumImpact();
+            ref.read(audioServiceProvider).playCard(widget.card);
+          },
+          child: AnimatedScale(
+            scale: scale,
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOutBack,
+            child: AnimatedBuilder(
+              animation: _pulseAnimation,
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: widget.isPlayingThis ? _pulseAnimation.value : 1.0,
+                  child: child,
+                );
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: widget.isPlayingThis
+                      ? Border.all(color: const Color(0xFFFF6B6B), width: 4)
+                      : Border.all(color: Colors.transparent, width: 4),
+                  boxShadow: widget.isPlayingThis
+                      ? const [
+                          BoxShadow(
+                            color: Color(0x66FF6B6B),
+                            blurRadius: 24,
+                            spreadRadius: 4,
+                          ),
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 24,
+                            offset: Offset(0, 12),
+                          ),
+                        ]
+                      : const [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 24,
+                            offset: Offset(0, 12),
+                          ),
+                        ],
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: hexOrFallback(widget.card.color),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        alignment: Alignment.center,
+                        child: FittedBox(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: GiphySprite(
+                              title:
+                                  widget.card.spriteKey != null &&
+                                      widget.card.spriteKey!.isNotEmpty
+                                  ? widget.card.spriteKey!
+                                  : widget.card.title,
+                              fallbackSprite: spriteDef,
+                              state: state,
+                              scale: AppResponsive.spriteScale(context),
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    widget.card.title,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF1A1A1A)),
-                    textDirection: intl.Bidi.detectRtlDirectionality(widget.card.title) ? TextDirection.rtl : TextDirection.ltr,
-                  )
-                ],
+                    const SizedBox(height: 12),
+                    Text(
+                      widget.card.title,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1A1A1A),
+                      ),
+                      textDirection:
+                          intl.Bidi.detectRtlDirectionality(widget.card.title)
+                          ? TextDirection.rtl
+                          : TextDirection.ltr,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 }
-
