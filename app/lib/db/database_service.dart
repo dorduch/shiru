@@ -206,11 +206,15 @@ SELECT id, name, elevenlabs_voice_id, sample_path, created_at
 FROM voice_profiles
 ''');
         await txn.execute('DROP TABLE voice_profiles');
-        await txn.execute('ALTER TABLE voice_profiles_new RENAME TO voice_profiles');
+        await txn.execute(
+          'ALTER TABLE voice_profiles_new RENAME TO voice_profiles',
+        );
       });
     }
     if (oldVersion < 5) {
-      await db.execute("ALTER TABLE voice_profiles ADD COLUMN provider TEXT NOT NULL DEFAULT 'cartesia'");
+      await db.execute(
+        "ALTER TABLE voice_profiles ADD COLUMN provider TEXT NOT NULL DEFAULT 'cartesia'",
+      );
     }
     if (oldVersion < 6) {
       await db.transaction((txn) async {
@@ -229,7 +233,9 @@ FROM voice_profiles
 WHERE sample_path IS NOT NULL
 ''');
         await txn.execute('DROP TABLE voice_profiles');
-        await txn.execute('ALTER TABLE voice_profiles_new RENAME TO voice_profiles');
+        await txn.execute(
+          'ALTER TABLE voice_profiles_new RENAME TO voice_profiles',
+        );
       });
     }
   }
@@ -242,6 +248,17 @@ WHERE sample_path IS NOT NULL
     final db = await instance.database;
     await db.insert('cards', card.toMap());
     return card;
+  }
+
+  Future<void> createCards(List<AudioCard> cards) async {
+    if (cards.isEmpty) return;
+
+    final db = await instance.database;
+    await db.transaction((txn) async {
+      for (final card in cards) {
+        await txn.insert('cards', card.toMap());
+      }
+    });
   }
 
   Future<AudioCard> readCard(String id) async {
@@ -262,7 +279,10 @@ WHERE sample_path IS NOT NULL
 
   Future<List<AudioCard>> readAllCards() async {
     final db = await instance.database;
-    final result = await db.query('cards', orderBy: 'position ASC, created_at DESC');
+    final result = await db.query(
+      'cards',
+      orderBy: 'position ASC, created_at DESC',
+    );
     return result.map((map) => AudioCard.fromMap(map)).toList();
   }
 
@@ -278,11 +298,16 @@ WHERE sample_path IS NOT NULL
 
   Future<int> deleteCard(String id) async {
     final db = await instance.database;
-    return await db.delete(
-      'cards',
-      where: 'id = ?',
-      whereArgs: [id],
+    return await db.delete('cards', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> countCardsWithAudioPath(String audioPath) async {
+    final db = await instance.database;
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) AS count FROM cards WHERE audio_path = ?',
+      [audioPath],
     );
+    return Sqflite.firstIntValue(result) ?? 0;
   }
 
   // ---------------------------------------------------------------------------
@@ -313,11 +338,20 @@ WHERE sample_path IS NOT NULL
 
   Future<int> deleteCategory(String id) async {
     final db = await instance.database;
-    return await db.delete(
-      'categories',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('categories', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> deleteCategoryAndUnassignCards(String id) async {
+    final db = await instance.database;
+    await db.transaction((txn) async {
+      await txn.update(
+        'cards',
+        {'collection_id': null},
+        where: 'collection_id = ?',
+        whereArgs: [id],
+      );
+      await txn.delete('categories', where: 'id = ?', whereArgs: [id]);
+    });
   }
 
   Future<void> batchUpdateCategoryPositions(List<Category> categories) async {
@@ -352,11 +386,7 @@ WHERE sample_path IS NOT NULL
 
   Future<int> deleteVoiceProfile(String id) async {
     final db = await instance.database;
-    return await db.delete(
-      'voice_profiles',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('voice_profiles', where: 'id = ?', whereArgs: [id]);
   }
 
   Future close() async {
