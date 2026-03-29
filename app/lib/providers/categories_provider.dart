@@ -27,7 +27,7 @@ class CategoriesNotifier extends StateNotifier<AsyncValue<List<Category>>> {
   }
 
   Future<void> deleteCategory(String id) async {
-    await DatabaseService.instance.deleteCategory(id);
+    await DatabaseService.instance.deleteCategoryAndUnassignCards(id);
     await loadCategories();
   }
 
