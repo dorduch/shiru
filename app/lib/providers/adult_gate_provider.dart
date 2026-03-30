@@ -1,11 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+import '../services/key_value_store.dart';
 
 class AdultGateNotifier extends StateNotifier<AsyncValue<bool>> {
-  static const _storage = FlutterSecureStorage();
   static const _key = 'adult_gate_verified';
+  final KeyValueStore _storage;
 
-  AdultGateNotifier() : super(const AsyncValue.loading()) {
+  AdultGateNotifier(this._storage) : super(const AsyncValue.loading()) {
     _loadStatus();
   }
 
@@ -31,5 +32,5 @@ class AdultGateNotifier extends StateNotifier<AsyncValue<bool>> {
 
 final adultAgeVerifiedProvider =
     StateNotifierProvider<AdultGateNotifier, AsyncValue<bool>>(
-      (ref) => AdultGateNotifier(),
+      (ref) => AdultGateNotifier(ref.watch(keyValueStoreProvider)),
     );

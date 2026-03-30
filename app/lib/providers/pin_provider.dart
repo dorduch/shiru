@@ -1,11 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+import '../services/key_value_store.dart';
 
 class PinNotifier extends StateNotifier<AsyncValue<String?>> {
-  static const _storage = FlutterSecureStorage();
   static const _key = 'parent_pin';
+  final KeyValueStore _storage;
 
-  PinNotifier() : super(const AsyncValue.loading()) {
+  PinNotifier(this._storage) : super(const AsyncValue.loading()) {
     _loadPin();
   }
 
@@ -25,5 +26,5 @@ class PinNotifier extends StateNotifier<AsyncValue<String?>> {
 }
 
 final pinProvider = StateNotifierProvider<PinNotifier, AsyncValue<String?>>(
-  (ref) => PinNotifier(),
+  (ref) => PinNotifier(ref.watch(keyValueStoreProvider)),
 );

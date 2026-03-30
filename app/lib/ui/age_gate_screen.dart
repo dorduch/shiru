@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../logic/age_gate_logic.dart';
 import '../providers/adult_gate_provider.dart';
 
 class AgeGateScreen extends ConsumerStatefulWidget {
@@ -38,28 +39,14 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
     });
   }
 
-  int _calculateAge(DateTime birthDate, DateTime now) {
-    var age = now.year - birthDate.year;
-    final birthdayReached =
-        now.month > birthDate.month ||
-        (now.month == birthDate.month && now.day >= birthDate.day);
-    if (!birthdayReached) age -= 1;
-    return age;
-  }
-
   Future<void> _continue() async {
-    final birthDate = _selectedBirthDate;
-    if (birthDate == null) {
+    final validationError = validateAdultBirthDate(
+      _selectedBirthDate,
+      DateTime.now(),
+    );
+    if (validationError != null) {
       setState(() {
-        _errorMessage = 'Enter your birth date to continue.';
-      });
-      return;
-    }
-
-    final age = _calculateAge(birthDate, DateTime.now());
-    if (age < 18) {
-      setState(() {
-        _errorMessage = 'This area is only available to adults.';
+        _errorMessage = validationError;
       });
       return;
     }

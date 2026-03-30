@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'logic/parent_flow_logic.dart';
 import 'providers/auth_provider.dart';
 import 'ui/kid_home_screen.dart';
 import 'ui/age_gate_screen.dart';
@@ -13,23 +14,15 @@ import 'models/category.dart';
 import 'ui/change_pin_screen.dart';
 import 'ui/bulk_import_screen.dart';
 
-String _routeWithNext(String path, String nextLocation) {
-  return Uri(path: path, queryParameters: {'next': nextLocation}).toString();
-}
-
-bool _isParentAreaLocation(String location) {
-  final path = Uri.parse(location).path;
-  return path.startsWith('/parent');
-}
-
 OnEnterResult _handleParentAreaTransition(
   WidgetRef ref,
   GoRouterState currentState,
   GoRouterState nextState,
 ) {
-  final isLeavingParentArea =
-      _isParentAreaLocation(currentState.uri.toString()) &&
-      !_isParentAreaLocation(nextState.uri.toString());
+  final isLeavingParentArea = shouldResetParentAuth(
+    currentLocation: currentState.uri.toString(),
+    nextLocation: nextState.uri.toString(),
+  );
 
   if (isLeavingParentArea) {
     ref.read(parentAuthProvider.notifier).state = false;
@@ -39,13 +32,10 @@ OnEnterResult _handleParentAreaTransition(
 }
 
 String? _protectAdultRoute(WidgetRef ref, GoRouterState state) {
-  final nextLocation = state.uri.toString();
-  final isAuthenticated = ref.read(parentAuthProvider);
-  if (!isAuthenticated) {
-    return _routeWithNext('/parent-access', nextLocation);
-  }
-
-  return null;
+  return protectAdultRoute(
+    isAuthenticated: ref.read(parentAuthProvider),
+    nextLocation: state.uri.toString(),
+  );
 }
 
 GoRouter createRouter(WidgetRef ref) {
