@@ -5,7 +5,6 @@ import 'package:sqflite_sqlcipher/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/audio_card.dart';
 import '../models/category.dart';
-import '../models/voice_profile.dart';
 
 /// Key under which the DB encryption password is stored in secure storage.
 const _kDbPasswordKey = 'db_encryption_key';
@@ -156,15 +155,6 @@ CREATE TABLE categories (
   position INTEGER DEFAULT 0
 )
 ''');
-
-    await db.execute('''
-CREATE TABLE voice_profiles (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  sample_path TEXT NOT NULL,
-  created_at INTEGER NOT NULL
-)
-''');
   }
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
@@ -177,66 +167,6 @@ CREATE TABLE categories (
   position INTEGER DEFAULT 0
 )
 ''');
-    }
-    if (oldVersion < 3) {
-      await db.execute('''
-CREATE TABLE voice_profiles (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  elevenlabs_voice_id TEXT NOT NULL,
-  sample_path TEXT,
-  created_at INTEGER NOT NULL
-)
-''');
-    }
-    if (oldVersion < 4) {
-      await db.transaction((txn) async {
-        await txn.execute('''
-CREATE TABLE voice_profiles_new (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  voice_id TEXT NOT NULL,
-  sample_path TEXT,
-  created_at INTEGER NOT NULL
-)
-''');
-        await txn.execute('''
-INSERT INTO voice_profiles_new
-SELECT id, name, elevenlabs_voice_id, sample_path, created_at
-FROM voice_profiles
-''');
-        await txn.execute('DROP TABLE voice_profiles');
-        await txn.execute(
-          'ALTER TABLE voice_profiles_new RENAME TO voice_profiles',
-        );
-      });
-    }
-    if (oldVersion < 5) {
-      await db.execute(
-        "ALTER TABLE voice_profiles ADD COLUMN provider TEXT NOT NULL DEFAULT 'cartesia'",
-      );
-    }
-    if (oldVersion < 6) {
-      await db.transaction((txn) async {
-        await txn.execute('''
-CREATE TABLE voice_profiles_new (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  sample_path TEXT NOT NULL,
-  created_at INTEGER NOT NULL
-)
-''');
-        await txn.execute('''
-INSERT INTO voice_profiles_new
-SELECT id, name, sample_path, created_at
-FROM voice_profiles
-WHERE sample_path IS NOT NULL
-''');
-        await txn.execute('DROP TABLE voice_profiles');
-        await txn.execute(
-          'ALTER TABLE voice_profiles_new RENAME TO voice_profiles',
-        );
-      });
     }
   }
 
@@ -366,27 +296,6 @@ WHERE sample_path IS NOT NULL
         );
       }
     });
-  }
-
-  // ---------------------------------------------------------------------------
-  // CRUD — voice profiles
-  // ---------------------------------------------------------------------------
-
-  Future<VoiceProfile> createVoiceProfile(VoiceProfile profile) async {
-    final db = await instance.database;
-    await db.insert('voice_profiles', profile.toMap());
-    return profile;
-  }
-
-  Future<List<VoiceProfile>> readAllVoiceProfiles() async {
-    final db = await instance.database;
-    final result = await db.query('voice_profiles', orderBy: 'created_at DESC');
-    return result.map((map) => VoiceProfile.fromMap(map)).toList();
-  }
-
-  Future<int> deleteVoiceProfile(String id) async {
-    final db = await instance.database;
-    return await db.delete('voice_profiles', where: 'id = ?', whereArgs: [id]);
   }
 
   Future close() async {

@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:just_audio/just_audio.dart';
 
-import '../app_mode.dart';
 import '../models/audio_card.dart';
 import '../models/category.dart';
 import '../models/sprites.dart';
@@ -41,9 +40,7 @@ class ParentListScreen extends ConsumerWidget {
             children: [
               _LibraryHeader(
                 onBulkImport: () => context.push('/parent/bulk-import'),
-                onVoices: () => _handleVoicesTap(context),
                 onAddCard: () => context.go('/parent/edit'),
-                onStoryBuilder: () => _handleStoryBuilderTap(context),
                 onMenuSelected: (action) {
                   switch (action) {
                     case _LibraryMenuAction.changePin:
@@ -63,8 +60,6 @@ class ParentListScreen extends ConsumerWidget {
                       return _LibraryEmptyState(
                         onAddCard: () => context.go('/parent/edit'),
                         onBulkImport: () => context.push('/parent/bulk-import'),
-                        onVoices: () => _handleVoicesTap(context),
-                        onStoryBuilder: () => _handleStoryBuilderTap(context),
                       );
                     }
 
@@ -97,190 +92,16 @@ class ParentListScreen extends ConsumerWidget {
       ),
     );
   }
-
-  void _handleStoryBuilderTap(BuildContext context) {
-    if (isPaidApp) {
-      context.push('/story-builder');
-      return;
-    }
-
-    _showPremiumSheet(context);
-  }
-
-  void _handleVoicesTap(BuildContext context) {
-    if (isPaidApp) {
-      context.push('/parent/voices');
-      return;
-    }
-
-    _showPremiumSheet(context);
-  }
-
-  Future<void> _showPremiumSheet(BuildContext context) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (sheetContext) {
-        return SafeArea(
-          top: false,
-          child: Container(
-            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x1F0F172A),
-                  blurRadius: 24,
-                  offset: Offset(0, 12),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Icon(
-                        Icons.auto_awesome,
-                        color: Colors.white,
-                        size: 26,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    const Expanded(
-                      child: Text(
-                        'Premium storytelling',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF111827),
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.of(sheetContext).pop(),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Story Builder and family voices are part of the paid plan. Keep them visible so parents discover them, but route taps through one clear upgrade flow.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    height: 1.45,
-                    color: Color(0xFF6B7280),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                const _PremiumFeatureRow(
-                  icon: Icons.auto_stories_outlined,
-                  title: 'Generate original stories',
-                  subtitle:
-                      'Create new adventures with guided prompts and narration.',
-                ),
-                const SizedBox(height: 14),
-                const _PremiumFeatureRow(
-                  icon: Icons.mic_none_rounded,
-                  title: 'Add family voices',
-                  subtitle:
-                      'Record and manage voice profiles for more personal playback.',
-                ),
-                const SizedBox(height: 14),
-                const _PremiumFeatureRow(
-                  icon: Icons.workspace_premium_outlined,
-                  title: 'Keep import separate',
-                  subtitle:
-                      'Bulk Import stays available on the free library workflow.',
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.of(sheetContext).pop(),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF374151),
-                          side: const BorderSide(color: Color(0xFFE5E7EB)),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                        ),
-                        child: const Text(
-                          'Not Now',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(sheetContext).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Upgrade flow coming soon.'),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF8B5CF6),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                        ),
-                        child: const Text(
-                          'Upgrade',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
 }
 
 class _LibraryHeader extends StatelessWidget {
   final VoidCallback onBulkImport;
-  final VoidCallback onVoices;
   final VoidCallback onAddCard;
-  final VoidCallback onStoryBuilder;
   final ValueChanged<_LibraryMenuAction> onMenuSelected;
 
   const _LibraryHeader({
     required this.onBulkImport,
-    required this.onVoices,
     required this.onAddCard,
-    required this.onStoryBuilder,
     required this.onMenuSelected,
   });
 
@@ -316,20 +137,6 @@ class _LibraryHeader extends StatelessWidget {
                   icon: Icons.folder_open_outlined,
                   variant: _LibraryActionVariant.secondary,
                   onTap: onBulkImport,
-                ),
-                _LibraryActionButton(
-                  label: 'Voices',
-                  icon: Icons.mic_none_rounded,
-                  variant: _LibraryActionVariant.premium,
-                  badge: isPaidApp ? null : 'PRO',
-                  onTap: onVoices,
-                ),
-                _LibraryActionButton(
-                  label: 'Story Builder',
-                  icon: Icons.auto_awesome,
-                  variant: _LibraryActionVariant.premium,
-                  badge: isPaidApp ? null : 'PRO',
-                  onTap: onStoryBuilder,
                 ),
                 _LibraryActionButton(
                   label: 'Add Card',
@@ -382,14 +189,10 @@ class _LibraryHeader extends StatelessWidget {
 class _LibraryEmptyState extends StatelessWidget {
   final VoidCallback onAddCard;
   final VoidCallback onBulkImport;
-  final VoidCallback onVoices;
-  final VoidCallback onStoryBuilder;
 
   const _LibraryEmptyState({
     required this.onAddCard,
     required this.onBulkImport,
-    required this.onVoices,
-    required this.onStoryBuilder,
   });
 
   @override
@@ -438,7 +241,7 @@ class _LibraryEmptyState extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               const Text(
-                'Add a single story, import a batch of files, manage family voices, or use Story Builder to create something new.',
+                'Add a single recording or import a batch of audio files to get the first library ready.',
                 style: TextStyle(
                   fontSize: 18,
                   height: 1.45,
@@ -463,20 +266,6 @@ class _LibraryEmptyState extends StatelessWidget {
                     icon: Icons.folder_open_outlined,
                     variant: _LibraryActionVariant.secondary,
                     onTap: onBulkImport,
-                  ),
-                  _LibraryActionButton(
-                    label: 'Voices',
-                    icon: Icons.mic_none_rounded,
-                    variant: _LibraryActionVariant.premium,
-                    badge: isPaidApp ? null : 'PRO',
-                    onTap: onVoices,
-                  ),
-                  _LibraryActionButton(
-                    label: 'Story Builder',
-                    icon: Icons.auto_awesome,
-                    variant: _LibraryActionVariant.premium,
-                    badge: isPaidApp ? null : 'PRO',
-                    onTap: onStoryBuilder,
                   ),
                 ],
               ),
@@ -687,66 +476,10 @@ class _CardArtwork extends StatelessWidget {
   }
 }
 
-class _PremiumFeatureRow extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  const _PremiumFeatureRow({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5F3FF),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Icon(icon, color: const Color(0xFF7C3AED)),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF111827),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  fontSize: 14,
-                  height: 1.4,
-                  color: Color(0xFF6B7280),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _LibraryActionButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final _LibraryActionVariant variant;
-  final String? badge;
   final VoidCallback onTap;
 
   const _LibraryActionButton({
@@ -754,13 +487,11 @@ class _LibraryActionButton extends StatelessWidget {
     required this.icon,
     required this.variant,
     required this.onTap,
-    this.badge,
   });
 
   @override
   Widget build(BuildContext context) {
     final bool isPrimary = variant == _LibraryActionVariant.primary;
-    final bool isPremium = variant == _LibraryActionVariant.premium;
 
     return Material(
       color: Colors.transparent,
@@ -772,16 +503,11 @@ class _LibraryActionButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 18),
           decoration: BoxDecoration(
             color: isPrimary ? const Color(0xFFFF6B6B) : Colors.white,
-            gradient: isPremium
-                ? const LinearGradient(
-                    colors: [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
-                  )
-                : null,
             borderRadius: BorderRadius.circular(27),
-            border: isPrimary || isPremium
+            border: isPrimary
                 ? null
                 : Border.all(color: const Color(0xFFE5E7EB), width: 2),
-            boxShadow: isPrimary || isPremium
+            boxShadow: isPrimary
                 ? const [
                     BoxShadow(
                       color: Color(0x1AFF6B6B),
@@ -797,9 +523,7 @@ class _LibraryActionButton extends StatelessWidget {
               Icon(
                 icon,
                 size: 20,
-                color: isPrimary || isPremium
-                    ? Colors.white
-                    : const Color(0xFF6B7280),
+                color: isPrimary ? Colors.white : const Color(0xFF6B7280),
               ),
               const SizedBox(width: 8),
               Text(
@@ -807,34 +531,9 @@ class _LibraryActionButton extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: isPrimary || isPremium
-                      ? Colors.white
-                      : const Color(0xFF374151),
+                  color: isPrimary ? Colors.white : const Color(0xFF374151),
                 ),
               ),
-              if (badge != null) ...[
-                const SizedBox(width: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isPremium
-                        ? const Color(0x33FFFFFF)
-                        : const Color(0xFFEFF6FF),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    badge!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: isPremium ? Colors.white : const Color(0xFF2563EB),
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
         ),
@@ -936,6 +635,6 @@ class _MenuLabel extends StatelessWidget {
   }
 }
 
-enum _LibraryActionVariant { primary, secondary, premium }
+enum _LibraryActionVariant { primary, secondary }
 
 enum _LibraryMenuAction { changePin, categories }
