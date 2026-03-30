@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../logic/parent_flow_logic.dart';
 import '../providers/auth_provider.dart';
 import '../providers/adult_gate_provider.dart';
 
@@ -56,11 +57,11 @@ class ParentAccessScreen extends ConsumerWidget {
       data: (hasVerifiedAdult) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!context.mounted) return;
-          final nextPath = isAuthenticated
-              ? nextLocation
-              : hasVerifiedAdult
-              ? '/pin'
-              : '/age-check';
+          final nextPath = resolveParentAccessDestination(
+            isAuthenticated: isAuthenticated,
+            hasVerifiedAdult: hasVerifiedAdult,
+            nextLocation: nextLocation,
+          );
           context.go(
             Uri(
               path: nextPath,
