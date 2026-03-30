@@ -10,10 +10,7 @@ import 'ui/parent_edit_screen.dart';
 import 'ui/parent_categories_screen.dart';
 import 'ui/parent_category_edit_screen.dart';
 import 'models/category.dart';
-import 'ui/story_builder_screen.dart';
 import 'ui/change_pin_screen.dart';
-import 'ui/voice_profiles_screen.dart';
-import 'ui/voice_record_screen.dart';
 import 'ui/bulk_import_screen.dart';
 
 String _routeWithNext(String path, String nextLocation) {
@@ -22,7 +19,7 @@ String _routeWithNext(String path, String nextLocation) {
 
 bool _isParentAreaLocation(String location) {
   final path = Uri.parse(location).path;
-  return path == '/story-builder' || path.startsWith('/parent');
+  return path.startsWith('/parent');
 }
 
 OnEnterResult _handleParentAreaTransition(
@@ -77,11 +74,6 @@ GoRouter createRouter(WidgetRef ref) {
         ),
       ),
       GoRoute(
-        path: '/story-builder',
-        redirect: (context, state) => _protectAdultRoute(ref, state),
-        builder: (context, state) => const StoryBuilderScreen(),
-      ),
-      GoRoute(
         path: '/parent',
         redirect: (context, state) => _protectAdultRoute(ref, state),
         builder: (context, state) => const ParentListScreen(),
@@ -111,16 +103,6 @@ GoRouter createRouter(WidgetRef ref) {
                   final category = state.extra as Category?;
                   return ParentCategoryEditScreen(category: category);
                 },
-              ),
-            ],
-          ),
-          GoRoute(
-            path: 'voices',
-            builder: (context, state) => const VoiceProfilesScreen(),
-            routes: [
-              GoRoute(
-                path: 'record',
-                builder: (context, state) => const VoiceRecordScreen(),
               ),
             ],
           ),
