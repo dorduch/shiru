@@ -20,6 +20,27 @@ String _routeWithNext(String path, String nextLocation) {
   return Uri(path: path, queryParameters: {'next': nextLocation}).toString();
 }
 
+bool _isParentAreaLocation(String location) {
+  final path = Uri.parse(location).path;
+  return path == '/story-builder' || path.startsWith('/parent');
+}
+
+OnEnterResult _handleParentAreaTransition(
+  WidgetRef ref,
+  GoRouterState currentState,
+  GoRouterState nextState,
+) {
+  final isLeavingParentArea =
+      _isParentAreaLocation(currentState.uri.toString()) &&
+      !_isParentAreaLocation(nextState.uri.toString());
+
+  if (isLeavingParentArea) {
+    ref.read(parentAuthProvider.notifier).state = false;
+  }
+
+  return const Allow();
+}
+
 String? _protectAdultRoute(WidgetRef ref, GoRouterState state) {
   final nextLocation = state.uri.toString();
   final isAuthenticated = ref.read(parentAuthProvider);
@@ -33,6 +54,8 @@ String? _protectAdultRoute(WidgetRef ref, GoRouterState state) {
 GoRouter createRouter(WidgetRef ref) {
   return GoRouter(
     initialLocation: '/',
+    onEnter: (context, currentState, nextState, router) =>
+        _handleParentAreaTransition(ref, currentState, nextState),
     routes: [
       GoRoute(path: '/', builder: (context, state) => const KidHomeScreen()),
       GoRoute(
