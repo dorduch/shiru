@@ -1,4 +1,4 @@
-package com.example.app
+package com.dorduch.shiru
 
 import io.flutter.embedding.android.FlutterActivity
 

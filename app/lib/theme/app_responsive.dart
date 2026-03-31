@@ -25,8 +25,8 @@ class AppResponsive {
   static double spriteScale(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     if (width > 1000) return 8.0; // tablet
-    if (width > 700) return 6.0;  // normal phone
-    return 5.0;                    // small phone
+    if (width > 700) return 6.0; // normal phone
+    return 5.0; // small phone
   }
 
   /// Whether device is a tablet (width > 900px in landscape)

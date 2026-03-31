@@ -4,8 +4,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-if [ ! -f env.json ]; then
-  echo "Error: env.json not found. Create it with OPENAI_API_KEY, ELEVENLABS_API_KEY, CARTESIA_API_KEY, GIPHY_API_KEY."
+if [ ! -f android/key.properties ]; then
+  echo "Error: android/key.properties not found."
+  echo "Copy android/key.properties.example to android/key.properties and add your release signing values."
   exit 1
 fi
 
@@ -13,19 +14,17 @@ echo "==> Cleaning..."
 flutter clean
 flutter pub get
 
+echo "==> Running tests..."
+flutter test
+
+echo "==> Building release app bundle..."
+flutter build appbundle
+
 echo "==> Building release APK..."
-flutter build apk --dart-define-from-file=env.json
+flutter build apk --release
 
+APP_BUNDLE="build/app/outputs/bundle/release/app-release.aab"
 APK="build/app/outputs/flutter-apk/app-release.apk"
-echo "==> Built: $APK"
 
-if [ "${1:-}" = "--install" ]; then
-  DEVICE="${2:-}"
-  if [ -n "$DEVICE" ]; then
-    echo "==> Installing on $DEVICE..."
-    flutter install --device-id "$DEVICE"
-  else
-    echo "==> Installing on default device..."
-    flutter install
-  fi
-fi
+echo "==> Built AAB: $APP_BUNDLE"
+echo "==> Built APK: $APK"

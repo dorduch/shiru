@@ -50,6 +50,8 @@ class CategoriesNotifier extends StateNotifier<AsyncValue<List<Category>>> {
 }
 
 final categoriesProvider =
-    StateNotifierProvider<CategoriesNotifier, AsyncValue<List<Category>>>((ref) {
-  return CategoriesNotifier();
-});
+    StateNotifierProvider<CategoriesNotifier, AsyncValue<List<Category>>>((
+      ref,
+    ) {
+      return CategoriesNotifier();
+    });

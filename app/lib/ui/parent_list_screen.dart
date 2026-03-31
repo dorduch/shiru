@@ -12,7 +12,6 @@ import '../models/sprites.dart';
 import '../providers/audio_player_provider.dart';
 import '../providers/cards_provider.dart';
 import '../providers/categories_provider.dart';
-import 'giphy_sprite.dart';
 import 'pixel_sprite.dart';
 
 class ParentListScreen extends ConsumerWidget {
@@ -198,78 +197,80 @@ class _LibraryEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 820),
-        child: Container(
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x120F172A),
-                blurRadius: 24,
-                offset: Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 84,
-                height: 84,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF1F2),
-                  borderRadius: BorderRadius.circular(24),
+      child: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 820),
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x120F172A),
+                  blurRadius: 24,
+                  offset: Offset(0, 10),
                 ),
-                child: const Icon(
-                  Icons.library_music_outlined,
-                  size: 42,
-                  color: Color(0xFFFF6B6B),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Start building your library',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF111827),
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Add a single recording or import a batch of audio files to get the first library ready.',
-                style: TextStyle(
-                  fontSize: 18,
-                  height: 1.45,
-                  color: Color(0xFF6B7280),
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 28),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                alignment: WrapAlignment.center,
-                children: [
-                  _LibraryActionButton(
-                    label: 'Add Card',
-                    icon: Icons.add,
-                    variant: _LibraryActionVariant.primary,
-                    onTap: onAddCard,
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 84,
+                  height: 84,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF1F2),
+                    borderRadius: BorderRadius.circular(24),
                   ),
-                  _LibraryActionButton(
-                    label: 'Bulk Import',
-                    icon: Icons.folder_open_outlined,
-                    variant: _LibraryActionVariant.secondary,
-                    onTap: onBulkImport,
+                  child: const Icon(
+                    Icons.library_music_outlined,
+                    size: 42,
+                    color: Color(0xFFFF6B6B),
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Start building your library',
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF111827),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Add a single recording or import a batch of audio files to get the first library ready.',
+                  style: TextStyle(
+                    fontSize: 18,
+                    height: 1.45,
+                    color: Color(0xFF6B7280),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 28),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    _LibraryActionButton(
+                      label: 'Add Card',
+                      icon: Icons.add,
+                      variant: _LibraryActionVariant.primary,
+                      onTap: onAddCard,
+                    ),
+                    _LibraryActionButton(
+                      label: 'Bulk Import',
+                      icon: Icons.folder_open_outlined,
+                      variant: _LibraryActionVariant.secondary,
+                      onTap: onBulkImport,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -463,11 +464,8 @@ class _CardArtwork extends StatelessWidget {
       child: hasCustomImage
           ? Image.file(imageFile, fit: BoxFit.cover)
           : Center(
-              child: GiphySprite(
-                title: card.spriteKey != null && card.spriteKey!.isNotEmpty
-                    ? card.spriteKey!
-                    : card.title,
-                fallbackSprite: spriteDef,
+              child: PixelSprite(
+                sprite: spriteDef,
                 state: SpriteState.idle,
                 scale: 2.7,
               ),
