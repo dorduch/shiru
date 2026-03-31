@@ -70,8 +70,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Choose a parent PIN'), findsOneWidget);
-    expect(find.text('Pick a 4-digit PIN for parent tools'), findsOneWidget);
+    expect(find.text('Create a parent PIN'), findsOneWidget);
+    expect(
+      find.text('Choose 4 digits only the grown-ups in your home will know'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('shows enter flow when a pin already exists', (tester) async {
@@ -85,8 +88,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Parents Only! 🔒'), findsOneWidget);
-    expect(find.text('Enter 4-digit PIN'), findsOneWidget);
+    expect(find.text('Parent PIN'), findsOneWidget);
+    expect(
+      find.text('Enter the 4 digits for the grown-up area'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('creates a new pin and navigates to the parent area', (

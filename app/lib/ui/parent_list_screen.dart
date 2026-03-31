@@ -45,6 +45,9 @@ class ParentListScreen extends ConsumerWidget {
                     case _LibraryMenuAction.changePin:
                       context.push('/parent/change-pin');
                       break;
+                    case _LibraryMenuAction.about:
+                      context.push('/parent/about');
+                      break;
                     case _LibraryMenuAction.categories:
                       context.push('/parent/categories');
                       break;
@@ -132,13 +135,13 @@ class _LibraryHeader extends StatelessWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 _LibraryActionButton(
-                  label: 'Bulk Import',
+                  label: 'Import Audio',
                   icon: Icons.folder_open_outlined,
                   variant: _LibraryActionVariant.secondary,
                   onTap: onBulkImport,
                 ),
                 _LibraryActionButton(
-                  label: 'Add Card',
+                  label: 'Add Recording',
                   icon: Icons.add,
                   variant: _LibraryActionVariant.primary,
                   onTap: onAddCard,
@@ -152,6 +155,13 @@ class _LibraryHeader extends StatelessWidget {
                       child: _MenuLabel(
                         icon: Icons.lock_outline,
                         label: 'Change PIN',
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: _LibraryMenuAction.about,
+                      child: _MenuLabel(
+                        icon: Icons.info_outline,
+                        label: 'About Shiru',
                       ),
                     ),
                     PopupMenuItem(
@@ -231,7 +241,7 @@ class _LibraryEmptyState extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 const Text(
-                  'Start building your library',
+                  'Start with one goodnight message',
                   style: TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.w800,
@@ -241,7 +251,7 @@ class _LibraryEmptyState extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  'Add a single recording or import a batch of audio files to get the first library ready.',
+                  'A single recording, song, or family story is enough to begin. Add one gently by hand, or bring in several at once from your device.',
                   style: TextStyle(
                     fontSize: 18,
                     height: 1.45,
@@ -256,13 +266,13 @@ class _LibraryEmptyState extends StatelessWidget {
                   alignment: WrapAlignment.center,
                   children: [
                     _LibraryActionButton(
-                      label: 'Add Card',
+                      label: 'Add Recording',
                       icon: Icons.add,
                       variant: _LibraryActionVariant.primary,
                       onTap: onAddCard,
                     ),
                     _LibraryActionButton(
-                      label: 'Bulk Import',
+                      label: 'Import Audio',
                       icon: Icons.folder_open_outlined,
                       variant: _LibraryActionVariant.secondary,
                       onTap: onBulkImport,
@@ -427,7 +437,7 @@ class _LibraryCardTile extends ConsumerWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Could not preview this story right now.'),
+          content: Text("Couldn't play this recording right now."),
         ),
       );
     }
@@ -635,4 +645,4 @@ class _MenuLabel extends StatelessWidget {
 
 enum _LibraryActionVariant { primary, secondary }
 
-enum _LibraryMenuAction { changePin, categories }
+enum _LibraryMenuAction { changePin, about, categories }

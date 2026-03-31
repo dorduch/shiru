@@ -252,7 +252,7 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
                   ),
                   const SizedBox(width: 8),
                   const Text(
-                    'Bulk Import',
+                    'Import Audio',
                     style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800),
                   ),
                 ],
@@ -306,7 +306,7 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
               ),
               const SizedBox(height: 20),
               const Text(
-                'Import multiple stories at once',
+                'Bring a whole set of stories in at once',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
@@ -315,7 +315,7 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
               ),
               const SizedBox(height: 12),
               const Text(
-                'Select several audio files, review the generated card titles, optionally apply one shared category, and save the batch in one pass.',
+                'Choose several audio files, give them warm names, add a shared category if you want, and save them together in one pass.',
                 style: TextStyle(
                   fontSize: 18,
                   height: 1.45,
@@ -325,17 +325,17 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
               const SizedBox(height: 20),
               const _ChecklistRow(
                 icon: Icons.check_circle_outline,
-                text: 'Select multiple files from the device',
+                text: 'Pick a handful of files from the device',
               ),
               const SizedBox(height: 12),
               const _ChecklistRow(
                 icon: Icons.check_circle_outline,
-                text: 'Review and rename each generated title',
+                text: 'Rename each one so it feels personal',
               ),
               const SizedBox(height: 12),
               const _ChecklistRow(
                 icon: Icons.check_circle_outline,
-                text: 'Apply one shared category to the batch',
+                text: 'Keep them together with one shared category',
               ),
               const SizedBox(height: 28),
               Wrap(

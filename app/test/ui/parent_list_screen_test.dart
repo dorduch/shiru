@@ -52,9 +52,9 @@ void main() {
     await tester.pumpWidget(_buildScreen(cards: const []));
     await tester.pumpAndSettle();
 
-    expect(find.text('Start building your library'), findsOneWidget);
-    expect(find.text('Add Card'), findsNWidgets(2));
-    expect(find.text('Bulk Import'), findsNWidgets(2));
+    expect(find.text('Start with one goodnight message'), findsOneWidget);
+    expect(find.text('Add Recording'), findsNWidgets(2));
+    expect(find.text('Import Audio'), findsNWidgets(2));
     expect(find.text('Voices'), findsNothing);
     expect(find.text('Story Builder'), findsNothing);
   });
@@ -88,6 +88,19 @@ void main() {
 
     expect(find.text('Moon Story'), findsOneWidget);
     expect(find.text('🌙 Bedtime'), findsOneWidget);
-    expect(find.text('Start building your library'), findsNothing);
+    expect(find.text('Start with one goodnight message'), findsNothing);
+  });
+
+  testWidgets('settings menu exposes the about entry', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(_buildScreen(cards: const []));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Library settings'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('About Shiru'), findsOneWidget);
   });
 }

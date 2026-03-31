@@ -13,6 +13,7 @@ import 'ui/parent_category_edit_screen.dart';
 import 'models/category.dart';
 import 'ui/change_pin_screen.dart';
 import 'ui/bulk_import_screen.dart';
+import 'ui/about_screen.dart';
 
 OnEnterResult _handleParentAreaTransition(
   WidgetRef ref,
@@ -82,6 +83,10 @@ GoRouter createRouter(WidgetRef ref) {
           GoRoute(
             path: 'bulk-import',
             builder: (context, state) => const BulkImportScreen(),
+          ),
+          GoRoute(
+            path: 'about',
+            builder: (context, state) => const AboutScreen(),
           ),
           GoRoute(
             path: 'categories',
