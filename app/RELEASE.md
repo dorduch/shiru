@@ -18,7 +18,7 @@ Artifacts:
 ## iOS
 
 1. Open `ios/Runner.xcworkspace` in Xcode.
-2. Confirm bundle ID `com.dorduch.shiru`.
+2. Confirm bundle ID `com.shiru.app`.
 3. Select the correct Apple signing team/profile.
 4. Archive the app from Xcode and validate the archive before upload.
 
