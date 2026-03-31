@@ -125,8 +125,8 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                       return Center(
                         child: Text(
                           _selectedCategoryId == null
-                              ? "Ask your parents to add cards!"
-                              : "No cards in this category!",
+                              ? 'Ask a grown-up to add a story, song, or message.'
+                              : 'Nothing in this corner yet.',
                           style: const TextStyle(
                             fontSize: 24,
                             color: Colors.black54,

@@ -112,7 +112,7 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Enter Your Birth Date',
+                      'Grown-ups only for this part',
                       style: TextStyle(
                         fontSize: 30,
                         fontWeight: FontWeight.w800,
@@ -121,7 +121,7 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
                     ),
                     const SizedBox(height: 12),
                     const Text(
-                      'This section includes tools intended for adults. Enter your birth date to continue.',
+                      'These tools shape what your child can hear. Enter your birth date so the parent area stays in adult hands.',
                       style: TextStyle(
                         fontSize: 17,
                         height: 1.45,
@@ -151,7 +151,7 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
                             Expanded(
                               child: Text(
                                 selectedBirthDate == null
-                                    ? 'Select birth date'
+                                    ? 'Choose birth date'
                                     : DateFormat.yMMMMd().format(
                                         selectedBirthDate,
                                       ),

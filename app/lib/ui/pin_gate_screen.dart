@@ -142,22 +142,22 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
 
   String _title(String? savedPin) {
     if (savedPin != null) {
-      return 'Parents Only! 🔒';
+      return 'Parent PIN';
     }
 
     return _step == _PinFlowStep.confirm
-        ? 'Confirm your PIN'
-        : 'Choose a parent PIN';
+        ? 'Enter it one more time'
+        : 'Create a parent PIN';
   }
 
   String _subtitle(String? savedPin) {
     if (savedPin != null) {
-      return 'Enter 4-digit PIN';
+      return 'Enter the 4 digits for the grown-up area';
     }
 
     return _step == _PinFlowStep.confirm
-        ? 'Enter the same 4 digits again'
-        : 'Pick a 4-digit PIN for parent tools';
+        ? 'Use the same 4 digits again so we know it is right'
+        : 'Choose 4 digits only the grown-ups in your home will know';
   }
 
   @override
