@@ -36,12 +36,6 @@ android {
         versionName = flutter.versionName
     }
 
-    packaging {
-        jniLibs {
-            keepDebugSymbols += "**/*.so"
-        }
-    }
-
     signingConfigs {
         if (keyPropertiesFile.exists()) {
             create("release") {
