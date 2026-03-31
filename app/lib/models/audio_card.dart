@@ -66,7 +66,9 @@ class AudioCard {
   }) {
     return AudioCard(
       id: id,
-      collectionId: clearCollectionId ? null : (collectionId ?? this.collectionId),
+      collectionId: clearCollectionId
+          ? null
+          : (collectionId ?? this.collectionId),
       title: title ?? this.title,
       color: color ?? this.color,
       spriteKey: spriteKey ?? this.spriteKey,

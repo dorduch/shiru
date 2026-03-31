@@ -21,19 +21,10 @@ class Category {
   }
 
   Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'name': name,
-      'emoji': emoji,
-      'position': position,
-    };
+    return {'id': id, 'name': name, 'emoji': emoji, 'position': position};
   }
 
-  Category copyWith({
-    String? name,
-    String? emoji,
-    int? position,
-  }) {
+  Category copyWith({String? name, String? emoji, int? position}) {
     return Category(
       id: id,
       name: name ?? this.name,

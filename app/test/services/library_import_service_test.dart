@@ -52,24 +52,30 @@ void main() {
       );
     });
 
-    test('isManagedLibraryPath matches files stored in the library directory', () {
-      expect(
-        LibraryImportService.isManagedLibraryPath(
-          filePath: '/app/docs/audio/story.mp3',
-          libraryDirPath: '/app/docs',
-        ),
-        isTrue,
-      );
-    });
+    test(
+      'isManagedLibraryPath matches files stored in the library directory',
+      () {
+        expect(
+          LibraryImportService.isManagedLibraryPath(
+            filePath: '/app/docs/audio/story.mp3',
+            libraryDirPath: '/app/docs',
+          ),
+          isTrue,
+        );
+      },
+    );
 
-    test('isManagedLibraryPath rejects files outside the library directory', () {
-      expect(
-        LibraryImportService.isManagedLibraryPath(
-          filePath: '/tmp/story.mp3',
-          libraryDirPath: '/app/docs',
-        ),
-        isFalse,
-      );
-    });
+    test(
+      'isManagedLibraryPath rejects files outside the library directory',
+      () {
+        expect(
+          LibraryImportService.isManagedLibraryPath(
+            filePath: '/tmp/story.mp3',
+            libraryDirPath: '/app/docs',
+          ),
+          isFalse,
+        );
+      },
+    );
   });
 }

@@ -24,7 +24,7 @@ class _PixelSpriteState extends State<PixelSprite> {
   int _currentFrame = 0;
   Timer? _timer;
   SpriteState _currentState = SpriteState.idle;
-  
+
   @override
   void initState() {
     super.initState();
@@ -35,7 +35,8 @@ class _PixelSpriteState extends State<PixelSprite> {
   @override
   void didUpdateWidget(PixelSprite oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.state != widget.state || oldWidget.sprite.id != widget.sprite.id) {
+    if (oldWidget.state != widget.state ||
+        oldWidget.sprite.id != widget.sprite.id) {
       if (widget.state == SpriteState.tap) {
         _triggerTap();
       } else {
@@ -54,19 +55,22 @@ class _PixelSpriteState extends State<PixelSprite> {
   void _startAnimation() {
     _timer?.cancel();
     final stateKey = _currentState.name;
-    final frames = widget.sprite.frames[stateKey] ?? widget.sprite.frames['idle']!;
+    final frames =
+        widget.sprite.frames[stateKey] ?? widget.sprite.frames['idle']!;
     if (frames.isEmpty) return;
-    
+
     final fps = widget.sprite.fps[stateKey] ?? 6;
     final duration = Duration(milliseconds: 1000 ~/ fps);
-    
+
     _timer = Timer.periodic(duration, (timer) {
       if (!mounted) return;
       setState(() {
         _currentFrame++;
         if (_currentFrame >= frames.length) {
           if (_currentState == SpriteState.tap) {
-            _currentState = widget.state == SpriteState.tap ? SpriteState.active : widget.state;
+            _currentState = widget.state == SpriteState.tap
+                ? SpriteState.active
+                : widget.state;
             _startAnimation(); // restart with new state
             return;
           }
@@ -85,8 +89,11 @@ class _PixelSpriteState extends State<PixelSprite> {
   @override
   Widget build(BuildContext context) {
     final stateKey = _currentState.name;
-    final frames = widget.sprite.frames[stateKey] ?? widget.sprite.frames['idle']!;
-    final frameData = frames.isNotEmpty ? frames[_currentFrame % frames.length] : <List<int>>[];
+    final frames =
+        widget.sprite.frames[stateKey] ?? widget.sprite.frames['idle']!;
+    final frameData = frames.isNotEmpty
+        ? frames[_currentFrame % frames.length]
+        : <List<int>>[];
 
     return CustomPaint(
       size: Size(16 * widget.scale, 16 * widget.scale),

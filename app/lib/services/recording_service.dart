@@ -55,7 +55,9 @@ class RecordingService {
       _durationController.add(_elapsed);
     });
 
-    _amplitudeTimer = Timer.periodic(const Duration(milliseconds: 100), (_) async {
+    _amplitudeTimer = Timer.periodic(const Duration(milliseconds: 100), (
+      _,
+    ) async {
       try {
         final amp = await _recorder.getAmplitude();
         final normalized = ((amp.current + 60) / 60).clamp(0.0, 1.0);
@@ -83,7 +85,9 @@ class RecordingService {
       _durationController.add(_elapsed);
     });
 
-    _amplitudeTimer = Timer.periodic(const Duration(milliseconds: 100), (_) async {
+    _amplitudeTimer = Timer.periodic(const Duration(milliseconds: 100), (
+      _,
+    ) async {
       try {
         final amp = await _recorder.getAmplitude();
         final normalized = ((amp.current + 60) / 60).clamp(0.0, 1.0);

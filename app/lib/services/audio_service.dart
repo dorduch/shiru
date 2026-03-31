@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import '../models/audio_card.dart';
 import '../providers/audio_player_provider.dart';
@@ -12,7 +13,7 @@ class AudioService {
     _player.playerStateStream.listen((state) {
       ref.read(isPlayingProvider.notifier).state = state.playing;
       if (state.processingState == ProcessingState.completed) {
-         ref.read(currentPlayingCardIdProvider.notifier).state = null;
+        ref.read(currentPlayingCardIdProvider.notifier).state = null;
       }
     });
   }
@@ -34,7 +35,7 @@ class AudioService {
       await _player.setFilePath(card.audioPath);
       await _player.play();
     } catch (e) {
-      print("Error playing audio: \$e");
+      debugPrint('Error playing audio: $e');
     }
   }
 

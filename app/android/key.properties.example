@@ -1,0 +1,4 @@
+storeFile=../keystore/release-keystore.jks
+storePassword=replace-me
+keyAlias=release
+keyPassword=replace-me

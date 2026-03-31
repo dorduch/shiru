@@ -85,7 +85,10 @@ class LibraryImportService {
     }
 
     final docsDir = await getApplicationDocumentsDirectory();
-    if (isManagedLibraryPath(filePath: sourcePath, libraryDirPath: docsDir.path)) {
+    if (isManagedLibraryPath(
+      filePath: sourcePath,
+      libraryDirPath: docsDir.path,
+    )) {
       return sourcePath;
     }
 

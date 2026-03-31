@@ -14,7 +14,6 @@ import '../theme/app_colors.dart';
 import '../theme/app_responsive.dart';
 import '../theme/app_typography.dart';
 import 'pixel_sprite.dart';
-import 'giphy_sprite.dart';
 
 class KidHomeScreen extends ConsumerStatefulWidget {
   const KidHomeScreen({Key? key}) : super(key: key);
@@ -295,13 +294,8 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                             ),
                             alignment: Alignment.center,
                             child: FittedBox(
-                              child: GiphySprite(
-                                title:
-                                    card.spriteKey != null &&
-                                        card.spriteKey!.isNotEmpty
-                                    ? card.spriteKey!
-                                    : card.title,
-                                fallbackSprite: spriteDef,
+                              child: PixelSprite(
+                                sprite: spriteDef,
                                 state: isPlayingGlobal
                                     ? SpriteState.active
                                     : SpriteState.idle,
@@ -584,13 +578,8 @@ class _AudioCardTileState extends ConsumerState<AudioCardTile>
                         child: FittedBox(
                           child: Padding(
                             padding: const EdgeInsets.all(16),
-                            child: GiphySprite(
-                              title:
-                                  widget.card.spriteKey != null &&
-                                      widget.card.spriteKey!.isNotEmpty
-                                  ? widget.card.spriteKey!
-                                  : widget.card.title,
-                              fallbackSprite: spriteDef,
+                            child: PixelSprite(
+                              sprite: spriteDef,
                               state: state,
                               scale: AppResponsive.spriteScale(context),
                             ),

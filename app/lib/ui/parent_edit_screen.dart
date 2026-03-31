@@ -15,7 +15,6 @@ import '../models/sprites.dart';
 import '../services/library_import_service.dart';
 import '../theme/app_responsive.dart';
 import 'pixel_sprite.dart';
-import 'giphy_sprite.dart';
 
 class ParentEditScreen extends ConsumerStatefulWidget {
   final String? cardId;
@@ -27,7 +26,6 @@ class ParentEditScreen extends ConsumerStatefulWidget {
 
 class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
   final _titleController = TextEditingController();
-  final _spriteKeyController = TextEditingController();
   AudioCard? _existingCard;
   String? _audioPath;
   String _color = '#F0FDF4';
@@ -62,7 +60,6 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
 
     _existingCard = card;
     _titleController.text = card.title;
-    _spriteKeyController.text = card.spriteKey ?? '';
     _audioPath = card.audioPath;
     _color = card.color;
     _selectedCategoryId = card.collectionId;
@@ -86,7 +83,8 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
     try {
       final existingCard = widget.cardId == null
           ? null
-          : (_existingCard ?? await DatabaseService.instance.readCard(widget.cardId!));
+          : (_existingCard ??
+                await DatabaseService.instance.readCard(widget.cardId!));
 
       var finalAudioPath = selectedAudioPath;
       final audioChanged =
@@ -104,9 +102,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
         collectionId: _selectedCategoryId,
         title: title,
         color: _color,
-        spriteKey: _spriteKeyController.text.isNotEmpty
-            ? _spriteKeyController.text
-            : null,
+        spriteKey: null,
         audioPath: finalAudioPath,
         position: existingCard?.position ?? cardsList.length,
         createdAt:
@@ -123,9 +119,8 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
           final oldAudioPath = existingCard.audioPath;
           final oldAudioStillReferenced = await DatabaseService.instance
               .countCardsWithAudioPath(oldAudioPath);
-          final oldAudioManaged = await LibraryImportService.isImportedLibraryPath(
-            oldAudioPath,
-          );
+          final oldAudioManaged =
+              await LibraryImportService.isImportedLibraryPath(oldAudioPath);
 
           if (oldAudioManaged &&
               oldAudioStillReferenced == 0 &&
@@ -154,7 +149,6 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
   void dispose() {
     _debounce?.cancel();
     _titleController.dispose();
-    _spriteKeyController.dispose();
     super.dispose();
   }
 
@@ -371,70 +365,6 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                             ),
                             const SizedBox(height: 24),
                             const Text(
-                              'Custom GIF search (optional)',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Semantics(
-                              label: 'Custom GIF search keyword',
-                              child: TextField(
-                                controller: _spriteKeyController,
-                                onChanged: (v) {
-                                  if (_debounce?.isActive ?? false)
-                                    _debounce!.cancel();
-                                  _debounce = Timer(
-                                    const Duration(milliseconds: 700),
-                                    () {
-                                      if (mounted) setState(() {});
-                                    },
-                                  );
-                                },
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                textDirection:
-                                    intl.Bidi.detectRtlDirectionality(
-                                      _spriteKeyController.text,
-                                    )
-                                    ? TextDirection.rtl
-                                    : TextDirection.ltr,
-                                textAlign:
-                                    intl.Bidi.detectRtlDirectionality(
-                                      _spriteKeyController.text,
-                                    )
-                                    ? TextAlign.right
-                                    : TextAlign.left,
-                                decoration: InputDecoration(
-                                  hintText: 'e.g.: running cat',
-                                  hintStyle: const TextStyle(
-                                    color: Colors.black38,
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  contentPadding: const EdgeInsets.all(16),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFE5E7EB),
-                                      width: 2,
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFF3B82F6),
-                                      width: 2,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            const Text(
                               'Audio',
                               style: TextStyle(
                                 fontSize: 16,
@@ -508,11 +438,8 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                 child: FittedBox(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
-                    child: GiphySprite(
-                      title: _spriteKeyController.text.isNotEmpty
-                          ? _spriteKeyController.text
-                          : _titleController.text,
-                      fallbackSprite: sprite,
+                    child: PixelSprite(
+                      sprite: sprite,
                       state: SpriteState.active,
                       scale: 6.0,
                     ),

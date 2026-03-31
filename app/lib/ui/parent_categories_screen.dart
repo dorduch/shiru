@@ -24,16 +24,22 @@ class ParentCategoriesScreen extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new, size: 28),
-                      onPressed: () => context.pop(),
-                    ),
-                    const SizedBox(width: 8),
-                    const Text('Categories',
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_ios_new, size: 28),
+                        onPressed: () => context.pop(),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Categories',
                         style: TextStyle(
-                            fontSize: 32, fontWeight: FontWeight.w800)),
-                  ]),
+                          fontSize: 32,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
                   IconButton(
                     icon: const Icon(Icons.add, size: 28),
                     onPressed: () => context.push('/parent/categories/edit'),
@@ -47,9 +53,10 @@ class ParentCategoriesScreen extends ConsumerWidget {
                   data: (categories) {
                     if (categories.isEmpty) {
                       return const Center(
-                        child: Text('No categories yet.',
-                            style: TextStyle(
-                                fontSize: 20, color: Colors.black54)),
+                        child: Text(
+                          'No categories yet.',
+                          style: TextStyle(fontSize: 20, color: Colors.black54),
+                        ),
                       );
                     }
                     return ReorderableListView.builder(
@@ -69,8 +76,7 @@ class ParentCategoriesScreen extends ConsumerWidget {
                             '/parent/categories/edit',
                             extra: cat,
                           ),
-                          onDelete: () =>
-                              _confirmDelete(context, ref, cat),
+                          onDelete: () => _confirmDelete(context, ref, cat),
                         );
                       },
                     );
@@ -91,9 +97,10 @@ class ParentCategoriesScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(28),
                     boxShadow: const [
                       BoxShadow(
-                          color: Color(0x4022C55E),
-                          blurRadius: 12,
-                          offset: Offset(0, 4))
+                        color: Color(0x4022C55E),
+                        blurRadius: 12,
+                        offset: Offset(0, 4),
+                      ),
                     ],
                   ),
                   child: const Row(
@@ -101,11 +108,14 @@ class ParentCategoriesScreen extends ConsumerWidget {
                     children: [
                       Icon(Icons.add, color: Colors.white),
                       SizedBox(width: 8),
-                      Text('Add Category',
-                          style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white)),
+                      Text(
+                        'Add Category',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -117,27 +127,28 @@ class ParentCategoriesScreen extends ConsumerWidget {
     );
   }
 
-  void _confirmDelete(
-      BuildContext context, WidgetRef ref, Category category) {
+  void _confirmDelete(BuildContext context, WidgetRef ref, Category category) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text('Delete "${category.emoji} ${category.name}"?'),
         content: const Text(
-            'Cards in this category will become uncategorized.'),
+          'Cards in this category will become uncategorized.',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () {
-              ref
-                  .read(categoriesProvider.notifier)
-                  .deleteCategory(category.id);
+              ref.read(categoriesProvider.notifier).deleteCategory(category.id);
               Navigator.pop(ctx);
             },
-            child: const Text('Delete',
-                style: TextStyle(color: Colors.redAccent)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.redAccent),
+            ),
           ),
         ],
       ),
@@ -162,56 +173,65 @@ class _CategoryRow extends StatelessWidget {
     return Semantics(
       label: '${category.emoji} ${category.name}',
       child: Container(
-      height: 80,
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-              color: Colors.black12, blurRadius: 12, offset: Offset(0, 4))
-        ],
-      ),
-      child: Row(
-        children: [
-          Semantics(
-            label: 'Reorder ${category.name}',
-            child: SizedBox(
-              width: 44,
-              height: 44,
-              child: Center(child: Icon(Icons.drag_handle, color: Colors.grey, size: 36)),
+        height: 80,
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 12,
+              offset: Offset(0, 4),
             ),
-          ),
-          const SizedBox(width: 12),
-          Text(category.emoji, style: const TextStyle(fontSize: 28)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(category.name,
+          ],
+        ),
+        child: Row(
+          children: [
+            Semantics(
+              label: 'Reorder ${category.name}',
+              child: SizedBox(
+                width: 44,
+                height: 44,
+                child: Center(
+                  child: Icon(Icons.drag_handle, color: Colors.grey, size: 36),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(category.emoji, style: const TextStyle(fontSize: 28)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                category.name,
                 style: const TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.w700)),
-          ),
-          Semantics(
-            label: 'Edit ${category.name}',
-            button: true,
-            child: IconButton(
-              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-              icon: const Icon(Icons.edit, color: Colors.grey),
-              onPressed: onEdit,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
-          ),
-          Semantics(
-            label: 'Delete ${category.name}',
-            button: true,
-            child: IconButton(
-              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-              icon: const Icon(Icons.delete, color: Colors.redAccent),
-              onPressed: onDelete,
+            Semantics(
+              label: 'Edit ${category.name}',
+              button: true,
+              child: IconButton(
+                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                icon: const Icon(Icons.edit, color: Colors.grey),
+                onPressed: onEdit,
+              ),
             ),
-          ),
-        ],
+            Semantics(
+              label: 'Delete ${category.name}',
+              button: true,
+              child: IconButton(
+                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                icon: const Icon(Icons.delete, color: Colors.redAccent),
+                onPressed: onDelete,
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
   }
 }
