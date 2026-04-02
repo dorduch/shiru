@@ -69,4 +69,18 @@ void main() {
       expect(sprite.id, isNotEmpty);
     });
   });
+
+  group('spriteKey resolution', () {
+    test('known key resolves to correct sprite', () {
+      final sprite = predefinedSprites['moon'];
+      expect(sprite, isNotNull);
+      expect(sprite!.name, 'Moon');
+    });
+
+    test('unknown key falls back gracefully via null check', () {
+      const unknownKey = 'does_not_exist';
+      final sprite = predefinedSprites[unknownKey];
+      expect(sprite, isNull); // caller should fall back to autoAssignSprite
+    });
+  });
 }

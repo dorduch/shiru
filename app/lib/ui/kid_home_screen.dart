@@ -257,7 +257,9 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
     final card = cardsAsync.value?.firstWhere((c) => c.id == playingId);
     if (card == null) return const SizedBox.shrink();
 
-    final spriteDef = autoAssignSprite(card.title);
+    final spriteDef = card.spriteKey != null
+        ? (predefinedSprites[card.spriteKey!] ?? autoAssignSprite(card.title))
+        : autoAssignSprite(card.title);
     final player = ref.read(audioPlayerProvider);
 
     return Container(
@@ -495,7 +497,9 @@ class _AudioCardTileState extends ConsumerState<AudioCardTile>
 
   @override
   Widget build(BuildContext context) {
-    final spriteDef = autoAssignSprite(widget.card.title);
+    final spriteDef = widget.card.spriteKey != null
+        ? (predefinedSprites[widget.card.spriteKey!] ?? autoAssignSprite(widget.card.title))
+        : autoAssignSprite(widget.card.title);
     final state = widget.isPlayingThis
         ? (widget.isPlayingGlobal ? SpriteState.active : SpriteState.idle)
         : SpriteState.idle;

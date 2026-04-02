@@ -510,7 +510,9 @@ class _CardArtwork extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final spriteDef = autoAssignSprite(card.title);
+    final spriteDef = card.spriteKey != null
+        ? (predefinedSprites[card.spriteKey!] ?? autoAssignSprite(card.title))
+        : autoAssignSprite(card.title);
     final customImagePath = card.customImagePath;
     final imageFile = customImagePath != null && customImagePath.isNotEmpty
         ? File(customImagePath)
