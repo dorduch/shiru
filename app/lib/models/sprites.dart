@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'dart:ui';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 
 enum SpriteCategory { animals, fantasy, sciFi }
 
@@ -3962,8 +3963,7 @@ final Map<String, SpriteDef> predefinedSprites = {
 
 final Map<String, String> _assignedSprites = {};
 
-// Test-only: reset the assignment cache between test runs.
-// ignore: unused_element
+@visibleForTesting
 void resetAssignedSpritesForTesting() => _assignedSprites.clear();
 
 SpriteDef autoAssignSprite(String title) {

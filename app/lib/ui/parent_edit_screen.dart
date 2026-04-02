@@ -32,7 +32,6 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
   String _color = '#F0FDF4';
   String? _selectedCategoryId;
   bool _isLoading = false;
-  String? _selectedSpriteKey;
   Timer? _debounce;
 
   @override
@@ -65,7 +64,6 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
     _audioPath = card.audioPath;
     _color = card.color;
     _selectedCategoryId = card.collectionId;
-    _selectedSpriteKey = card.spriteKey;
     setState(() {});
   }
 
@@ -105,7 +103,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
         collectionId: _selectedCategoryId,
         title: title,
         color: _color,
-        spriteKey: _selectedSpriteKey ?? autoAssignSprite(title).id,
+        spriteKey: null,
         audioPath: finalAudioPath,
         position: existingCard?.position ?? cardsList.length,
         createdAt:
@@ -149,23 +147,6 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
     }
   }
 
-  void _showSpritePicker() {
-    final currentKey = _selectedSpriteKey ??
-        autoAssignSprite(_titleController.text).id;
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => _SpritePicker(
-        selectedKey: currentKey,
-        onSelected: (key) {
-          setState(() => _selectedSpriteKey = key);
-          Navigator.pop(ctx);
-        },
-      ),
-    );
-  }
-
   @override
   void dispose() {
     _debounce?.cancel();
@@ -178,9 +159,11 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
     if (_isLoading)
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
-    final spriteDef = _selectedSpriteKey != null
-        ? (predefinedSprites[_selectedSpriteKey!] ?? autoAssignSprite(_titleController.text))
-        : autoAssignSprite(_titleController.text);
+    final spriteDef = autoAssignSprite(
+      _titleController.text.trim().isEmpty
+          ? 'New Card'
+          : _titleController.text.trim(),
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F8),
@@ -448,7 +431,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
           ),
           padding: const EdgeInsets.all(16),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
                 width: double.infinity,
@@ -470,33 +453,6 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              GestureDetector(
-                onTap: _showSpritePicker,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFE5E7EB), width: 1.5),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.shuffle_rounded, size: 16, color: Color(0xFF6B7280)),
-                      SizedBox(width: 6),
-                      Text(
-                        'Change Creature',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF6B7280),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
               Text(
                 _titleController.text.isEmpty
                     ? "New Card"
@@ -518,194 +474,6 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _SpritePicker extends StatefulWidget {
-  final String selectedKey;
-  final void Function(String key) onSelected;
-
-  const _SpritePicker({required this.selectedKey, required this.onSelected});
-
-  @override
-  State<_SpritePicker> createState() => _SpritePickerState();
-}
-
-class _SpritePickerState extends State<_SpritePicker> {
-  late SpriteCategory _activeCategory;
-
-  @override
-  void initState() {
-    super.initState();
-    final selected = predefinedSprites[widget.selectedKey];
-    _activeCategory = selected?.category ?? SpriteCategory.sciFi;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final filtered = predefinedSprites.values
-        .where((s) => s.category == _activeCategory)
-        .toList();
-
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.4,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (ctx, scrollController) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          children: [
-            // Drag handle
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFD1D5DB),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            // Category tabs
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  _CategoryTab(
-                    label: 'Animals',
-                    active: _activeCategory == SpriteCategory.animals,
-                    onTap: () =>
-                        setState(() => _activeCategory = SpriteCategory.animals),
-                  ),
-                  const SizedBox(width: 8),
-                  _CategoryTab(
-                    label: 'Fantasy',
-                    active: _activeCategory == SpriteCategory.fantasy,
-                    onTap: () =>
-                        setState(() => _activeCategory = SpriteCategory.fantasy),
-                  ),
-                  const SizedBox(width: 8),
-                  _CategoryTab(
-                    label: 'Sci-Fi',
-                    active: _activeCategory == SpriteCategory.sciFi,
-                    onTap: () =>
-                        setState(() => _activeCategory = SpriteCategory.sciFi),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Sprite grid
-            Expanded(
-              child: filtered.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'Coming soon!',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Color(0xFF9CA3AF),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    )
-                  : GridView.builder(
-                      controller: scrollController,
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 4,
-                        mainAxisSpacing: 8,
-                        crossAxisSpacing: 8,
-                        childAspectRatio: 0.85,
-                      ),
-                      itemCount: filtered.length,
-                      itemBuilder: (ctx, i) {
-                        final sprite = filtered[i];
-                        final isSelected = sprite.id == widget.selectedKey;
-                        return GestureDetector(
-                          onTap: () => widget.onSelected(sprite.id),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF9FAFB),
-                              borderRadius: BorderRadius.circular(12),
-                              border: isSelected
-                                  ? Border.all(
-                                      color: const Color(0xFF22C55E), width: 2.5)
-                                  : Border.all(
-                                      color: const Color(0xFFE5E7EB), width: 1),
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                PixelSprite(
-                                  sprite: sprite,
-                                  state: SpriteState.idle,
-                                  scale: 3.0,
-                                ),
-                                const SizedBox(height: 4),
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 4),
-                                  child: Text(
-                                    sprite.name,
-                                    style: const TextStyle(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF374151),
-                                    ),
-                                    textAlign: TextAlign.center,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CategoryTab extends StatelessWidget {
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-
-  const _CategoryTab({
-    required this.label,
-    required this.active,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: active ? const Color(0xFF22C55E) : const Color(0xFFF3F4F6),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: active ? Colors.white : const Color(0xFF6B7280),
-          ),
-        ),
-      ),
     );
   }
 }
