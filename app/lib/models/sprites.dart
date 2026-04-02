@@ -1,9 +1,12 @@
 import 'dart:math';
 import 'dart:ui';
 
+enum SpriteCategory { animals, fantasy, sciFi }
+
 class SpriteDef {
   final String id;
   final String name;
+  final SpriteCategory category;
   final List<String> palette;
   final Map<String, List<List<List<int>>>> frames;
   final Map<String, int> fps;
@@ -11,6 +14,7 @@ class SpriteDef {
   const SpriteDef({
     required this.id,
     required this.name,
+    this.category = SpriteCategory.sciFi,
     required this.palette,
     required this.frames,
     required this.fps,
