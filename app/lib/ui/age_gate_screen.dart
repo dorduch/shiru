@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -16,11 +18,51 @@ class AgeGateScreen extends ConsumerStatefulWidget {
 }
 
 class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
+  static const int _maxFailedAttempts = 3;
+  static const int _cooldownSeconds = 60;
+
   DateTime? _selectedBirthDate;
   String? _errorMessage;
   bool _isSubmitting = false;
 
+  int _failedAttempts = 0;
+  DateTime? _cooldownEndsAt;
+  Timer? _cooldownTimer;
+
+  int get _cooldownSecondsLeft {
+    if (_cooldownEndsAt == null) return 0;
+    final remaining = _cooldownEndsAt!.difference(DateTime.now()).inSeconds;
+    return remaining < 0 ? 0 : remaining;
+  }
+
+  bool get _isInCooldown => _cooldownSecondsLeft > 0;
+
+  void _startCooldown() {
+    _cooldownEndsAt = DateTime.now().add(
+      const Duration(seconds: _cooldownSeconds),
+    );
+    _cooldownTimer?.cancel();
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) {
+        _cooldownTimer?.cancel();
+        return;
+      }
+      setState(() {});
+      if (_cooldownSecondsLeft <= 0) {
+        _cooldownTimer?.cancel();
+        setState(() => _errorMessage = null);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _cooldownTimer?.cancel();
+    super.dispose();
+  }
+
   Future<void> _pickBirthDate() async {
+    if (_isInCooldown) return;
     final now = DateTime.now();
     final initialDate = DateTime(now.year - 25, now.month, now.day);
     final pickedDate = await showDatePicker(
@@ -40,14 +82,23 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
   }
 
   Future<void> _continue() async {
+    if (_isInCooldown) return;
+
     final validationError = validateAdultBirthDate(
       _selectedBirthDate,
       DateTime.now(),
     );
     if (validationError != null) {
-      setState(() {
-        _errorMessage = validationError;
-      });
+      _failedAttempts += 1;
+      if (_failedAttempts >= _maxFailedAttempts) {
+        _startCooldown();
+        setState(() {
+          _errorMessage =
+              'Too many attempts. Please wait $_cooldownSeconds seconds.';
+        });
+      } else {
+        setState(() => _errorMessage = validationError);
+      }
       return;
     }
 
@@ -77,6 +128,8 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
   @override
   Widget build(BuildContext context) {
     final selectedBirthDate = _selectedBirthDate;
+    final inCooldown = _isInCooldown;
+    final secondsLeft = _cooldownSecondsLeft;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F8),
@@ -130,8 +183,10 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
                     ),
                     const SizedBox(height: 24),
                     GestureDetector(
-                      onTap: _pickBirthDate,
-                      child: Container(
+                      onTap: inCooldown ? null : _pickBirthDate,
+                      child: Opacity(
+                        opacity: inCooldown ? 0.4 : 1.0,
+                        child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 18,
                           vertical: 20,
@@ -173,7 +228,18 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
                         ),
                       ),
                     ),
-                    if (_errorMessage != null) ...[
+                    ),
+                    if (inCooldown) ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        'Too many attempts. Try again in $secondsLeft second${secondsLeft == 1 ? '' : 's'}.',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Color(0xFFDC2626),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ] else if (_errorMessage != null) ...[
                       const SizedBox(height: 16),
                       Text(
                         _errorMessage!,
@@ -186,7 +252,7 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
                     ],
                     const SizedBox(height: 24),
                     ElevatedButton(
-                      onPressed: _isSubmitting ? null : _continue,
+                      onPressed: (_isSubmitting || inCooldown) ? null : _continue,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF111827),
                         foregroundColor: Colors.white,

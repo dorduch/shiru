@@ -37,7 +37,9 @@ class AudioService {
       await _player.play();
       AnalyticsService.instance.logCardPlayed();
     } catch (e) {
-      debugPrint('Error playing audio: $e');
+      if (kDebugMode) {
+        debugPrint('Error playing audio: $e');
+      }
     }
   }
 

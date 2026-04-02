@@ -20,6 +20,11 @@ class ExportService {
   ///
   /// Throws [ExportException] if the audio file does not exist or cannot be copied.
   static Future<void> shareCard(AudioCard card) async {
+    final docsDir = await getApplicationDocumentsDirectory();
+    final normalizedAudioPath = path.normalize(card.audioPath);
+    if (!path.isWithin(path.normalize(docsDir.path), normalizedAudioPath)) {
+      throw const ExportException('Audio file path is outside the app library');
+    }
     final sourceFile = File(card.audioPath);
     if (!await sourceFile.exists()) {
       throw const ExportException('Could not find audio file');
@@ -58,7 +63,7 @@ class ExportService {
   /// and falls back to "audio" if the result is empty.
   static String sanitizeTitle(String title) {
     final sanitized = title
-        .replaceAll(RegExp(r'[/\\:*?"<>|]'), '')
+        .replaceAll(RegExp(r'[/\\:*?"<>|\x00]'), '')
         .trim()
         .replaceAll(RegExp(r' +'), ' ');
     return sanitized.isEmpty ? 'audio' : sanitized;

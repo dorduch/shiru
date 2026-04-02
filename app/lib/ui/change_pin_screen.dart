@@ -5,7 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/pin_provider.dart';
 import '../services/analytics_service.dart';
+import '../services/key_value_store.dart';
 import '../theme/app_responsive.dart';
+
+const _kFailedAttemptsKey = 'pin_failed_attempts';
+const _kLockUntilKey = 'pin_lock_until';
 
 enum _ChangePinStep { enterCurrent, enterNew, confirmNew }
 
@@ -31,9 +35,47 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
       : _lockedUntil!.difference(DateTime.now()).inSeconds.clamp(0, 30);
 
   @override
+  void initState() {
+    super.initState();
+    _loadLockState();
+  }
+
+  @override
   void dispose() {
     _lockTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _loadLockState() async {
+    final store = ref.read(keyValueStoreProvider);
+    final attemptsStr = await store.read(key: _kFailedAttemptsKey);
+    final lockUntilStr = await store.read(key: _kLockUntilKey);
+    if (attemptsStr == null && lockUntilStr == null) return;
+    final attempts = int.tryParse(attemptsStr ?? '') ?? 0;
+    final lockUntilMs = int.tryParse(lockUntilStr ?? '');
+    final lockUntil = lockUntilMs != null && lockUntilMs > 0
+        ? DateTime.fromMillisecondsSinceEpoch(lockUntilMs)
+        : null;
+    if (!mounted) return;
+    setState(() {
+      _failedAttempts = attempts;
+      _lockedUntil = lockUntil;
+    });
+    if (_isLocked) _startLockTimer();
+  }
+
+  Future<void> _persistLockState() async {
+    final store = ref.read(keyValueStoreProvider);
+    await store.write(key: _kFailedAttemptsKey, value: _failedAttempts.toString());
+    if (_lockedUntil != null) {
+      await store.write(key: _kLockUntilKey, value: _lockedUntil!.millisecondsSinceEpoch.toString());
+    }
+  }
+
+  Future<void> _clearLockState() async {
+    final store = ref.read(keyValueStoreProvider);
+    await store.write(key: _kFailedAttemptsKey, value: '0');
+    await store.write(key: _kLockUntilKey, value: '0');
   }
 
   void _startLockTimer() {
@@ -90,6 +132,7 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
       case _ChangePinStep.enterCurrent:
         if (_input == currentPin) {
           _failedAttempts = 0;
+          await _clearLockState();
           setState(() {
             _step = _ChangePinStep.enterNew;
             _input = '';
@@ -103,8 +146,10 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
                 const Duration(seconds: 30),
               ),
             );
+            await _persistLockState();
             _startLockTimer();
           } else {
+            await _persistLockState();
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(const SnackBar(content: Text('Wrong PIN')));

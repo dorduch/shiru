@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math';
+import 'package:flutter/foundation.dart' hide Category;
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
@@ -30,7 +31,7 @@ class DatabaseService {
   /// Returns the encryption key, generating and persisting it on first launch.
   Future<String> _getOrCreateEncryptionKey() async {
     const storage = FlutterSecureStorage(
-      iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+      iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device),
     );
     String? key = await storage.read(key: _kDbPasswordKey);
     if (key == null) {
@@ -106,6 +107,12 @@ class DatabaseService {
       // This happens in development when the APK is reinstalled (wiping
       // flutter_secure_storage) while the DB file survives. Recover by
       // deleting the inaccessible file and starting fresh.
+      if (kDebugMode) {
+        debugPrint(
+          '[DatabaseService] WARNING: DB at $path could not be opened. '
+          'Deleting and starting fresh. Error: $e',
+        );
+      }
       await dbFile.delete();
       return await openDatabase(
         path,

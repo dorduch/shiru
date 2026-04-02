@@ -1,16 +1,26 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:flutter/foundation.dart';
 
 class AnalyticsService {
   static final AnalyticsService instance = AnalyticsService._();
   AnalyticsService._();
 
-  Future<void> ensureConsent() => _run(
+  Future<void> ensureConsent() async {
+    if (kDebugMode) {
+      // Disable analytics in debug builds so development activity is never sent.
+      await _run((analytics) => analytics.setAnalyticsCollectionEnabled(false));
+    } else {
+      // In release builds, analytics is enabled for crash/usage reporting.
+      // Ensure this is disclosed in the app's privacy policy.
+      await _run(
         (analytics) => analytics.setConsent(
           adStorageConsentGranted: false,
           adUserDataConsentGranted: false,
           analyticsStorageConsentGranted: true,
         ),
       );
+    }
+  }
 
   FirebaseAnalyticsObserver get observer =>
       FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance);

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
@@ -101,7 +102,9 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
         if (mounted) widget.onAudioSelected(result.files.single.path!);
       }
     } catch (e) {
-      debugPrint('[_AudioRecorderWidgetState] Caught error in _pickAudio: $e');
+      if (kDebugMode) {
+        debugPrint('[_AudioRecorderWidgetState] Caught error in _pickAudio: $e');
+      }
       if (mounted) {
         ScaffoldMessenger.of(
           context,
