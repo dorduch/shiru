@@ -409,7 +409,7 @@ class _LibraryCardTileState extends ConsumerState<_LibraryCardTile> {
               else
                 _RoundIconButton(
                   semanticLabel: 'Share audio for ${card.title}',
-                  icon: Icons.ios_share,
+                  icon: Icons.share,
                   foregroundColor: const Color(0xFF1D4ED8),
                   backgroundColor: const Color(0xFFEFF6FF),
                   onPressed: _exportCard,
