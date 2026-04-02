@@ -549,9 +549,9 @@ class _SpritePickerState extends State<_SpritePicker> {
         .toList();
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.65,
+      initialChildSize: 0.85,
       minChildSize: 0.4,
-      maxChildSize: 0.92,
+      maxChildSize: 0.95,
       expand: false,
       builder: (ctx, scrollController) => Container(
         decoration: const BoxDecoration(
@@ -601,62 +601,73 @@ class _SpritePickerState extends State<_SpritePicker> {
             const SizedBox(height: 12),
             // Sprite grid
             Expanded(
-              child: GridView.builder(
-                controller: scrollController,
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                gridDelegate:
-                    const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  childAspectRatio: 0.85,
-                ),
-                itemCount: filtered.length,
-                itemBuilder: (ctx, i) {
-                  final sprite = filtered[i];
-                  final isSelected = sprite.id == widget.selectedKey;
-                  return GestureDetector(
-                    onTap: () => widget.onSelected(sprite.id),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF9FAFB),
-                        borderRadius: BorderRadius.circular(12),
-                        border: isSelected
-                            ? Border.all(
-                                color: const Color(0xFF22C55E), width: 2.5)
-                            : Border.all(
-                                color: const Color(0xFFE5E7EB), width: 1),
+              child: filtered.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'Coming soon!',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF9CA3AF),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          PixelSprite(
-                            sprite: sprite,
-                            state: SpriteState.idle,
-                            scale: 3.0,
-                          ),
-                          const SizedBox(height: 4),
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 4),
-                            child: Text(
-                              sprite.name,
-                              style: const TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF374151),
-                              ),
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                    )
+                  : GridView.builder(
+                      controller: scrollController,
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 4,
+                        mainAxisSpacing: 8,
+                        crossAxisSpacing: 8,
+                        childAspectRatio: 0.85,
+                      ),
+                      itemCount: filtered.length,
+                      itemBuilder: (ctx, i) {
+                        final sprite = filtered[i];
+                        final isSelected = sprite.id == widget.selectedKey;
+                        return GestureDetector(
+                          onTap: () => widget.onSelected(sprite.id),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF9FAFB),
+                              borderRadius: BorderRadius.circular(12),
+                              border: isSelected
+                                  ? Border.all(
+                                      color: const Color(0xFF22C55E), width: 2.5)
+                                  : Border.all(
+                                      color: const Color(0xFFE5E7EB), width: 1),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                PixelSprite(
+                                  sprite: sprite,
+                                  state: SpriteState.idle,
+                                  scale: 3.0,
+                                ),
+                                const SizedBox(height: 4),
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 4),
+                                  child: Text(
+                                    sprite.name,
+                                    style: const TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF374151),
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),
