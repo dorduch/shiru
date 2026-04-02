@@ -131,7 +131,7 @@ class ParentCategoriesScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Delete "${category.emoji} ${category.name}"?'),
+        title: Text('Delete "${category.name}"?'),
         content: const Text(
           'Cards in this category won\'t be deleted — they\'ll just lose their label.',
         ),
@@ -171,7 +171,7 @@ class _CategoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: '${category.emoji} ${category.name}',
+      label: category.name,
       child: Container(
         height: 80,
         margin: const EdgeInsets.only(bottom: 12),
@@ -199,8 +199,6 @@ class _CategoryRow extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 12),
-            Text(category.emoji, style: const TextStyle(fontSize: 28)),
             const SizedBox(width: 12),
             Expanded(
               child: Text(

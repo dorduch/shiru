@@ -671,7 +671,7 @@ class _CategoryDropdown extends StatelessWidget {
             ...categories.map(
               (category) => DropdownMenuItem<String?>(
                 value: category.id,
-                child: Text('${category.emoji} ${category.name}'),
+                child: Text(category.name),
               ),
             ),
           ],
