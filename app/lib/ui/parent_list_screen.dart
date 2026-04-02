@@ -12,6 +12,7 @@ import '../models/sprites.dart';
 import '../providers/audio_player_provider.dart';
 import '../providers/cards_provider.dart';
 import '../providers/categories_provider.dart';
+import '../services/export_service.dart';
 import 'pixel_sprite.dart';
 
 class ParentListScreen extends ConsumerWidget {
@@ -288,14 +289,23 @@ class _LibraryEmptyState extends StatelessWidget {
   }
 }
 
-class _LibraryCardTile extends ConsumerWidget {
+class _LibraryCardTile extends ConsumerStatefulWidget {
   final AudioCard card;
   final Category? category;
 
   const _LibraryCardTile({required this.card, required this.category});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_LibraryCardTile> createState() => _LibraryCardTileState();
+}
+
+class _LibraryCardTileState extends ConsumerState<_LibraryCardTile> {
+  bool _isExporting = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final card = widget.card;
+    final category = widget.category;
     final isTitleRtl = intl.Bidi.detectRtlDirectionality(card.title);
     final currentCardId = ref.watch(currentPlayingCardIdProvider);
     final isPlaying = ref.watch(isPlayingProvider);
@@ -380,6 +390,31 @@ class _LibraryCardTile extends ConsumerWidget {
                 onPressed: () => _togglePreview(context, ref),
               ),
               const SizedBox(width: 10),
+              // Export button
+              if (_isExporting)
+                const SizedBox(
+                  width: 54,
+                  height: 54,
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Color(0xFF1D4ED8),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                _RoundIconButton(
+                  semanticLabel: 'Share audio for ${card.title}',
+                  icon: Icons.ios_share,
+                  foregroundColor: const Color(0xFF1D4ED8),
+                  backgroundColor: const Color(0xFFEFF6FF),
+                  onPressed: _exportCard,
+                ),
+              const SizedBox(width: 10),
               _RoundIconButton(
                 semanticLabel: 'Edit ${card.title}',
                 icon: Icons.edit_outlined,
@@ -408,7 +443,7 @@ class _LibraryCardTile extends ConsumerWidget {
     final currentCardId = ref.read(currentPlayingCardIdProvider);
     final isPlaying = ref.read(isPlayingProvider);
 
-    if (currentCardId == card.id && isPlaying) {
+    if (currentCardId == widget.card.id && isPlaying) {
       await player.stop();
       ref.read(currentPlayingCardIdProvider.notifier).state = null;
       ref.read(isPlayingProvider.notifier).state = false;
@@ -417,16 +452,16 @@ class _LibraryCardTile extends ConsumerWidget {
 
     try {
       await player.stop();
-      ref.read(currentPlayingCardIdProvider.notifier).state = card.id;
+      ref.read(currentPlayingCardIdProvider.notifier).state = widget.card.id;
       ref.read(isPlayingProvider.notifier).state = true;
-      await player.setFilePath(card.audioPath);
+      await player.setFilePath(widget.card.audioPath);
       await player.play();
       player.playerStateStream
           .firstWhere(
             (state) => state.processingState == ProcessingState.completed,
           )
           .then((_) {
-            if (ref.read(currentPlayingCardIdProvider) == card.id) {
+            if (ref.read(currentPlayingCardIdProvider) == widget.card.id) {
               ref.read(currentPlayingCardIdProvider.notifier).state = null;
               ref.read(isPlayingProvider.notifier).state = false;
             }
@@ -440,6 +475,25 @@ class _LibraryCardTile extends ConsumerWidget {
           content: Text("Couldn't play this recording right now."),
         ),
       );
+    }
+  }
+
+  Future<void> _exportCard() async {
+    setState(() => _isExporting = true);
+    try {
+      await ExportService.shareCard(widget.card);
+    } on ExportException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Export failed')),
+      );
+    } finally {
+      if (mounted) setState(() => _isExporting = false);
     }
   }
 
