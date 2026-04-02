@@ -546,8 +546,18 @@ class _SpritePickerState extends State<_SpritePicker> {
     _activeCategory = selected?.category ?? SpriteCategory.sciFi;
   }
 
+  static const _categoryLabels = {
+    SpriteCategory.animals: 'Animals',
+    SpriteCategory.fantasy: 'Fantasy',
+    SpriteCategory.sciFi: 'Sci-Fi',
+  };
+
   @override
   Widget build(BuildContext context) {
+    final populated = SpriteCategory.values
+        .where((c) => predefinedSprites.values.any((s) => s.category == c))
+        .toList();
+
     final filtered = predefinedSprites.values
         .where((s) => s.category == _activeCategory)
         .toList();
@@ -574,49 +584,28 @@ class _SpritePickerState extends State<_SpritePicker> {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            // Category tabs
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  _CategoryTab(
-                    label: 'Animals',
-                    active: _activeCategory == SpriteCategory.animals,
-                    onTap: () =>
-                        setState(() => _activeCategory = SpriteCategory.animals),
-                  ),
-                  const SizedBox(width: 8),
-                  _CategoryTab(
-                    label: 'Fantasy',
-                    active: _activeCategory == SpriteCategory.fantasy,
-                    onTap: () =>
-                        setState(() => _activeCategory = SpriteCategory.fantasy),
-                  ),
-                  const SizedBox(width: 8),
-                  _CategoryTab(
-                    label: 'Sci-Fi',
-                    active: _activeCategory == SpriteCategory.sciFi,
-                    onTap: () =>
-                        setState(() => _activeCategory = SpriteCategory.sciFi),
-                  ),
-                ],
+            // Category tabs — only shown when more than one category has sprites
+            if (populated.length > 1)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    for (int i = 0; i < populated.length; i++) ...[
+                      if (i > 0) const SizedBox(width: 8),
+                      _CategoryTab(
+                        label: _categoryLabels[populated[i]]!,
+                        active: _activeCategory == populated[i],
+                        onTap: () =>
+                            setState(() => _activeCategory = populated[i]),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
             const SizedBox(height: 12),
             // Sprite grid
             Expanded(
-              child: filtered.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'Coming soon!',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Color(0xFF9CA3AF),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    )
-                  : GridView.builder(
+              child: GridView.builder(
                       controller: scrollController,
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                       gridDelegate:
