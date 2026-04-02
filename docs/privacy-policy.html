@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shiru – Privacy Policy</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f9fafb;
+      color: #111827;
+      line-height: 1.7;
+      padding: 2rem 1rem 4rem;
+    }
+
+    .wrap {
+      max-width: 680px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 16px;
+      padding: 2.5rem 2rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,.06);
+    }
+
+    .logo {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      color: #111827;
+      margin-bottom: .25rem;
+    }
+
+    .tagline {
+      color: #6b7280;
+      font-size: .95rem;
+      margin-bottom: 2rem;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: .25rem;
+    }
+
+    .updated {
+      font-size: .85rem;
+      color: #9ca3af;
+      margin-bottom: 2rem;
+    }
+
+    h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #111827;
+      margin: 2rem 0 .5rem;
+    }
+
+    p { margin-bottom: .75rem; color: #374151; }
+
+    ul {
+      padding-left: 1.25rem;
+      margin-bottom: .75rem;
+      color: #374151;
+    }
+
+    ul li { margin-bottom: .35rem; }
+
+    .pill {
+      display: inline-block;
+      background: #f0fdf4;
+      color: #166534;
+      font-size: .8rem;
+      font-weight: 600;
+      padding: .15rem .6rem;
+      border-radius: 999px;
+      margin-left: .4rem;
+      vertical-align: middle;
+    }
+
+    .highlight {
+      background: #f9fafb;
+      border-left: 3px solid #d1d5db;
+      border-radius: 0 8px 8px 0;
+      padding: .75rem 1rem;
+      margin: 1rem 0;
+      color: #374151;
+      font-size: .95rem;
+    }
+
+    a { color: #2563eb; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    footer {
+      margin-top: 2.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #f3f4f6;
+      font-size: .85rem;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="logo">Shiru</div>
+    <div class="tagline">A DIY audio player for kids</div>
+
+    <h1>Privacy Policy</h1>
+    <div class="updated">Last updated: April 3, 2026</div>
+
+    <div class="highlight">
+      Shiru is a local-only app. It has no account system, no cloud sync, and no server of its own. Almost everything stays on your device.
+    </div>
+
+    <h2>Who this app is for</h2>
+    <p>Shiru is designed for families. Parents set up the audio card library; children tap cards to play them. The app is intended to be set up and managed by an adult.</p>
+
+    <h2>What data we collect</h2>
+
+    <h2>1. Data stored only on your device <span class="pill">local only</span></h2>
+    <p>The following data never leaves your device:</p>
+    <ul>
+      <li><strong>Audio recordings</strong> — voice recordings made inside the app are stored in your device's private app storage and are never uploaded anywhere.</li>
+      <li><strong>Card library</strong> — card titles, categories, colors, and audio file paths are stored in an encrypted local database.</li>
+      <li><strong>Parent PIN</strong> — stored in the device's secure storage (Android Keystore / iOS Keychain). We never see it.</li>
+    </ul>
+
+    <h2>2. Crash reports (Firebase Crashlytics)</h2>
+    <p>If the app crashes, an anonymous crash report is automatically sent to Google's Firebase Crashlytics service. This report includes:</p>
+    <ul>
+      <li>The stack trace and error message</li>
+      <li>Device model, OS version, and app version</li>
+      <li>A randomly generated installation ID (not linked to any account or person)</li>
+    </ul>
+    <p>No audio, card content, or PIN data is ever included in crash reports.</p>
+
+    <h2>3. Usage analytics (Firebase Analytics)</h2>
+    <p>We collect anonymous usage events to understand how the app is used and where to focus improvements. Examples of events logged:</p>
+    <ul>
+      <li>A card was played</li>
+      <li>A card was created or deleted</li>
+      <li>The parent area was accessed</li>
+    </ul>
+    <p>Analytics are disabled in development builds. No event contains audio content, card titles, or any personally identifiable information.</p>
+
+    <h2>Children's privacy</h2>
+    <p>Shiru does not knowingly collect personal information from children. The app is operated entirely by a parent or guardian. Children interact only with the playback interface — they cannot create accounts, enter personal information, or trigger any network activity.</p>
+    <p>The crash reports and analytics described above do not contain any child-specific data.</p>
+
+    <h2>Third-party services</h2>
+    <p>Shiru uses the following third-party services, both provided by Google:</p>
+    <ul>
+      <li><strong>Firebase Crashlytics</strong> — <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener">Firebase Privacy</a></li>
+      <li><strong>Firebase Analytics</strong> — <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener">Firebase Privacy</a></li>
+    </ul>
+    <p>We do not sell, rent, or share your data with any other third parties.</p>
+
+    <h2>Data retention</h2>
+    <p>Local data (recordings, cards, PIN) remains on your device until you uninstall the app or delete it manually. Crashlytics and Analytics data is retained by Google per their standard policies (typically 90 days for crash data, 14 months for analytics).</p>
+
+    <h2>Your rights</h2>
+    <p>Because Shiru stores no personal data on any server, there is nothing for us to delete or export on your behalf. To remove all local app data, uninstall Shiru from your device.</p>
+    <p>For Google's data (crash reports and analytics), you can opt out by disabling analytics on your Android device under <em>Settings → Google → Ads → Opt out of Ads Personalization</em>.</p>
+
+    <h2>Changes to this policy</h2>
+    <p>If we make material changes to this policy, we will update the "Last updated" date above. Continued use of the app after changes constitutes acceptance of the updated policy.</p>
+
+    <h2>Contact</h2>
+    <p>Questions? Reach us at <a href="mailto:privacy@shiru.app">privacy@shiru.app</a> or open an issue at <a href="https://github.com/dorduch/shiru" target="_blank" rel="noopener">github.com/dorduch/shiru</a>.</p>
+
+    <footer>
+      &copy; 2026 Shiru. Made with love for kids and their parents.
+    </footer>
+  </div>
+</body>
+</html>
