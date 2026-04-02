@@ -87,7 +87,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Moon Story'), findsOneWidget);
-    expect(find.text('🌙 Bedtime'), findsOneWidget);
+    expect(find.text('Bedtime'), findsOneWidget);
     expect(find.text('Start with one goodnight message'), findsNothing);
   });
 
