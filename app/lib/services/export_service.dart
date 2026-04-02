@@ -21,7 +21,7 @@ class ExportService {
   /// Throws [ExportException] if the audio file does not exist or cannot be copied.
   static Future<void> shareCard(AudioCard card) async {
     final sourceFile = File(card.audioPath);
-    if (!sourceFile.existsSync()) {
+    if (!await sourceFile.exists()) {
       throw const ExportException('Audio file not found');
     }
 
@@ -30,7 +30,7 @@ class ExportService {
     final filename = '$sanitized$ext';
 
     final tempDir = await getTemporaryDirectory();
-    final tempPath = path.join(tempDir.path, filename);
+    final tempPath = path.join(tempDir.path, '${card.id}_$filename');
 
     try {
       await sourceFile.copy(tempPath);
@@ -40,7 +40,7 @@ class ExportService {
 
     try {
       await Share.shareXFiles(
-        [XFile(tempPath, mimeType: 'audio/*', name: filename)],
+        [XFile(tempPath, name: filename)],
         subject: card.title,
       );
     } finally {
