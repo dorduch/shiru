@@ -32,6 +32,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
   String _color = '#F0FDF4';
   String? _selectedCategoryId;
   bool _isLoading = false;
+  String? _selectedSpriteKey;
   Timer? _debounce;
 
   @override
@@ -64,6 +65,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
     _audioPath = card.audioPath;
     _color = card.color;
     _selectedCategoryId = card.collectionId;
+    _selectedSpriteKey = card.spriteKey;
     setState(() {});
   }
 
@@ -103,7 +105,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
         collectionId: _selectedCategoryId,
         title: title,
         color: _color,
-        spriteKey: null,
+        spriteKey: _selectedSpriteKey ?? autoAssignSprite(title).id,
         audioPath: finalAudioPath,
         position: existingCard?.position ?? cardsList.length,
         createdAt:
@@ -159,7 +161,9 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
     if (_isLoading)
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
-    final spriteDef = autoAssignSprite(_titleController.text);
+    final spriteDef = _selectedSpriteKey != null
+        ? (predefinedSprites[_selectedSpriteKey!] ?? autoAssignSprite(_titleController.text))
+        : autoAssignSprite(_titleController.text);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F8),
