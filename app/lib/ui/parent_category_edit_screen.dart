@@ -21,21 +21,18 @@ class ParentCategoryEditScreen extends ConsumerStatefulWidget {
 class _ParentCategoryEditScreenState
     extends ConsumerState<ParentCategoryEditScreen> {
   final _nameController = TextEditingController();
-  final _emojiController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     if (widget.category != null) {
       _nameController.text = widget.category!.name;
-      _emojiController.text = widget.category!.emoji;
     }
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _emojiController.dispose();
     super.dispose();
   }
 
@@ -48,20 +45,12 @@ class _ParentCategoryEditScreenState
       );
       return;
     }
-    if (_emojiController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please enter an emoji.')));
-      return;
-    }
-
-    final emoji = _emojiController.text.characters.first;
 
     final notifier = ref.read(categoriesProvider.notifier);
 
     if (widget.category != null) {
       await notifier.updateCategory(
-        widget.category!.copyWith(name: name, emoji: emoji),
+        widget.category!.copyWith(name: name),
       );
     } else {
       final existing = ref.read(categoriesProvider).value ?? [];
@@ -72,7 +61,7 @@ class _ParentCategoryEditScreenState
         Category(
           id: const Uuid().v4(),
           name: name,
-          emoji: emoji,
+          emoji: '',
           position: maxPos + 1,
         ),
       );
@@ -152,103 +141,43 @@ class _ParentCategoryEditScreenState
                 ],
               ),
               const SizedBox(height: 24),
-              // Emoji + Name row
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Emoji',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: 72,
-                        child: TextField(
-                          controller: _emojiController,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 32),
-                          decoration: InputDecoration(
-                            hintText: '🎵',
-                            hintStyle: const TextStyle(
-                              fontSize: 32,
-                              color: Colors.black26,
-                            ),
-                            filled: true,
-                            fillColor: Colors.white,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 12,
-                              horizontal: 8,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: const BorderSide(
-                                color: Color(0xFFE5E7EB),
-                                width: 2,
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: const BorderSide(
-                                color: Color(0xFF22C55E),
-                                width: 2,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Category Name',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: _nameController,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'e.g. Songs',
-                            hintStyle: const TextStyle(color: Colors.black38),
-                            filled: true,
-                            fillColor: Colors.white,
-                            contentPadding: const EdgeInsets.all(16),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: const BorderSide(
-                                color: Color(0xFFE5E7EB),
-                                width: 2,
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              borderSide: const BorderSide(
-                                color: Color(0xFF22C55E),
-                                width: 2,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+              // Name field
+              const Text(
+                'Category Name',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _nameController,
+                autofocus: true,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'e.g. Songs',
+                  hintStyle: const TextStyle(color: Colors.black38),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.all(16),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFE5E7EB),
+                      width: 2,
                     ),
                   ),
-                ],
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF22C55E),
+                      width: 2,
+                    ),
+                  ),
+                ),
               ),
               // Card assignment list (only when editing)
               if (isEditing) ...[
@@ -340,7 +269,7 @@ class _ParentCategoryEditScreenState
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Text(
-                                        '${otherCat.emoji} ${otherCat.name}',
+                                        otherCat.name,
                                         style: const TextStyle(
                                           fontSize: 12,
                                           color: Color(0xFF6B7280),

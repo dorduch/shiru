@@ -358,7 +358,7 @@ class _LibraryCardTileState extends ConsumerState<_LibraryCardTile> {
                   children: [
                     if (category != null)
                       _MetaChip(
-                        label: '${category!.emoji} ${category!.name}',
+                        label: category!.name,
                         backgroundColor: const Color(0xFFECFDF3),
                         foregroundColor: const Color(0xFF16A34A),
                       ),

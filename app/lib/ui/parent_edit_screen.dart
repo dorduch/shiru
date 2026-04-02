@@ -9,6 +9,7 @@ import 'package:uuid/uuid.dart';
 import '../db/database_service.dart';
 import 'package:intl/intl.dart' as intl;
 import '../models/audio_card.dart';
+import '../models/category.dart';
 import '../providers/cards_provider.dart';
 import '../providers/categories_provider.dart';
 import '../models/sprites.dart';
@@ -147,6 +148,18 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _showNewCategoryDialog() async {
+    final existing = ref.read(categoriesProvider).value ?? [];
+    final created = await showDialog<Category>(
+      context: context,
+      builder: (ctx) => _NewCategoryDialog(existingCategories: existing),
+    );
+
+    if (created == null) return;
+    await ref.read(categoriesProvider.notifier).addCategory(created);
+    if (mounted) setState(() => _selectedCategoryId = created.id);
   }
 
   void _showSpritePicker() {
@@ -346,47 +359,71 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                                   categoriesProvider,
                                 );
                                 final categories = categoriesAsync.value ?? [];
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: const Color(0xFFE5E7EB),
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<String?>(
-                                      isExpanded: true,
-                                      value: _selectedCategoryId,
-                                      hint: const Text('— None —'),
-                                      items: [
-                                        const DropdownMenuItem<String?>(
-                                          value: null,
-                                          child: Text('— None —'),
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: const Color(0xFFE5E7EB),
+                                          width: 2,
                                         ),
-                                        ...categories.map(
-                                          (c) => DropdownMenuItem<String?>(
-                                            value: c.id,
-                                            child: Text(
-                                              '${c.emoji} ${c.name}',
-                                              style: const TextStyle(
-                                                fontSize: 16,
+                                      ),
+                                      child: DropdownButtonHideUnderline(
+                                        child: DropdownButton<String?>(
+                                          isExpanded: true,
+                                          value: _selectedCategoryId,
+                                          hint: const Text('— None —'),
+                                          items: [
+                                            const DropdownMenuItem<String?>(
+                                              value: null,
+                                              child: Text('— None —'),
+                                            ),
+                                            ...categories.map(
+                                              (c) => DropdownMenuItem<String?>(
+                                                value: c.id,
+                                                child: Text(
+                                                  c.name,
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                  ),
+                                                ),
                                               ),
                                             ),
-                                          ),
+                                          ],
+                                          onChanged: (value) {
+                                            setState(
+                                              () => _selectedCategoryId = value,
+                                            );
+                                          },
                                         ),
-                                      ],
-                                      onChanged: (value) {
-                                        setState(
-                                          () => _selectedCategoryId = value,
-                                        );
-                                      },
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(height: 8),
+                                    GestureDetector(
+                                      onTap: _showNewCategoryDialog,
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.add_circle_outline, size: 16, color: Color(0xFF3B82F6)),
+                                          SizedBox(width: 6),
+                                          Text(
+                                            'New Category',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              color: Color(0xFF3B82F6),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 );
                               },
                             ),
@@ -520,6 +557,85 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
               ),
             ],
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _NewCategoryDialog extends StatefulWidget {
+  final List<Category> existingCategories;
+  const _NewCategoryDialog({required this.existingCategories});
+
+  @override
+  State<_NewCategoryDialog> createState() => _NewCategoryDialogState();
+}
+
+class _NewCategoryDialogState extends State<_NewCategoryDialog> {
+  final _nameController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) return;
+    final maxPos = widget.existingCategories.isEmpty
+        ? -1
+        : widget.existingCategories.map((c) => c.position).reduce((a, b) => a > b ? a : b);
+    Navigator.pop(
+      context,
+      Category(
+        id: const Uuid().v4(),
+        name: name,
+        emoji: '',
+        position: maxPos + 1,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Text('New Category', style: TextStyle(fontWeight: FontWeight.w800)),
+      content: TextField(
+        controller: _nameController,
+        autofocus: true,
+        onSubmitted: (_) => _submit(),
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        decoration: InputDecoration(
+          hintText: 'e.g. Songs',
+          hintStyle: const TextStyle(color: Colors.black38),
+          filled: true,
+          fillColor: const Color(0xFFF9FAFB),
+          contentPadding: const EdgeInsets.all(14),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 2),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF22C55E), width: 2),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel', style: TextStyle(color: Color(0xFF6B7280))),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF22C55E),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          onPressed: _submit,
+          child: const Text('Create', style: TextStyle(fontWeight: FontWeight.w700)),
         ),
       ],
     );

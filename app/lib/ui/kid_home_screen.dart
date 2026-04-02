@@ -193,7 +193,7 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
             (cat) => Padding(
               padding: const EdgeInsetsDirectional.only(end: 8),
               child: _buildTab(
-                label: '${cat.emoji} ${cat.name}',
+                label: cat.name,
                 isActive: _selectedCategoryId == cat.id,
                 onTap: () {
                   setState(() => _selectedCategoryId = cat.id);
