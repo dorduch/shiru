@@ -10,6 +10,7 @@ import '../providers/categories_provider.dart';
 import '../models/category.dart' as cat_model;
 import 'package:flutter/services.dart';
 import '../services/audio_service.dart';
+import '../services/analytics_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_responsive.dart';
 import '../theme/app_typography.dart';
@@ -125,8 +126,8 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                       return Center(
                         child: Text(
                           _selectedCategoryId == null
-                              ? 'Ask a grown-up to add a story, song, or message.'
-                              : 'Nothing in this corner yet.',
+                              ? 'No stories here yet!'
+                              : 'Nothing here yet!',
                           style: const TextStyle(
                             fontSize: 24,
                             color: Colors.black54,
@@ -161,7 +162,7 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                   },
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (err, stack) => Center(child: Text('Error: $err')),
+                  error: (err, stack) => const Center(child: Text('Something went wrong')),
                 ),
               ),
 
@@ -196,6 +197,7 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                 isActive: _selectedCategoryId == cat.id,
                 onTap: () {
                   setState(() => _selectedCategoryId = cat.id);
+                  AnalyticsService.instance.logCategoryFilterUsed();
                 },
               ),
             ),

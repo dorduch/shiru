@@ -91,7 +91,7 @@ void main() {
     expect(find.text('Start with one goodnight message'), findsNothing);
   });
 
-  testWidgets('settings menu exposes the about entry', (tester) async {
+  testWidgets('settings menu keeps about as the last entry', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1400, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -101,6 +101,20 @@ void main() {
     await tester.tap(find.byTooltip('Library settings'));
     await tester.pumpAndSettle();
 
-    expect(find.text('About Shiru'), findsOneWidget);
+    final changePin = find.text('Change PIN');
+    final categories = find.text('Categories');
+    final about = find.text('About Shiru');
+
+    expect(changePin, findsOneWidget);
+    expect(categories, findsOneWidget);
+    expect(about, findsOneWidget);
+    expect(
+      tester.getTopLeft(changePin).dy,
+      lessThan(tester.getTopLeft(categories).dy),
+    );
+    expect(
+      tester.getTopLeft(categories).dy,
+      lessThan(tester.getTopLeft(about).dy),
+    );
   });
 }

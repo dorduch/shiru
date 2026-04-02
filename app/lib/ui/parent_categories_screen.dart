@@ -133,7 +133,7 @@ class ParentCategoriesScreen extends ConsumerWidget {
       builder: (ctx) => AlertDialog(
         title: Text('Delete "${category.emoji} ${category.name}"?'),
         content: const Text(
-          'Cards in this category will become uncategorized.',
+          'Cards in this category won\'t be deleted — they\'ll just lose their label.',
         ),
         actions: [
           TextButton(

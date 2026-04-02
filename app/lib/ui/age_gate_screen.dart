@@ -28,7 +28,7 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
       initialDate: _selectedBirthDate ?? initialDate,
       firstDate: DateTime(now.year - 120),
       lastDate: now,
-      helpText: 'Enter your birth date',
+      helpText: 'Your birthday',
     );
 
     if (!mounted || pickedDate == null) return;
@@ -121,7 +121,7 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
                     ),
                     const SizedBox(height: 12),
                     const Text(
-                      'These tools shape what your child can hear. Enter your birth date so the parent area stays in adult hands.',
+                      'This is where you set things up for your child. A quick birthday check keeps it for grown-ups only.',
                       style: TextStyle(
                         fontSize: 17,
                         height: 1.45,

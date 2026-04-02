@@ -4,15 +4,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/pin_provider.dart';
+import '../services/analytics_service.dart';
 import '../theme/app_responsive.dart';
 
 enum _ChangePinStep { enterCurrent, enterNew, confirmNew }
 
 class ChangePinScreen extends ConsumerStatefulWidget {
-  const ChangePinScreen({Key? key}) : super(key: key);
+  const ChangePinScreen({super.key});
 
   @override
-  _ChangePinScreenState createState() => _ChangePinScreenState();
+  ConsumerState<ChangePinScreen> createState() => _ChangePinScreenState();
 }
 
 class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
@@ -46,11 +47,11 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
   String get _title {
     switch (_step) {
       case _ChangePinStep.enterCurrent:
-        return 'Enter current code';
+        return 'Enter current PIN';
       case _ChangePinStep.enterNew:
-        return 'Enter new code';
+        return 'Enter new PIN';
       case _ChangePinStep.confirmNew:
-        return 'Confirm new code';
+        return 'Confirm new PIN';
     }
   }
 
@@ -65,7 +66,7 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
     }
   }
 
-  void _onKeyPress(String key, String currentPin) {
+  Future<void> _onKeyPress(String key, String currentPin) async {
     if (_isLocked) return;
     HapticFeedback.lightImpact();
     if (key == 'DEL') {
@@ -80,11 +81,11 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
     setState(() => _input += key);
 
     if (_input.length == 4) {
-      _handleComplete(currentPin);
+      await _handleComplete(currentPin);
     }
   }
 
-  void _handleComplete(String currentPin) {
+  Future<void> _handleComplete(String currentPin) async {
     switch (_step) {
       case _ChangePinStep.enterCurrent:
         if (_input == currentPin) {
@@ -106,7 +107,7 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
           } else {
             ScaffoldMessenger.of(
               context,
-            ).showSnackBar(const SnackBar(content: Text('Wrong code')));
+            ).showSnackBar(const SnackBar(content: Text('Wrong PIN')));
           }
         }
         break;
@@ -121,11 +122,23 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
 
       case _ChangePinStep.confirmNew:
         if (_input == _newPin) {
-          ref.read(pinProvider.notifier).updatePin(_newPin);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Code changed successfully')),
-          );
-          context.pop();
+          try {
+            await ref.read(pinProvider.notifier).updatePin(_newPin);
+            AnalyticsService.instance.logPinChanged();
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('PIN changed successfully')),
+            );
+            context.pop();
+          } catch (_) {
+            if (!mounted) return;
+            setState(() => _input = '');
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Couldn\'t update your PIN. Please try again.'),
+              ),
+            );
+          }
         } else {
           setState(() {
             _step = _ChangePinStep.enterNew;
@@ -134,7 +147,7 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
           });
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text("Codes don't match")));
+          ).showSnackBar(const SnackBar(content: Text("PINs don't match")));
         }
         break;
     }
@@ -153,7 +166,7 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
         backgroundColor: Color(0xFFF6F7F8),
         body: Center(
           child: Text(
-            'Error loading PIN code',
+            'Something went wrong loading your PIN.',
             style: TextStyle(fontSize: 20, color: Color(0xFF1A1A1A)),
           ),
         ),

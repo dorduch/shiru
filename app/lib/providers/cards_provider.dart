@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/audio_card.dart';
 import '../db/database_service.dart';
 import '../services/library_import_service.dart';
+import '../services/analytics_service.dart';
 
 class CardsNotifier extends StateNotifier<AsyncValue<List<AudioCard>>> {
   CardsNotifier() : super(const AsyncValue.loading()) {
@@ -47,6 +48,7 @@ class CardsNotifier extends StateNotifier<AsyncValue<List<AudioCard>>> {
       } catch (_) {}
     }
     await DatabaseService.instance.deleteCard(id);
+    AnalyticsService.instance.logCardDeleted();
 
     if (deletedCard != null) {
       final audioPath = deletedCard.audioPath;

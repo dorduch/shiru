@@ -35,14 +35,14 @@ class LibraryImportService {
 
   static String deriveTitleFromSourcePath(String sourcePath) {
     final rawTitle = path.basenameWithoutExtension(sourcePath).trim();
-    if (rawTitle.isEmpty || rawTitle.startsWith('.')) return 'New Story';
+    if (rawTitle.isEmpty || rawTitle.startsWith('.')) return 'New Card';
 
     final normalizedTitle = rawTitle
         .replaceAll(RegExp(r'[_-]+'), ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
 
-    return normalizedTitle.isEmpty ? 'New Story' : normalizedTitle;
+    return normalizedTitle.isEmpty ? 'New Card' : normalizedTitle;
   }
 
   static String? validateAudioSelection({
@@ -55,15 +55,15 @@ class LibraryImportService {
         .toLowerCase();
 
     if (!supportedAudioExtensions.contains(extension)) {
-      return 'Unsupported audio format. Use MP3, WAV, M4A, or AAC.';
+      return 'This file type isn\'t supported. Try MP3, M4A, WAV, or AAC.';
     }
 
     if (sizeBytes <= 0) {
-      return 'File is empty.';
+      return 'This file appears to be empty.';
     }
 
     if (sizeBytes > maxAudioBytes) {
-      return 'File is too large. Maximum size is 200 MB.';
+      return 'This file is too large (200 MB max).';
     }
 
     return null;
@@ -72,7 +72,7 @@ class LibraryImportService {
   static Future<String> importAudioToLibrary(String sourcePath) async {
     final sourceFile = File(sourcePath);
     if (!await sourceFile.exists()) {
-      throw Exception('Selected file is no longer available.');
+      throw Exception('This file isn\'t available anymore.');
     }
 
     final sourceSize = await sourceFile.length();
@@ -103,7 +103,7 @@ class LibraryImportService {
       try {
         await importedFile.delete();
       } catch (_) {}
-      throw Exception('Audio file import failed. Please try again.');
+      throw Exception('Couldn\'t import this audio file. Please try again.');
     }
 
     final tempDir = await getTemporaryDirectory();

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/category.dart';
 import '../db/database_service.dart';
+import '../services/analytics_service.dart';
 
 class CategoriesNotifier extends StateNotifier<AsyncValue<List<Category>>> {
   CategoriesNotifier() : super(const AsyncValue.loading()) {
@@ -18,6 +19,7 @@ class CategoriesNotifier extends StateNotifier<AsyncValue<List<Category>>> {
 
   Future<void> addCategory(Category category) async {
     await DatabaseService.instance.createCategory(category);
+    AnalyticsService.instance.logCategoryCreated();
     await loadCategories();
   }
 
@@ -28,6 +30,7 @@ class CategoriesNotifier extends StateNotifier<AsyncValue<List<Category>>> {
 
   Future<void> deleteCategory(String id) async {
     await DatabaseService.instance.deleteCategoryAndUnassignCards(id);
+    AnalyticsService.instance.logCategoryDeleted();
     await loadCategories();
   }
 
