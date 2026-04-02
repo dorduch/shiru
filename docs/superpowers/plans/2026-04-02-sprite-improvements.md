@@ -149,7 +149,7 @@ class SpriteDef {
 cd app && flutter test test/models/sprites_test.dart
 ```
 
-Expected: all 6 tests pass.
+Expected: all 7 tests pass.
 
 - [ ] **Step 5: Verify app still analyzes clean**
 
@@ -202,7 +202,7 @@ Append to `test/models/sprites_test.dart` inside `main()`:
 cd app && flutter test test/models/sprites_test.dart
 ```
 
-Expected: all 8 tests pass.
+Expected: all 9 tests pass.
 
 - [ ] **Step 3: Update _CardArtwork in parent_list_screen.dart**
 

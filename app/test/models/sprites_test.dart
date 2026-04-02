@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shiru/models/sprites.dart';
 
 void main() {
+  tearDown(() => resetAssignedSpritesForTesting());
+
   group('SpriteCategory', () {
     test('has three values', () {
       expect(SpriteCategory.values.length, 3);

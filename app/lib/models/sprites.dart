@@ -3962,6 +3962,10 @@ final Map<String, SpriteDef> predefinedSprites = {
 
 final Map<String, String> _assignedSprites = {};
 
+// Test-only: reset the assignment cache between test runs.
+// ignore: unused_element
+void resetAssignedSpritesForTesting() => _assignedSprites.clear();
+
 SpriteDef autoAssignSprite(String title) {
   if (_assignedSprites.containsKey(title)) {
     return predefinedSprites[_assignedSprites[title]]!;
