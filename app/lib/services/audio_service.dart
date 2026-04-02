@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import '../models/audio_card.dart';
 import '../providers/audio_player_provider.dart';
+import 'analytics_service.dart';
 
 class AudioService {
   final Ref ref;
@@ -34,6 +35,7 @@ class AudioService {
       ref.read(currentPlayingCardIdProvider.notifier).state = card.id;
       await _player.setFilePath(card.audioPath);
       await _player.play();
+      AnalyticsService.instance.logCardPlayed();
     } catch (e) {
       debugPrint('Error playing audio: $e');
     }

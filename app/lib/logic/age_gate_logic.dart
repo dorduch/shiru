@@ -11,7 +11,7 @@ int calculateAge(DateTime birthDate, DateTime now) {
 
 String? validateAdultBirthDate(DateTime? birthDate, DateTime now) {
   if (birthDate == null) {
-    return 'Enter your birth date to continue.';
+    return 'Choose your birth date to continue.';
   }
 
   if (calculateAge(birthDate, now) < 18) {

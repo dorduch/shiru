@@ -18,7 +18,7 @@ void main() {
     test('deriveTitleFromSourcePath falls back for blank basename', () {
       expect(
         LibraryImportService.deriveTitleFromSourcePath('/tmp/.mp3'),
-        'New Story',
+        'New Card',
       );
     });
 
@@ -28,7 +28,7 @@ void main() {
           sourcePath: '/tmp/story.ogg',
           sizeBytes: 1024,
         ),
-        'Unsupported audio format. Use MP3, WAV, M4A, or AAC.',
+        'This file type isn\'t supported. Try MP3, M4A, WAV, or AAC.',
       );
     });
 
@@ -38,7 +38,7 @@ void main() {
           sourcePath: '/tmp/story.mp3',
           sizeBytes: LibraryImportService.maxAudioBytes + 1,
         ),
-        'File is too large. Maximum size is 200 MB.',
+        'This file is too large (200 MB max).',
       );
     });
 

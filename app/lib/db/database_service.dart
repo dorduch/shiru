@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'dart:math';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/audio_card.dart';
 import '../models/category.dart';
+import '../services/key_value_store.dart';
 
 /// Key under which the DB encryption password is stored in secure storage.
 const _kDbPasswordKey = 'db_encryption_key';
@@ -27,14 +29,23 @@ class DatabaseService {
 
   /// Returns the encryption key, generating and persisting it on first launch.
   Future<String> _getOrCreateEncryptionKey() async {
-    const storage = FlutterSecureStorage();
+    const storage = FlutterSecureStorage(
+      iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+    );
     String? key = await storage.read(key: _kDbPasswordKey);
     if (key == null) {
       final rng = Random.secure();
       const chars =
           'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
       key = List.generate(32, (_) => chars[rng.nextInt(chars.length)]).join();
-      await storage.write(key: _kDbPasswordKey, value: key);
+      try {
+        await storage.write(key: _kDbPasswordKey, value: key);
+      } on PlatformException catch (error) {
+        if (!isDuplicateKeychainItemError(error)) rethrow;
+
+        await storage.delete(key: _kDbPasswordKey);
+        await storage.write(key: _kDbPasswordKey, value: key);
+      }
     }
     return key;
   }

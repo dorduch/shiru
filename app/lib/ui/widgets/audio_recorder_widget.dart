@@ -92,7 +92,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('File is too large. Maximum size is 200 MB.'),
+                content: Text('This file is too large (200 MB max).'),
               ),
             );
           }
@@ -105,7 +105,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error picking file: $e')));
+        ).showSnackBar(const SnackBar(content: Text('Couldn\'t open that file. Please try again.')));
       }
     } finally {
       // Always reset — even if widget is disposed or picker threw.
@@ -123,7 +123,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Microphone permission required for recording.'),
+              content: Text('Microphone access is needed to record.'),
             ),
           );
         }
@@ -136,7 +136,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
             builder: (ctx) => AlertDialog(
               title: const Text('Microphone Permission'),
               content: const Text(
-                'Enable microphone access in settings to record.',
+                'Shiru needs microphone access to record. You can turn it on in Settings.',
               ),
               actions: [
                 TextButton(

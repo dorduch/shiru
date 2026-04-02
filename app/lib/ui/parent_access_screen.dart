@@ -30,7 +30,7 @@ class ParentAccessScreen extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'Unable to open parent tools.',
+                  'Something went wrong. Let\'s try that again.',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,

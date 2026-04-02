@@ -18,7 +18,7 @@ void main() {
     test('requires a birth date', () {
       expect(
         validateAdultBirthDate(null, now),
-        'Enter your birth date to continue.',
+        'Choose your birth date to continue.',
       );
     });
 

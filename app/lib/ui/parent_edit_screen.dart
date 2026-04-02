@@ -13,6 +13,7 @@ import '../providers/cards_provider.dart';
 import '../providers/categories_provider.dart';
 import '../models/sprites.dart';
 import '../services/library_import_service.dart';
+import '../services/analytics_service.dart';
 import '../theme/app_responsive.dart';
 import 'pixel_sprite.dart';
 
@@ -39,7 +40,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
     if (widget.cardId != null) {
       _loadCard(widget.cardId!);
     } else {
-      _titleController.text = "New Story";
+      _titleController.text = "New Card";
     }
   }
 
@@ -72,7 +73,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
     if (title.isEmpty || selectedAudioPath == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please fill in title and add an audio file.'),
+          content: Text('Add a title and an audio file to save.'),
         ),
       );
       return;
@@ -111,6 +112,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
 
       if (existingCard == null) {
         await ref.read(cardsProvider.notifier).addCard(card);
+        AnalyticsService.instance.logCardCreated(method: 'single');
       } else {
         await DatabaseService.instance.updateCard(card);
         await ref.read(cardsProvider.notifier).loadCards();
@@ -139,7 +141,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ).showSnackBar(const SnackBar(content: Text('Couldn\'t save this card. Please try again.')));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -449,7 +451,7 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
               const SizedBox(height: 16),
               Text(
                 _titleController.text.isEmpty
-                    ? "New Story"
+                    ? "New Card"
                     : _titleController.text,
                 textAlign: TextAlign.center,
                 maxLines: 1,

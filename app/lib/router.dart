@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'services/analytics_service.dart';
 import 'logic/parent_flow_logic.dart';
 import 'providers/auth_provider.dart';
 import 'ui/kid_home_screen.dart';
@@ -42,6 +43,7 @@ String? _protectAdultRoute(WidgetRef ref, GoRouterState state) {
 GoRouter createRouter(WidgetRef ref) {
   return GoRouter(
     initialLocation: '/',
+    observers: [AnalyticsService.instance.observer],
     onEnter: (context, currentState, nextState, router) =>
         _handleParentAreaTransition(ref, currentState, nextState),
     routes: [

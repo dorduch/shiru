@@ -11,6 +11,7 @@ import '../models/category.dart';
 import '../providers/cards_provider.dart';
 import '../providers/categories_provider.dart';
 import '../services/library_import_service.dart';
+import '../services/analytics_service.dart';
 
 class BulkImportScreen extends ConsumerStatefulWidget {
   const BulkImportScreen({super.key});
@@ -75,7 +76,7 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
           drafts.add(
             _BulkImportDraft.invalid(
               fileName: file.name,
-              errorMessage: 'File path unavailable on this device.',
+              errorMessage: 'Can\'t access this file on your device.',
             ),
           );
           continue;
@@ -115,7 +116,7 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error picking files: $e')));
+      ).showSnackBar(const SnackBar(content: Text('Couldn\'t open those files. Please try again.')));
     } finally {
       if (mounted) {
         setState(() => _isPickingFiles = false);
@@ -203,6 +204,7 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
             entry.draft.errorMessage = null;
           }
         });
+        AnalyticsService.instance.logBulkImport(count: preparedImports.length);
       } catch (_) {
         for (final entry in preparedImports) {
           try {
@@ -602,7 +604,7 @@ class _BulkImportDraft {
     return _BulkImportDraft(
       sourcePath: null,
       fileName: fileName,
-      titleController: TextEditingController(text: 'New Story'),
+      titleController: TextEditingController(text: 'New Card'),
       status: _BulkImportStatus.invalid,
       errorMessage: errorMessage,
     );

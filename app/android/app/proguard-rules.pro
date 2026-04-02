@@ -38,3 +38,7 @@
 # Conscrypt (SSL/TLS provider)
 -keep class org.conscrypt.** { *; }
 -dontwarn org.conscrypt.**
+
+# Firebase Crashlytics
+-keepattributes SourceFile,LineNumberTable
+-keep public class * extends java.lang.Exception

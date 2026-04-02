@@ -158,17 +158,17 @@ class _LibraryHeader extends StatelessWidget {
                       ),
                     ),
                     PopupMenuItem(
-                      value: _LibraryMenuAction.about,
-                      child: _MenuLabel(
-                        icon: Icons.info_outline,
-                        label: 'About Shiru',
-                      ),
-                    ),
-                    PopupMenuItem(
                       value: _LibraryMenuAction.categories,
                       child: _MenuLabel(
                         icon: Icons.category_outlined,
                         label: 'Categories',
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: _LibraryMenuAction.about,
+                      child: _MenuLabel(
+                        icon: Icons.info_outline,
+                        label: 'About Shiru',
                       ),
                     ),
                   ],

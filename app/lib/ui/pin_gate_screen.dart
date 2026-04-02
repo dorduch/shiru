@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../providers/auth_provider.dart';
 import '../providers/pin_provider.dart';
+import '../services/analytics_service.dart';
 import '../theme/app_responsive.dart';
 
 enum _PinFlowStep { enter, create, confirm }
@@ -89,6 +90,7 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
       if (_input == savedPin) {
         _failedAttempts = 0;
         ref.read(parentAuthProvider.notifier).state = true;
+        AnalyticsService.instance.logParentAreaEntered();
         if (mounted) {
           context.go(widget.nextLocation);
         }
@@ -120,10 +122,21 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
     }
 
     if (_input == _newPin) {
-      await ref.read(pinProvider.notifier).updatePin(_newPin);
-      ref.read(parentAuthProvider.notifier).state = true;
-      if (mounted) {
-        context.go(widget.nextLocation);
+      try {
+        await ref.read(pinProvider.notifier).updatePin(_newPin);
+        ref.read(parentAuthProvider.notifier).state = true;
+        AnalyticsService.instance.logParentAreaEntered();
+        if (mounted) {
+          context.go(widget.nextLocation);
+        }
+      } catch (_) {
+        if (!mounted) return;
+        setState(() => _input = '');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Couldn\'t save your PIN. Please try again.'),
+          ),
+        );
       }
       return;
     }
@@ -156,7 +169,7 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
     }
 
     return _step == _PinFlowStep.confirm
-        ? 'Use the same 4 digits again so we know it is right'
+        ? 'One more time, just to be sure.'
         : 'Choose 4 digits only the grown-ups in your home will know';
   }
 
@@ -175,7 +188,7 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (err, _) => Center(
                   child: Text(
-                    'Error loading PIN',
+                    'Something went wrong loading your PIN.',
                     style: const TextStyle(color: Colors.red, fontSize: 16),
                   ),
                 ),
@@ -248,7 +261,7 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
                 width: 280,
                 child: Center(
                   child: Text(
-                    'Error loading PIN',
+                    'Something went wrong loading your PIN.',
                     style: TextStyle(color: Colors.red, fontSize: 16),
                   ),
                 ),
