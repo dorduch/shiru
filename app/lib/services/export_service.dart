@@ -22,7 +22,7 @@ class ExportService {
   static Future<void> shareCard(AudioCard card) async {
     final sourceFile = File(card.audioPath);
     if (!await sourceFile.exists()) {
-      throw const ExportException('Audio file not found');
+      throw const ExportException('Could not find audio file');
     }
 
     final sanitized = sanitizeTitle(card.title);
@@ -40,7 +40,7 @@ class ExportService {
 
     try {
       await Share.shareXFiles(
-        [XFile(tempPath, name: filename)],
+        [XFile(tempPath, mimeType: 'audio/*', name: filename)],
         subject: card.title,
       );
     } finally {
