@@ -1,3 +1,4 @@
 tools/story-playground/.env
 .DS_Store
 app/firepit-log.txt
+.worktrees/
