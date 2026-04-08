@@ -12,6 +12,8 @@ import 'providers/auth_provider.dart';
 import 'providers/cards_provider.dart';
 import 'providers/categories_provider.dart';
 import 'router.dart';
+import 'screenshot_mode.dart';
+import 'services/screenshot_seed_service.dart';
 import 'theme/app_colors.dart';
 
 void main() async {
@@ -25,12 +27,12 @@ void main() async {
     return true;
   };
 
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.landscapeLeft,
-    DeviceOrientation.landscapeRight,
-  ]);
+  await SystemChrome.setPreferredOrientations([]);
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   WakelockPlus.enable();
+  if (kStoreScreenshotMode) {
+    await ScreenshotSeedService.ensureSeeded();
+  }
 
   runApp(const ProviderScope(child: ShiruApp()));
 }
@@ -93,6 +95,9 @@ class _ShiruAppState extends ConsumerState<ShiruApp>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (kStoreScreenshotMode) {
+      return;
+    }
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden ||
         state == AppLifecycleState.detached) {

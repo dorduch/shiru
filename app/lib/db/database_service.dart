@@ -31,7 +31,9 @@ class DatabaseService {
   /// Returns the encryption key, generating and persisting it on first launch.
   Future<String> _getOrCreateEncryptionKey() async {
     const storage = FlutterSecureStorage(
-      iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device),
+      iOptions: IOSOptions(
+        accessibility: KeychainAccessibility.first_unlock_this_device,
+      ),
     );
     String? key = await storage.read(key: _kDbPasswordKey);
     if (key == null) {
@@ -203,6 +205,16 @@ CREATE TABLE categories (
 
     final db = await instance.database;
     await db.transaction((txn) async {
+      for (final card in cards) {
+        await txn.insert('cards', card.toMap());
+      }
+    });
+  }
+
+  Future<void> replaceCards(List<AudioCard> cards) async {
+    final db = await instance.database;
+    await db.transaction((txn) async {
+      await txn.delete('cards');
       for (final card in cards) {
         await txn.insert('cards', card.toMap());
       }
