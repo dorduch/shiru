@@ -1,0 +1,215 @@
+<h2>Section 2: Screen-by-Screen Changes</h2>
+<p class="subtitle">What changes on each screen — and what stays the same</p>
+
+<div class="section">
+  <h3>main.dart — Unlock orientation</h3>
+  <div style="background:#111;border-radius:8px;padding:14px;font-family:monospace;font-size:12px;line-height:1.6;">
+    <div style="color:#ef4444;text-decoration:line-through;">SystemChrome.setPreferredOrientations([landscapeLeft, landscapeRight])</div>
+    <div style="color:#22c55e;">SystemChrome.setPreferredOrientations([])  <span style="color:#555;">// all orientations</span></div>
+  </div>
+  <p style="font-size:13px;color:#888;margin-top:6px;">One line change. Everything else in main.dart stays (immersiveSticky, wakelock).</p>
+</div>
+
+<div class="section">
+  <h3>KidHomeScreen — Grid + Player Pill</h3>
+  <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;">
+
+    <!-- Phone portrait -->
+    <div style="flex:1;min-width:120px;">
+      <div style="font-size:11px;color:#888;text-align:center;margin-bottom:6px;">Phone portrait (xs)</div>
+      <div style="background:#0f0f23;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:4px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="width:24px;height:24px;background:#1a1a3e;border-radius:6px;"></div>
+          <div style="display:flex;gap:4px;">
+            <div style="width:24px;height:8px;background:#6c63ff;border-radius:4px;"></div>
+            <div style="width:24px;height:8px;background:#333;border-radius:4px;"></div>
+          </div>
+          <div style="width:24px;height:24px;background:#1a1a3e;border-radius:6px;"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;">
+          <div style="background:#2a1a4a;border-radius:5px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;">
+            <div style="width:20px;height:20px;background:#6c63ff;border-radius:3px;"></div>
+          </div>
+          <div style="background:#1a2a4a;border-radius:5px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;">
+            <div style="width:20px;height:20px;background:#3b82f6;border-radius:3px;"></div>
+          </div>
+          <div style="background:#2a4a1a;border-radius:5px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;">
+            <div style="width:20px;height:20px;background:#22c55e;border-radius:3px;"></div>
+          </div>
+          <div style="background:#4a2a1a;border-radius:5px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;">
+            <div style="width:20px;height:20px;background:#f97316;border-radius:3px;"></div>
+          </div>
+        </div>
+        <!-- Player pill - full width in portrait -->
+        <div style="background:#1a1a3e;border-radius:8px;padding:5px;display:flex;align-items:center;gap:4px;">
+          <div style="width:24px;height:24px;background:#6c63ff;border-radius:50%;flex-shrink:0;"></div>
+          <div style="flex:1;">
+            <div style="height:3px;background:#333;border-radius:1px;"><div style="width:35%;height:100%;background:#6c63ff;border-radius:1px;"></div></div>
+          </div>
+          <div style="width:20px;height:20px;background:#333;border-radius:50%;"></div>
+        </div>
+        <div style="font-size:10px;color:#555;text-align:center;">2 cols · sprite 4.0 · pill full-width</div>
+      </div>
+    </div>
+
+    <!-- Tablet landscape -->
+    <div style="flex:2;min-width:200px;">
+      <div style="font-size:11px;color:#888;text-align:center;margin-bottom:6px;">Tablet landscape (lg)</div>
+      <div style="background:#0f0f23;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:4px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="width:30px;height:30px;background:#1a1a3e;border-radius:8px;"></div>
+          <div style="display:flex;gap:6px;">
+            <div style="width:36px;height:10px;background:#6c63ff;border-radius:5px;"></div>
+            <div style="width:28px;height:10px;background:#333;border-radius:5px;"></div>
+            <div style="width:28px;height:10px;background:#333;border-radius:5px;"></div>
+          </div>
+          <div style="width:30px;height:30px;background:#1a1a3e;border-radius:8px;"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;">
+          <div style="background:#2a1a4a;border-radius:6px;aspect-ratio:0.85;display:flex;align-items:center;justify-content:center;">
+            <div style="width:28px;height:28px;background:#6c63ff;border-radius:4px;"></div>
+          </div>
+          <div style="background:#1a2a4a;border-radius:6px;aspect-ratio:0.85;display:flex;align-items:center;justify-content:center;">
+            <div style="width:28px;height:28px;background:#3b82f6;border-radius:4px;"></div>
+          </div>
+          <div style="background:#2a4a1a;border-radius:6px;aspect-ratio:0.85;display:flex;align-items:center;justify-content:center;">
+            <div style="width:28px;height:28px;background:#22c55e;border-radius:4px;"></div>
+          </div>
+          <div style="background:#4a2a1a;border-radius:6px;aspect-ratio:0.85;display:flex;align-items:center;justify-content:center;">
+            <div style="width:28px;height:28px;background:#f97316;border-radius:4px;"></div>
+          </div>
+          <div style="background:#2a1a1a;border-radius:6px;aspect-ratio:0.85;display:flex;align-items:center;justify-content:center;">
+            <div style="width:28px;height:28px;background:#ef4444;border-radius:4px;"></div>
+          </div>
+          <div style="background:#1a3a4a;border-radius:6px;aspect-ratio:0.85;display:flex;align-items:center;justify-content:center;">
+            <div style="width:28px;height:28px;background:#06b6d4;border-radius:4px;"></div>
+          </div>
+          <div style="background:#3a1a4a;border-radius:6px;aspect-ratio:0.85;display:flex;align-items:center;justify-content:center;">
+            <div style="width:28px;height:28px;background:#a855f7;border-radius:4px;"></div>
+          </div>
+          <div style="background:#4a3a1a;border-radius:6px;aspect-ratio:0.85;display:flex;align-items:center;justify-content:center;">
+            <div style="width:28px;height:28px;background:#eab308;border-radius:4px;"></div>
+          </div>
+        </div>
+        <!-- Player pill floating bottom right on tablet -->
+        <div style="display:flex;justify-content:flex-end;">
+          <div style="background:#1a1a3e;border-radius:24px;padding:5px 8px;display:flex;align-items:center;gap:6px;max-width:60%;">
+            <div style="width:30px;height:30px;background:#6c63ff;border-radius:50%;flex-shrink:0;"></div>
+            <div style="flex:1;min-width:50px;">
+              <div style="height:3px;background:#333;border-radius:1px;"><div style="width:35%;height:100%;background:#6c63ff;border-radius:1px;"></div></div>
+            </div>
+            <div style="width:24px;height:24px;background:#333;border-radius:50%;"></div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:#555;text-align:center;">4+ cols · sprite 8.0 · pill floating pill</div>
+      </div>
+    </div>
+  </div>
+  <p style="font-size:12px;color:#666;margin-top:8px;">Grid: <code>maxCrossAxisExtent</code> from <code>AppResponsive.gridMaxExtent()</code> — no column count to manage manually. Player pill: full-width bar in portrait (xs/sm), floating pill in landscape (md/lg) — same widget, different constraints.</p>
+</div>
+
+<div class="section">
+  <h3>ParentEditScreen — Orientation-aware layout</h3>
+  <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;">
+
+    <!-- Portrait stacked -->
+    <div style="flex:1;min-width:120px;">
+      <div style="font-size:11px;color:#888;text-align:center;margin-bottom:6px;">Portrait (xs/sm)</div>
+      <div style="background:#111;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:4px;">
+        <div style="height:16px;background:#1a1a2e;border-radius:4px;display:flex;align-items:center;justify-content:space-between;padding:0 6px;">
+          <div style="width:20px;height:6px;background:#555;border-radius:2px;"></div>
+          <div style="width:28px;height:10px;background:#6c63ff;border-radius:3px;"></div>
+        </div>
+        <!-- Preview on top -->
+        <div style="background:#2a1a4a;border-radius:6px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="width:32px;height:32px;background:#6c63ff;border-radius:5px;"></div>
+          <div style="height:4px;width:40px;background:#888;border-radius:2px;"></div>
+          <div style="font-size:9px;color:#6c63ff;">Preview</div>
+        </div>
+        <!-- Form below -->
+        <div style="display:flex;flex-direction:column;gap:3px;">
+          <div style="height:4px;width:24px;background:#555;border-radius:2px;"></div>
+          <div style="height:12px;background:#222;border-radius:3px;border:1px solid #333;"></div>
+          <div style="height:4px;width:30px;background:#555;border-radius:2px;margin-top:2px;"></div>
+          <div style="height:12px;background:#222;border-radius:3px;border:1px solid #333;"></div>
+          <div style="height:4px;width:22px;background:#555;border-radius:2px;margin-top:2px;"></div>
+          <div style="height:18px;background:#222;border-radius:3px;border:1px solid #333;display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;padding:2px;">
+            <div style="background:#2a1a4a;border-radius:2px;"></div>
+            <div style="background:#1a2a4a;border-radius:2px;border:1px solid #6c63ff;"></div>
+            <div style="background:#2a4a1a;border-radius:2px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Landscape side by side -->
+    <div style="flex:2;min-width:180px;">
+      <div style="font-size:11px;color:#888;text-align:center;margin-bottom:6px;">Landscape (md/lg) — current behavior preserved</div>
+      <div style="background:#111;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:4px;">
+        <div style="height:16px;background:#1a1a2e;border-radius:4px;display:flex;align-items:center;justify-content:space-between;padding:0 6px;">
+          <div style="width:20px;height:6px;background:#555;border-radius:2px;"></div>
+          <div style="width:28px;height:10px;background:#6c63ff;border-radius:3px;"></div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <!-- Preview left -->
+          <div style="width:70px;background:#2a1a4a;border-radius:6px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;">
+            <div style="width:36px;height:36px;background:#6c63ff;border-radius:6px;"></div>
+            <div style="height:4px;width:44px;background:#888;border-radius:2px;"></div>
+            <div style="font-size:9px;color:#6c63ff;">Preview</div>
+          </div>
+          <!-- Form right -->
+          <div style="flex:1;display:flex;flex-direction:column;gap:3px;">
+            <div style="height:4px;width:24px;background:#555;border-radius:2px;"></div>
+            <div style="height:12px;background:#222;border-radius:3px;border:1px solid #333;"></div>
+            <div style="height:4px;width:30px;background:#555;border-radius:2px;margin-top:2px;"></div>
+            <div style="height:12px;background:#222;border-radius:3px;border:1px solid #333;"></div>
+            <div style="height:4px;width:22px;background:#555;border-radius:2px;margin-top:2px;"></div>
+            <div style="height:18px;background:#222;border-radius:3px;border:1px solid #333;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:2px;padding:2px;">
+              <div style="background:#2a1a4a;border-radius:2px;"></div>
+              <div style="background:#1a2a4a;border-radius:2px;border:1px solid #6c63ff;"></div>
+              <div style="background:#2a4a1a;border-radius:2px;"></div>
+              <div style="background:#4a2a1a;border-radius:2px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p style="font-size:12px;color:#666;margin-top:8px;">Implemented with <code>AppResponsive.isPortrait(context)</code> → switches between <code>Column</code> and <code>Row</code> layout. No separate widget trees.</p>
+</div>
+
+<div class="section">
+  <h3>Other screens — minimal changes</h3>
+  <table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <thead>
+      <tr style="border-bottom:1px solid #333;">
+        <th style="text-align:left;padding:6px 8px;color:#888;">Screen</th>
+        <th style="text-align:left;padding:6px 8px;color:#888;">Change</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid #1a1a1a;">
+        <td style="padding:6px 8px;color:#ddd;">ParentListScreen</td>
+        <td style="padding:6px 8px;color:#888;">Replace 980px hardcoded check with <code>sizeClass ≥ md</code> for 2-col grid; use <code>spacing()</code> for padding</td>
+      </tr>
+      <tr style="border-bottom:1px solid #1a1a1a;">
+        <td style="padding:6px 8px;color:#ddd;">AgeGateScreen</td>
+        <td style="padding:6px 8px;color:#888;">Already uses <code>ConstrainedBox(maxWidth: 640)</code> — just replace padding with <code>AppResponsive.spacing()</code></td>
+      </tr>
+      <tr style="border-bottom:1px solid #1a1a1a;">
+        <td style="padding:6px 8px;color:#ddd;">BulkImportScreen</td>
+        <td style="padding:6px 8px;color:#888;">Already uses maxWidth constraints — replace padding/font sizes with scale tokens</td>
+      </tr>
+      <tr style="border-bottom:1px solid #1a1a1a;">
+        <td style="padding:6px 8px;color:#ddd;">PinGateScreen</td>
+        <td style="padding:6px 8px;color:#888;">Numpad button sizes → <code>AppResponsive.buttonSize()</code></td>
+      </tr>
+      <tr>
+        <td style="padding:6px 8px;color:#ddd;">AboutScreen, ChangePinScreen</td>
+        <td style="padding:6px 8px;color:#888;">Padding + font scaling only — no layout changes needed</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p class="subtitle" style="margin-top:16px;">Does this screen breakdown look right? Reply in the terminal.</p>

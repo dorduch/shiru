@@ -66,9 +66,15 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
 
   Future<void> _persistLockState() async {
     final store = ref.read(keyValueStoreProvider);
-    await store.write(key: _kFailedAttemptsKey, value: _failedAttempts.toString());
+    await store.write(
+      key: _kFailedAttemptsKey,
+      value: _failedAttempts.toString(),
+    );
     if (_lockedUntil != null) {
-      await store.write(key: _kLockUntilKey, value: _lockedUntil!.millisecondsSinceEpoch.toString());
+      await store.write(
+        key: _kLockUntilKey,
+        value: _lockedUntil!.millisecondsSinceEpoch.toString(),
+      );
     }
   }
 
@@ -150,6 +156,7 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
             _startLockTimer();
           } else {
             await _persistLockState();
+            if (!mounted) return;
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(const SnackBar(content: Text('Wrong PIN')));
@@ -201,18 +208,24 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
   @override
   Widget build(BuildContext context) {
     final pinAsync = ref.watch(pinProvider);
+    final isPortrait = AppResponsive.isPortrait(context);
+    final horizontalPadding = AppResponsive.basePadding(context);
+    final verticalPadding = AppResponsive.spacing(context, 16);
 
     return pinAsync.when(
       loading: () => const Scaffold(
         backgroundColor: Color(0xFFF6F7F8),
         body: Center(child: CircularProgressIndicator()),
       ),
-      error: (err, _) => const Scaffold(
+      error: (err, _) => Scaffold(
         backgroundColor: Color(0xFFF6F7F8),
         body: Center(
           child: Text(
             'Something went wrong loading your PIN.',
-            style: TextStyle(fontSize: 20, color: Color(0xFF1A1A1A)),
+            style: TextStyle(
+              fontSize: AppResponsive.fontSize(context, 20),
+              color: const Color(0xFF1A1A1A),
+            ),
           ),
         ),
       ),
@@ -222,19 +235,19 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
             backgroundColor: const Color(0xFFF6F7F8),
             body: Center(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: EdgeInsets.all(AppResponsive.basePadding(context)),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
+                    Text(
                       'Set up a parent PIN first.',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: AppResponsive.fontSize(context, 24),
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF1A1A1A),
+                        color: const Color(0xFF1A1A1A),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: AppResponsive.spacing(context, 16)),
                     ElevatedButton(
                       onPressed: () => context.pop(),
                       child: const Text('Back'),
@@ -248,107 +261,170 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
 
         return Scaffold(
           backgroundColor: const Color(0xFFF6F7F8),
-          body: Row(
-            children: [
-              // Left side
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 24,
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new, size: 28),
-                          onPressed: () => context.pop(),
-                          color: const Color(0xFF1A1A1A),
-                        ),
+          body: SafeArea(
+            child: isPortrait
+                ? LayoutBuilder(
+                    builder: (context, constraints) => SingleChildScrollView(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: horizontalPadding,
+                        vertical: verticalPadding,
                       ),
-                      const SizedBox(height: 24),
-                      Text(
-                        _title,
-                        textAlign: TextAlign.left,
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF1A1A1A),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight:
+                              constraints.maxHeight - (verticalPadding * 2),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _stepSubtitle,
-                        textAlign: TextAlign.left,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          color: Color(0xFF6B7280),
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: List.generate(4, (index) {
-                          final filled = index < _input.length;
-                          return Semantics(
-                            label:
-                                'PIN digit ${index + 1} of 4, ${filled ? "entered" : "empty"}',
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 480),
                             child: Container(
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: 10,
+                              width: double.infinity,
+                              padding: EdgeInsets.all(
+                                AppResponsive.spacing(context, 24),
                               ),
-                              width: 20,
-                              height: 20,
                               decoration: BoxDecoration(
-                                color: filled
-                                    ? const Color(0xFF1A1A1A)
-                                    : const Color(0xFFD1D5DB),
-                                shape: BoxShape.circle,
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(28),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x120F172A),
+                                    blurRadius: 24,
+                                    offset: Offset(0, 12),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildStepIntro(context),
+                                  SizedBox(
+                                    height: AppResponsive.spacing(context, 24),
+                                  ),
+                                  Center(
+                                    child: _buildKeypad(currentPin, context),
+                                  ),
+                                ],
                               ),
                             ),
-                          );
-                        }),
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                : Row(
+                    children: [
+                      Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: horizontalPadding,
+                            vertical: verticalPadding,
+                          ),
+                          child: _buildStepIntro(context),
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: horizontalPadding,
+                          vertical: verticalPadding,
+                        ),
+                        child: _buildKeypad(currentPin, context),
                       ),
                     ],
                   ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 24,
-                ),
-                child: _buildKeypad(currentPin, context),
-              ),
-            ],
           ),
         );
       },
     );
   }
 
+  Widget _buildStepIntro(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: IconButton(
+            icon: Icon(
+              Icons.arrow_back_ios_new,
+              size: AppResponsive.iconSize(context, 28),
+            ),
+            onPressed: () => context.pop(),
+            color: const Color(0xFF1A1A1A),
+          ),
+        ),
+        SizedBox(height: AppResponsive.spacing(context, 24)),
+        Text(
+          _title,
+          textAlign: TextAlign.left,
+          style: TextStyle(
+            fontSize: AppResponsive.fontSize(context, 28),
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF1A1A1A),
+          ),
+        ),
+        SizedBox(height: AppResponsive.spacing(context, 8)),
+        Text(
+          _stepSubtitle,
+          textAlign: TextAlign.left,
+          style: TextStyle(
+            fontSize: AppResponsive.fontSize(context, 18),
+            color: const Color(0xFF6B7280),
+          ),
+        ),
+        SizedBox(height: AppResponsive.spacing(context, 32)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: List.generate(4, (index) {
+            final filled = index < _input.length;
+            return Semantics(
+              label:
+                  'PIN digit ${index + 1} of 4, ${filled ? "entered" : "empty"}',
+              child: Container(
+                margin: EdgeInsets.symmetric(
+                  horizontal: AppResponsive.spacing(context, 10),
+                ),
+                width: AppResponsive.spacing(context, 20),
+                height: AppResponsive.spacing(context, 20),
+                decoration: BoxDecoration(
+                  color: filled
+                      ? const Color(0xFF1A1A1A)
+                      : const Color(0xFFD1D5DB),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            );
+          }),
+        ),
+      ],
+    );
+  }
+
   Widget _buildKeypad(String currentPin, BuildContext context) {
-    final keySize = AppResponsive.isTablet(context)
-        ? 80.0
-        : (MediaQuery.of(context).size.width < 600 ? 64.0 : 72.0);
+    final keySize = AppResponsive.isPortrait(context)
+        ? AppResponsive.buttonSize(context) + AppResponsive.spacing(context, 16)
+        : AppResponsive.buttonSize(context);
+    final keypadWidth = (keySize * 3) + AppResponsive.spacing(context, 60);
     if (_isLocked) {
       return SizedBox(
-        width: 280,
+        width: keypadWidth,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.lock_clock, size: 48, color: Color(0xFF9CA3AF)),
-            const SizedBox(height: 16),
+            Icon(
+              Icons.lock_clock,
+              size: AppResponsive.iconSize(context, 48),
+              color: const Color(0xFF9CA3AF),
+            ),
+            SizedBox(height: AppResponsive.spacing(context, 16)),
             Text(
               'Too many attempts.\nTry again in ${_secondsRemaining}s.',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 18,
+              style: TextStyle(
+                fontSize: AppResponsive.fontSize(context, 18),
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF6B7280),
+                color: const Color(0xFF6B7280),
               ),
             ),
           ],
@@ -359,11 +435,11 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _buildKeyRow(['1', '2', '3'], currentPin, keySize),
-        const SizedBox(height: 16),
+        SizedBox(height: AppResponsive.spacing(context, 16)),
         _buildKeyRow(['4', '5', '6'], currentPin, keySize),
-        const SizedBox(height: 16),
+        SizedBox(height: AppResponsive.spacing(context, 16)),
         _buildKeyRow(['7', '8', '9'], currentPin, keySize),
-        const SizedBox(height: 16),
+        SizedBox(height: AppResponsive.spacing(context, 16)),
         _buildKeyRow(['', '0', 'DEL'], currentPin, keySize),
       ],
     );
@@ -380,7 +456,9 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
           label: k == 'DEL' ? 'Delete' : k,
           button: true,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppResponsive.spacing(context, 10),
+            ),
             child: GestureDetector(
               onTap: () => _onKeyPress(k, currentPin),
               child: Container(
@@ -411,17 +489,17 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
                       ),
                 alignment: Alignment.center,
                 child: k == 'DEL'
-                    ? const Icon(
+                    ? Icon(
                         Icons.backspace_rounded,
-                        size: 28,
-                        color: Color(0xFF9CA3AF),
+                        size: AppResponsive.iconSize(context, 28),
+                        color: const Color(0xFF9CA3AF),
                       )
                     : Text(
                         k,
-                        style: const TextStyle(
-                          fontSize: 28,
+                        style: TextStyle(
+                          fontSize: AppResponsive.fontSize(context, 28),
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A1A1A),
+                          color: const Color(0xFF1A1A1A),
                         ),
                       ),
               ),

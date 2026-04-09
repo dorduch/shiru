@@ -1,0 +1,5 @@
+{"type":"server-started","port":55271,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:55271","screen_dir":"/Users/dor.d/yoto-diy-2/.superpowers/brainstorm/81680-1775106716/content","state_dir":"/Users/dor.d/yoto-diy-2/.superpowers/brainstorm/81680-1775106716/state"}
+{"type":"screen-added","file":"/Users/dor.d/yoto-diy-2/.superpowers/brainstorm/81680-1775106716/content/picker-design.html"}
+{"source":"user-event","type":"click","text":"CHANGE CREATURE\n        \n        \n          \n          \n            ANIMALS\n            FANTASY\n            SCI-FI\n          \n          \n          \n            🐱\n            🐶\n            🐸\n            🐻\n            🐭\n          \n        \n      \n    \n    \n      A — Bottom Sheet\n      Slides up from the bottom over the edit form. Category tabs at top, scrollable sprite grid below. Familiar mobile pattern.","choice":"bottom-sheet","id":null,"timestamp":1775106974567}
+{"type":"screen-added","file":"/Users/dor.d/yoto-diy-2/.superpowers/brainstorm/81680-1775106716/content/waiting-1.html"}
+{"type":"server-stopped","reason":"idle timeout"}

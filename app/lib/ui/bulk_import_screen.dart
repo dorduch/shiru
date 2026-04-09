@@ -12,6 +12,7 @@ import '../providers/cards_provider.dart';
 import '../providers/categories_provider.dart';
 import '../services/library_import_service.dart';
 import '../services/analytics_service.dart';
+import '../theme/app_responsive.dart';
 
 class BulkImportScreen extends ConsumerStatefulWidget {
   const BulkImportScreen({super.key});
@@ -114,9 +115,11 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Couldn\'t open those files. Please try again.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Couldn\'t open those files. Please try again.'),
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _isPickingFiles = false);
@@ -237,29 +240,39 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
   @override
   Widget build(BuildContext context) {
     final categories = ref.watch(categoriesProvider).value ?? <Category>[];
+    final basePadding = AppResponsive.basePadding(context);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F8),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: EdgeInsets.symmetric(
+            horizontal: basePadding,
+            vertical: AppResponsive.spacing(context, 16),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new, size: 28),
+                    icon: Icon(
+                      Icons.arrow_back_ios_new,
+                      size: AppResponsive.iconSize(context, 28),
+                    ),
                     onPressed: () => context.pop(),
                   ),
-                  const SizedBox(width: 8),
-                  const Text(
+                  SizedBox(width: AppResponsive.spacing(context, 8)),
+                  Text(
                     'Import Audio',
-                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800),
+                    style: TextStyle(
+                      fontSize: AppResponsive.fontSize(context, 32),
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: AppResponsive.spacing(context, 24)),
               Expanded(
                 child: _drafts.isEmpty
                     ? _buildEmptyState(context)
@@ -273,159 +286,161 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 760),
-        child: Container(
-          padding: const EdgeInsets.all(28),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x120F172A),
-                blurRadius: 24,
-                offset: Offset(0, 12),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF4E8),
-                  borderRadius: BorderRadius.circular(20),
+    return SingleChildScrollView(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 760),
+          child: Container(
+            padding: EdgeInsets.all(AppResponsive.spacing(context, 28)),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x120F172A),
+                  blurRadius: 24,
+                  offset: Offset(0, 12),
                 ),
-                child: const Icon(
-                  Icons.folder_copy_outlined,
-                  size: 36,
-                  color: Color(0xFFF97316),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: AppResponsive.spacing(context, 72),
+                  height: AppResponsive.spacing(context, 72),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF4E8),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Icon(
+                    Icons.folder_copy_outlined,
+                    size: AppResponsive.iconSize(context, 36),
+                    color: const Color(0xFFF97316),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Bring a whole set of stories in at once',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF111827),
+                SizedBox(height: AppResponsive.spacing(context, 20)),
+                Text(
+                  'Bring a whole set of stories in at once',
+                  style: TextStyle(
+                    fontSize: AppResponsive.fontSize(context, 28),
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF111827),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Choose several audio files, give them warm names, add a shared category if you want, and save them together in one pass.',
-                style: TextStyle(
-                  fontSize: 18,
-                  height: 1.45,
-                  color: Color(0xFF6B7280),
+                SizedBox(height: AppResponsive.spacing(context, 12)),
+                Text(
+                  'Choose several audio files, give them warm names, add a shared category if you want, and save them together in one pass.',
+                  style: TextStyle(
+                    fontSize: AppResponsive.fontSize(context, 18),
+                    height: 1.45,
+                    color: const Color(0xFF6B7280),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              const _ChecklistRow(
-                icon: Icons.check_circle_outline,
-                text: 'Pick a handful of files from the device',
-              ),
-              const SizedBox(height: 12),
-              const _ChecklistRow(
-                icon: Icons.check_circle_outline,
-                text: 'Rename each one so it feels personal',
-              ),
-              const SizedBox(height: 12),
-              const _ChecklistRow(
-                icon: Icons.check_circle_outline,
-                text: 'Keep them together with one shared category',
-              ),
-              const SizedBox(height: 28),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: _isPickingFiles ? null : _pickFiles,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF6B6B),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 22,
-                        vertical: 18,
+                SizedBox(height: AppResponsive.spacing(context, 20)),
+                const _ChecklistRow(
+                  icon: Icons.check_circle_outline,
+                  text: 'Pick a handful of files from the device',
+                ),
+                SizedBox(height: AppResponsive.spacing(context, 12)),
+                const _ChecklistRow(
+                  icon: Icons.check_circle_outline,
+                  text: 'Rename each one so it feels personal',
+                ),
+                SizedBox(height: AppResponsive.spacing(context, 12)),
+                const _ChecklistRow(
+                  icon: Icons.check_circle_outline,
+                  text: 'Keep them together with one shared category',
+                ),
+                SizedBox(height: AppResponsive.spacing(context, 28)),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: _isPickingFiles ? null : _pickFiles,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF6B6B),
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppResponsive.spacing(context, 22),
+                          vertical: AppResponsive.spacing(context, 18),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    icon: _isPickingFiles
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
+                      icon: _isPickingFiles
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
-                            ),
-                          )
-                        : const Icon(Icons.upload_file_outlined),
-                    label: Text(
-                      _isPickingFiles
-                          ? 'Choosing Files...'
-                          : 'Choose Audio Files',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                            )
+                          : const Icon(Icons.upload_file_outlined),
+                      label: Text(
+                        _isPickingFiles
+                            ? 'Choosing Files...'
+                            : 'Choose Audio Files',
+                        style: TextStyle(
+                          fontSize: AppResponsive.fontSize(context, 16),
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () => context.go('/parent/edit'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF374151),
-                      side: const BorderSide(color: Color(0xFFE5E7EB)),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 22,
-                        vertical: 18,
+                    OutlinedButton.icon(
+                      onPressed: () => context.go('/parent/edit'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF374151),
+                        side: const BorderSide(color: Color(0xFFE5E7EB)),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppResponsive.spacing(context, 22),
+                          vertical: AppResponsive.spacing(context, 18),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    icon: const Icon(Icons.add),
-                    label: const Text(
-                      'Add One Story Instead',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () => context.pop(),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF374151),
-                      side: const BorderSide(color: Color(0xFFE5E7EB)),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 22,
-                        vertical: 18,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                      icon: const Icon(Icons.add),
+                      label: Text(
+                        'Add One Story Instead',
+                        style: TextStyle(
+                          fontSize: AppResponsive.fontSize(context, 16),
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                    icon: const Icon(Icons.arrow_back),
-                    label: const Text(
-                      'Back to Library',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                    OutlinedButton.icon(
+                      onPressed: () => context.pop(),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF374151),
+                        side: const BorderSide(color: Color(0xFFE5E7EB)),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppResponsive.spacing(context, 22),
+                          vertical: AppResponsive.spacing(context, 18),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      icon: const Icon(Icons.arrow_back),
+                      label: Text(
+                        'Back to Library',
+                        style: TextStyle(
+                          fontSize: AppResponsive.fontSize(context, 16),
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

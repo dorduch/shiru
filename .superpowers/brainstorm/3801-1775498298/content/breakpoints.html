@@ -1,0 +1,113 @@
+<h2>Section 1: Breakpoint System</h2>
+<p class="subtitle">Four size classes based on logical width — covers every device from small phone to large tablet</p>
+
+<div style="margin: 20px 0;">
+  <div style="display: flex; gap: 0; border-radius: 10px; overflow: hidden; font-size: 13px;">
+    <div style="flex: 1.2; background: #1e1b4b; padding: 14px 10px; text-align: center; border-right: 1px solid #333;">
+      <div style="font-weight: bold; color: #a5b4fc; margin-bottom: 6px;">xs</div>
+      <div style="color: #ddd; font-size: 12px;">< 480px</div>
+      <div style="color: #888; font-size: 11px; margin-top: 4px;">small phone<br/>portrait</div>
+      <div style="margin-top: 8px; display: flex; justify-content: center;">
+        <div style="width: 22px; height: 38px; background: #312e81; border-radius: 4px; border: 1px solid #4f46e5;"></div>
+      </div>
+    </div>
+    <div style="flex: 1.5; background: #1e1b4b; padding: 14px 10px; text-align: center; border-right: 1px solid #333; opacity: 0.9;">
+      <div style="font-weight: bold; color: #a5b4fc; margin-bottom: 6px;">sm</div>
+      <div style="color: #ddd; font-size: 12px;">480 – 720px</div>
+      <div style="color: #888; font-size: 11px; margin-top: 4px;">large phone<br/>portrait / small landscape</div>
+      <div style="margin-top: 8px; display: flex; justify-content: center; gap: 4px;">
+        <div style="width: 26px; height: 44px; background: #312e81; border-radius: 4px; border: 1px solid #4f46e5;"></div>
+        <div style="width: 44px; height: 26px; background: #312e81; border-radius: 4px; border: 1px solid #6366f1; align-self: center;"></div>
+      </div>
+    </div>
+    <div style="flex: 2; background: #1e1b4b; padding: 14px 10px; text-align: center; border-right: 1px solid #333; opacity: 0.85;">
+      <div style="font-weight: bold; color: #a5b4fc; margin-bottom: 6px;">md</div>
+      <div style="color: #ddd; font-size: 12px;">720 – 1024px</div>
+      <div style="color: #888; font-size: 11px; margin-top: 4px;">tablet portrait<br/>phone landscape</div>
+      <div style="margin-top: 8px; display: flex; justify-content: center; gap: 4px;">
+        <div style="width: 30px; height: 40px; background: #312e81; border-radius: 4px; border: 1px solid #6366f1;"></div>
+        <div style="width: 52px; height: 36px; background: #312e81; border-radius: 4px; border: 1px solid #4f46e5; align-self: center;"></div>
+      </div>
+    </div>
+    <div style="flex: 2.5; background: #1e1b4b; padding: 14px 10px; text-align: center; opacity: 0.8;">
+      <div style="font-weight: bold; color: #a5b4fc; margin-bottom: 6px;">lg</div>
+      <div style="color: #ddd; font-size: 12px;">> 1024px</div>
+      <div style="color: #888; font-size: 11px; margin-top: 4px;">tablet landscape<br/>large display</div>
+      <div style="margin-top: 8px; display: flex; justify-content: center; gap: 4px;">
+        <div style="width: 36px; height: 46px; background: #312e81; border-radius: 4px; border: 1px solid #6366f1;"></div>
+        <div style="width: 64px; height: 44px; background: #312e81; border-radius: 4px; border: 1px solid #4f46e5; align-self: center;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Scale tokens per breakpoint</h3>
+  <p class="subtitle">Every dimension derived from a single scale factor — nothing hardcoded</p>
+  <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;">
+    <thead>
+      <tr style="border-bottom:1px solid #333;">
+        <th style="text-align:left;padding:6px 8px;color:#888;">Token</th>
+        <th style="text-align:center;padding:6px 8px;color:#a5b4fc;">xs</th>
+        <th style="text-align:center;padding:6px 8px;color:#a5b4fc;">sm</th>
+        <th style="text-align:center;padding:6px 8px;color:#a5b4fc;">md</th>
+        <th style="text-align:center;padding:6px 8px;color:#a5b4fc;">lg</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid #222;">
+        <td style="padding:6px 8px;color:#ddd;">scaleFactor</td>
+        <td style="text-align:center;padding:6px 8px;color:#888;">0.80</td>
+        <td style="text-align:center;padding:6px 8px;color:#888;">0.90</td>
+        <td style="text-align:center;padding:6px 8px;color:#888;">1.00</td>
+        <td style="text-align:center;padding:6px 8px;color:#888;">1.20</td>
+      </tr>
+      <tr style="border-bottom:1px solid #222;">
+        <td style="padding:6px 8px;color:#ddd;">spriteScale (grid)</td>
+        <td style="text-align:center;padding:6px 8px;color:#888;">4.0</td>
+        <td style="text-align:center;padding:6px 8px;color:#888;">5.0</td>
+        <td style="text-align:center;padding:6px 8px;color:#888;">6.0</td>
+        <td style="text-align:center;padding:6px 8px;color:#888;">8.0</td>
+      </tr>
+      <tr style="border-bottom:1px solid #222;">
+        <td style="padding:6px 8px;color:#ddd;">gridMaxExtent</td>
+        <td style="text-align:center;padding:6px 8px;color:#888;">160px</td>
+        <td style="text-align:center;padding:6px 8px;color:#888;">200px</td>
+        <td style="text-align:center;padding:6px 8px;color:#888;">240px</td>
+        <td style="text-align:center;padding:6px 8px;color:#888;">300px</td>
+      </tr>
+      <tr style="border-bottom:1px solid #222;">
+        <td style="padding:6px 8px;color:#ddd;">buttonSize</td>
+        <td style="text-align:center;padding:6px 8px;color:#888;">44px</td>
+        <td style="text-align:center;padding:6px 8px;color:#888;">48px</td>
+        <td style="text-align:center;padding:6px 8px;color:#888;">56px</td>
+        <td style="text-align:center;padding:6px 8px;color:#888;">64px</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 8px;color:#ddd;">basePadding</td>
+        <td style="text-align:center;padding:6px 8px;color:#888;">12px</td>
+        <td style="text-align:center;padding:6px 8px;color:#888;">16px</td>
+        <td style="text-align:center;padding:6px 8px;color:#888;">20px</td>
+        <td style="text-align:center;padding:6px 8px;color:#888;">28px</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h3>AppResponsive API (expanded)</h3>
+  <div style="background:#111;border-radius:8px;padding:14px;font-family:monospace;font-size:12px;line-height:1.6;color:#ddd;">
+    <span style="color:#6c63ff;">AppResponsive</span>.<span style="color:#06b6d4;">sizeClass</span>(context)   <span style="color:#555;">// → SizeClass.xs/sm/md/lg</span><br>
+    <span style="color:#6c63ff;">AppResponsive</span>.<span style="color:#06b6d4;">scaleFactor</span>(context) <span style="color:#555;">// → 0.80–1.20</span><br>
+    <span style="color:#6c63ff;">AppResponsive</span>.<span style="color:#06b6d4;">spacing</span>(context, base) <span style="color:#555;">// → base × scaleFactor</span><br>
+    <span style="color:#6c63ff;">AppResponsive</span>.<span style="color:#06b6d4;">fontSize</span>(context, base) <span style="color:#555;">// → base × scaleFactor</span><br>
+    <span style="color:#6c63ff;">AppResponsive</span>.<span style="color:#06b6d4;">iconSize</span>(context, base) <span style="color:#555;">// → base × scaleFactor</span><br>
+    <span style="color:#6c63ff;">AppResponsive</span>.<span style="color:#06b6d4;">buttonSize</span>(context)   <span style="color:#555;">// → 44–64 by size class</span><br>
+    <span style="color:#6c63ff;">AppResponsive</span>.<span style="color:#06b6d4;">spriteScale</span>(context)  <span style="color:#555;">// → 4.0–8.0 by size class</span><br>
+    <span style="color:#6c63ff;">AppResponsive</span>.<span style="color:#06b6d4;">gridMaxExtent</span>(context) <span style="color:#555;">// → 160–300 by size class</span><br>
+    <span style="color:#6c63ff;">AppResponsive</span>.<span style="color:#06b6d4;">isCompact</span>(context)    <span style="color:#555;">// → true if xs or sm</span><br>
+    <span style="color:#6c63ff;">AppResponsive</span>.<span style="color:#06b6d4;">isPortrait</span>(context)   <span style="color:#555;">// → orientation check</span><br>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:16px;">Does this breakpoint system and API look right? Reply in the terminal.</p>

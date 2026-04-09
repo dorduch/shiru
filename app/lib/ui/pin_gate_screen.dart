@@ -72,9 +72,15 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
 
   Future<void> _persistLockState() async {
     final store = ref.read(keyValueStoreProvider);
-    await store.write(key: _kFailedAttemptsKey, value: _failedAttempts.toString());
+    await store.write(
+      key: _kFailedAttemptsKey,
+      value: _failedAttempts.toString(),
+    );
     if (_lockedUntil != null) {
-      await store.write(key: _kLockUntilKey, value: _lockedUntil!.millisecondsSinceEpoch.toString());
+      await store.write(
+        key: _kLockUntilKey,
+        value: _lockedUntil!.millisecondsSinceEpoch.toString(),
+      );
     }
   }
 
@@ -223,127 +229,188 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
   @override
   Widget build(BuildContext context) {
     final pinAsync = ref.watch(pinProvider);
+    final isPortrait = AppResponsive.isPortrait(context);
+    final horizontalPadding = AppResponsive.basePadding(context);
+    final verticalPadding = AppResponsive.spacing(context, 16);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F8),
-      body: Row(
-        children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: pinAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, _) => Center(
-                  child: Text(
-                    'Something went wrong loading your PIN.',
-                    style: const TextStyle(color: Colors.red, fontSize: 16),
-                  ),
-                ),
-                data: (savedPin) {
-                  _syncStepWithSavedPin(savedPin);
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_new, size: 28),
-                        onPressed: () => context.go('/'),
-                        padding: EdgeInsets.zero,
-                        alignment: Alignment.centerLeft,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _title(savedPin),
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _subtitle(savedPin),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Color(0xFF6B7280),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: List.generate(4, (index) {
-                          final filled = index < _input.length;
-                          return Semantics(
-                            label:
-                                'PIN digit ${index + 1} of 4, ${filled ? "entered" : "empty"}',
-                            child: Container(
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                              ),
-                              width: 20,
-                              height: 20,
-                              decoration: BoxDecoration(
-                                color: filled
-                                    ? const Color(0xFF1A1A1A)
-                                    : const Color(0xFFD1D5DB),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          );
-                        }),
-                      ),
-                    ],
-                  );
-                },
+      body: SafeArea(
+        child: pinAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (err, _) => Center(
+            child: Text(
+              'Something went wrong loading your PIN.',
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: AppResponsive.fontSize(context, 16),
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            child: pinAsync.when(
-              loading: () => const SizedBox(
-                width: 280,
-                child: Center(child: CircularProgressIndicator()),
-              ),
-              error: (err, _) => const SizedBox(
-                width: 280,
-                child: Center(
-                  child: Text(
-                    'Something went wrong loading your PIN.',
-                    style: TextStyle(color: Colors.red, fontSize: 16),
+          data: (savedPin) {
+            _syncStepWithSavedPin(savedPin);
+
+            final intro = _buildIntro(savedPin, context);
+            final keypad = _buildKeypad(savedPin, context);
+
+            if (isPortrait) {
+              return LayoutBuilder(
+                builder: (context, constraints) => SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: horizontalPadding,
+                    vertical: verticalPadding,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight - (verticalPadding * 2),
+                    ),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 480),
+                        child: Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.all(
+                            AppResponsive.spacing(context, 24),
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(28),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x120F172A),
+                                blurRadius: 24,
+                                offset: Offset(0, 12),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              intro,
+                              SizedBox(
+                                height: AppResponsive.spacing(context, 24),
+                              ),
+                              Center(child: keypad),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              data: (savedPin) {
-                _syncStepWithSavedPin(savedPin);
-                return _buildKeypad(savedPin, context);
-              },
-            ),
-          ),
-        ],
+              );
+            }
+
+            return Row(
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                      vertical: verticalPadding,
+                    ),
+                    child: intro,
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: horizontalPadding,
+                    vertical: verticalPadding,
+                  ),
+                  child: keypad,
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
 
+  Widget _buildIntro(String? savedPin, BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            size: AppResponsive.iconSize(context, 28),
+          ),
+          onPressed: () => context.go('/'),
+          padding: EdgeInsets.zero,
+          alignment: Alignment.centerLeft,
+        ),
+        SizedBox(height: AppResponsive.spacing(context, 16)),
+        Text(
+          _title(savedPin),
+          style: TextStyle(
+            fontSize: AppResponsive.fontSize(context, 28),
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        SizedBox(height: AppResponsive.spacing(context, 8)),
+        Text(
+          _subtitle(savedPin),
+          style: TextStyle(
+            fontSize: AppResponsive.fontSize(context, 16),
+            color: const Color(0xFF6B7280),
+          ),
+        ),
+        SizedBox(height: AppResponsive.spacing(context, 24)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: List.generate(4, (index) {
+            final filled = index < _input.length;
+            return Semantics(
+              label:
+                  'PIN digit ${index + 1} of 4, ${filled ? "entered" : "empty"}',
+              child: Container(
+                margin: EdgeInsets.symmetric(
+                  horizontal: AppResponsive.spacing(context, 10),
+                ),
+                width: AppResponsive.spacing(context, 20),
+                height: AppResponsive.spacing(context, 20),
+                decoration: BoxDecoration(
+                  color: filled
+                      ? const Color(0xFF1A1A1A)
+                      : const Color(0xFFD1D5DB),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            );
+          }),
+        ),
+      ],
+    );
+  }
+
   Widget _buildKeypad(String? savedPin, BuildContext context) {
-    final keySize = AppResponsive.isTablet(context)
-        ? 80.0
-        : (MediaQuery.of(context).size.width < 600 ? 64.0 : 72.0);
+    final keySize = AppResponsive.isPortrait(context)
+        ? AppResponsive.buttonSize(context) + AppResponsive.spacing(context, 16)
+        : AppResponsive.buttonSize(context);
+    final keypadWidth = (keySize * 3) + AppResponsive.spacing(context, 48);
 
     if (_isLocked) {
       return SizedBox(
-        width: 280,
+        width: keypadWidth,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.lock_clock, size: 48, color: Color(0xFF9CA3AF)),
-            const SizedBox(height: 16),
+            Icon(
+              Icons.lock_clock,
+              size: AppResponsive.iconSize(context, 48),
+              color: const Color(0xFF9CA3AF),
+            ),
+            SizedBox(height: AppResponsive.spacing(context, 16)),
             Text(
               'Too many attempts.\nTry again in ${_secondsRemaining}s.',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 18,
+              style: TextStyle(
+                fontSize: AppResponsive.fontSize(context, 18),
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF6B7280),
+                color: const Color(0xFF6B7280),
               ),
             ),
           ],
@@ -355,11 +422,11 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _buildKeyRow(['1', '2', '3'], savedPin, keySize),
-        const SizedBox(height: 14),
+        SizedBox(height: AppResponsive.spacing(context, 16)),
         _buildKeyRow(['4', '5', '6'], savedPin, keySize),
-        const SizedBox(height: 14),
+        SizedBox(height: AppResponsive.spacing(context, 16)),
         _buildKeyRow(['7', '8', '9'], savedPin, keySize),
-        const SizedBox(height: 14),
+        SizedBox(height: AppResponsive.spacing(context, 16)),
         _buildKeyRow(['', '0', 'DEL'], savedPin, keySize),
       ],
     );
@@ -377,7 +444,9 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
           label: key == 'DEL' ? 'Delete' : key,
           button: true,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppResponsive.spacing(context, 8),
+            ),
             child: GestureDetector(
               onTap: () => _onKeyPress(key, savedPin),
               child: Container(
@@ -408,17 +477,17 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
                       ),
                 alignment: Alignment.center,
                 child: key == 'DEL'
-                    ? const Icon(
+                    ? Icon(
                         Icons.backspace_rounded,
-                        size: 28,
-                        color: Color(0xFF9CA3AF),
+                        size: AppResponsive.iconSize(context, 28),
+                        color: const Color(0xFF9CA3AF),
                       )
                     : Text(
                         key,
-                        style: const TextStyle(
-                          fontSize: 28,
+                        style: TextStyle(
+                          fontSize: AppResponsive.fontSize(context, 28),
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A1A1A),
+                          color: const Color(0xFF1A1A1A),
                         ),
                       ),
               ),

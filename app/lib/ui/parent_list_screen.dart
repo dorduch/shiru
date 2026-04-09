@@ -13,6 +13,7 @@ import '../providers/audio_player_provider.dart';
 import '../providers/cards_provider.dart';
 import '../providers/categories_provider.dart';
 import '../services/export_service.dart';
+import '../theme/app_responsive.dart';
 import 'pixel_sprite.dart';
 
 class ParentListScreen extends ConsumerWidget {
@@ -26,15 +27,24 @@ class ParentListScreen extends ConsumerWidget {
       for (final category in categoriesAsync.value ?? <Category>[])
         category.id: category,
     };
-    final width = MediaQuery.of(context).size.width;
-    final isTwoColumn = width >= 980;
-    final childAspectRatio = isTwoColumn ? (width >= 1280 ? 3.0 : 2.65) : 3.15;
+    final sizeClass = AppResponsive.sizeClass(context);
+    final isPortrait = AppResponsive.isPortrait(context);
+    final isTwoColumn =
+        sizeClass == SizeClass.lg || (sizeClass == SizeClass.md && isPortrait);
+    final gridChildAspectRatio = switch ((sizeClass, isPortrait)) {
+      (SizeClass.lg, _) => 2.35,
+      (SizeClass.md, true) => 1.72,
+      _ => 3.0,
+    };
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F8),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppResponsive.basePadding(context),
+            vertical: AppResponsive.spacing(context, 16),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -66,20 +76,37 @@ class ParentListScreen extends ConsumerWidget {
                       );
                     }
 
-                    return GridView.builder(
+                    if (isTwoColumn) {
+                      return GridView.builder(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        itemCount: cards.length,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 18,
+                          mainAxisSpacing: 18,
+                          childAspectRatio: gridChildAspectRatio,
+                        ),
+                        itemBuilder: (context, index) {
+                          final card = cards[index];
+                          return _LibraryCardTile(
+                            card: card,
+                            category: categoriesById[card.collectionId],
+                            isListLayout: false,
+                          );
+                        },
+                      );
+                    }
+
+                    return ListView.separated(
                       padding: const EdgeInsets.only(bottom: 12),
                       itemCount: cards.length,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: isTwoColumn ? 2 : 1,
-                        crossAxisSpacing: 18,
-                        mainAxisSpacing: 18,
-                        childAspectRatio: childAspectRatio,
-                      ),
+                      separatorBuilder: (_, _) => const SizedBox(height: 16),
                       itemBuilder: (context, index) {
                         final card = cards[index];
                         return _LibraryCardTile(
                           card: card,
                           category: categoriesById[card.collectionId],
+                          isListLayout: true,
                         );
                       },
                     );
@@ -110,6 +137,8 @@ class _LibraryHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final buttonSize = AppResponsive.buttonSize(context);
+
     return Row(
       children: [
         Row(
@@ -118,14 +147,17 @@ class _LibraryHeader extends StatelessWidget {
               icon: const Icon(Icons.arrow_back_ios_new, size: 28),
               onPressed: () => context.go('/'),
             ),
-            const SizedBox(width: 8),
-            const Text(
+            SizedBox(width: AppResponsive.spacing(context, 8)),
+            Text(
               'Library',
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                fontSize: AppResponsive.fontSize(context, 32),
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ],
         ),
-        const SizedBox(width: 20),
+        SizedBox(width: AppResponsive.spacing(context, 20)),
         Expanded(
           child: Align(
             alignment: Alignment.centerRight,
@@ -174,8 +206,8 @@ class _LibraryHeader extends StatelessWidget {
                     ),
                   ],
                   child: Container(
-                    width: 54,
-                    height: 54,
+                    width: buttonSize,
+                    height: buttonSize,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
@@ -292,8 +324,13 @@ class _LibraryEmptyState extends StatelessWidget {
 class _LibraryCardTile extends ConsumerStatefulWidget {
   final AudioCard card;
   final Category? category;
+  final bool isListLayout;
 
-  const _LibraryCardTile({required this.card, required this.category});
+  const _LibraryCardTile({
+    required this.card,
+    required this.category,
+    required this.isListLayout,
+  });
 
   @override
   ConsumerState<_LibraryCardTile> createState() => _LibraryCardTileState();
@@ -310,131 +347,203 @@ class _LibraryCardTileState extends ConsumerState<_LibraryCardTile> {
     final currentCardId = ref.watch(currentPlayingCardIdProvider);
     final isPlaying = ref.watch(isPlayingProvider);
     final isPreviewing = currentCardId == card.id && isPlaying;
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x120F172A),
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
+    final actionButtonSize = AppResponsive.buttonSize(context);
+    final actionButtons = [
+      _RoundIconButton(
+        semanticLabel: isPreviewing
+            ? 'Stop preview for ${card.title}'
+            : 'Preview ${card.title}',
+        icon: isPreviewing ? Icons.stop_rounded : Icons.play_arrow_rounded,
+        foregroundColor: isPreviewing
+            ? const Color(0xFF166534)
+            : const Color(0xFF16A34A),
+        backgroundColor: const Color(0xFFDCFCE7),
+        onPressed: () => _togglePreview(context, ref),
       ),
-      child: Row(
-        children: [
-          _CardArtwork(card: card),
-          const SizedBox(width: 18),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: isTitleRtl
-                  ? CrossAxisAlignment.end
-                  : CrossAxisAlignment.start,
-              children: [
-                Text(
-                  card.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: isTitleRtl ? TextAlign.right : TextAlign.left,
-                  textDirection: isTitleRtl
-                      ? TextDirection.rtl
-                      : TextDirection.ltr,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF111827),
-                    height: 1.15,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    if (category != null)
-                      _MetaChip(
-                        label: category!.name,
-                        backgroundColor: const Color(0xFFECFDF3),
-                        foregroundColor: const Color(0xFF16A34A),
-                      ),
-                    _MetaChip(
-                      label: _formatDate(card.createdAt),
-                      backgroundColor: const Color(0xFFF3F4F6),
-                      foregroundColor: const Color(0xFF6B7280),
-                    ),
-                  ],
-                ),
-              ],
+      if (_isExporting)
+        SizedBox(
+          width: actionButtonSize,
+          height: actionButtonSize,
+          child: const Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Color(0xFF1D4ED8),
+              ),
             ),
           ),
-          const SizedBox(width: 12),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _RoundIconButton(
-                semanticLabel: isPreviewing
-                    ? 'Stop preview for ${card.title}'
-                    : 'Preview ${card.title}',
-                icon: isPreviewing
-                    ? Icons.stop_rounded
-                    : Icons.play_arrow_rounded,
-                foregroundColor: isPreviewing
-                    ? const Color(0xFF166534)
-                    : const Color(0xFF16A34A),
-                backgroundColor: const Color(0xFFDCFCE7),
-                onPressed: () => _togglePreview(context, ref),
-              ),
-              const SizedBox(width: 10),
-              // Export button
-              if (_isExporting)
-                const SizedBox(
-                  width: 54,
-                  height: 54,
-                  child: Center(
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Color(0xFF1D4ED8),
-                      ),
-                    ),
-                  ),
-                )
-              else
-                _RoundIconButton(
-                  semanticLabel: 'Share audio for ${card.title}',
-                  icon: Icons.share,
-                  foregroundColor: const Color(0xFF1D4ED8),
-                  backgroundColor: const Color(0xFFEFF6FF),
-                  onPressed: _exportCard,
-                ),
-              const SizedBox(width: 10),
-              _RoundIconButton(
-                semanticLabel: 'Edit ${card.title}',
-                icon: Icons.edit_outlined,
-                foregroundColor: const Color(0xFF6B7280),
-                backgroundColor: const Color(0xFFF3F4F6),
-                onPressed: () => context.push('/parent/edit', extra: card.id),
-              ),
-              const SizedBox(width: 10),
-              _RoundIconButton(
-                semanticLabel: 'Delete ${card.title}',
-                icon: Icons.delete_outline,
-                foregroundColor: const Color(0xFFEF4444),
-                backgroundColor: const Color(0xFFFEF2F2),
-                onPressed: () =>
-                    ref.read(cardsProvider.notifier).deleteCard(card.id),
+        )
+      else
+        _RoundIconButton(
+          semanticLabel: 'Share audio for ${card.title}',
+          icon: Icons.share,
+          foregroundColor: const Color(0xFF1D4ED8),
+          backgroundColor: const Color(0xFFEFF6FF),
+          onPressed: _exportCard,
+        ),
+      _RoundIconButton(
+        semanticLabel: 'Edit ${card.title}',
+        icon: Icons.edit_outlined,
+        foregroundColor: const Color(0xFF6B7280),
+        backgroundColor: const Color(0xFFF3F4F6),
+        onPressed: () => context.push('/parent/edit', extra: card.id),
+      ),
+      _RoundIconButton(
+        semanticLabel: 'Delete ${card.title}',
+        icon: Icons.delete_outline,
+        foregroundColor: const Color(0xFFEF4444),
+        backgroundColor: const Color(0xFFFEF2F2),
+        onPressed: () => ref.read(cardsProvider.notifier).deleteCard(card.id),
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final useCompactCardLayout =
+            constraints.maxWidth < 520 ||
+            (widget.isListLayout && constraints.maxWidth < 720);
+        final cardPadding = useCompactCardLayout ? 16.0 : 18.0;
+
+        return Container(
+          padding: EdgeInsets.all(cardPadding),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x120F172A),
+                blurRadius: 18,
+                offset: Offset(0, 8),
               ),
             ],
           ),
-        ],
-      ),
+          child: useCompactCardLayout
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _CardArtwork(card: card),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: isTitleRtl
+                                ? CrossAxisAlignment.end
+                                : CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                card.title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: isTitleRtl
+                                    ? TextAlign.right
+                                    : TextAlign.left,
+                                textDirection: isTitleRtl
+                                    ? TextDirection.rtl
+                                    : TextDirection.ltr,
+                                style: TextStyle(
+                                  fontSize: AppResponsive.fontSize(context, 22),
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF111827),
+                                  height: 1.15,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  if (category != null)
+                                    _MetaChip(
+                                      label: category.name,
+                                      backgroundColor: const Color(0xFFECFDF3),
+                                      foregroundColor: const Color(0xFF16A34A),
+                                    ),
+                                  _MetaChip(
+                                    label: _formatDate(card.createdAt),
+                                    backgroundColor: const Color(0xFFF3F4F6),
+                                    foregroundColor: const Color(0xFF6B7280),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Wrap(spacing: 10, runSpacing: 10, children: actionButtons),
+                  ],
+                )
+              : Row(
+                  children: [
+                    _CardArtwork(card: card),
+                    const SizedBox(width: 18),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: isTitleRtl
+                            ? CrossAxisAlignment.end
+                            : CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            card.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: isTitleRtl
+                                ? TextAlign.right
+                                : TextAlign.left,
+                            textDirection: isTitleRtl
+                                ? TextDirection.rtl
+                                : TextDirection.ltr,
+                            style: TextStyle(
+                              fontSize: AppResponsive.fontSize(context, 22),
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF111827),
+                              height: 1.15,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              if (category != null)
+                                _MetaChip(
+                                  label: category.name,
+                                  backgroundColor: const Color(0xFFECFDF3),
+                                  foregroundColor: const Color(0xFF16A34A),
+                                ),
+                              _MetaChip(
+                                label: _formatDate(card.createdAt),
+                                backgroundColor: const Color(0xFFF3F4F6),
+                                foregroundColor: const Color(0xFF6B7280),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (int i = 0; i < actionButtons.length; i++) ...[
+                          if (i > 0) const SizedBox(width: 10),
+                          actionButtons[i],
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+        );
+      },
     );
   }
 
@@ -484,14 +593,14 @@ class _LibraryCardTileState extends ConsumerState<_LibraryCardTile> {
       await ExportService.shareCard(widget.card);
     } on ExportException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Export failed')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Export failed')));
     } finally {
       if (mounted) setState(() => _isExporting = false);
     }
@@ -533,7 +642,7 @@ class _CardArtwork extends StatelessWidget {
               child: PixelSprite(
                 sprite: spriteDef,
                 state: SpriteState.idle,
-                scale: 2.7,
+                scale: AppResponsive.spriteScale(context) * 0.45,
               ),
             ),
     );
@@ -556,6 +665,7 @@ class _LibraryActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isPrimary = variant == _LibraryActionVariant.primary;
+    final buttonHeight = AppResponsive.buttonSize(context);
 
     return Material(
       color: Colors.transparent,
@@ -563,11 +673,13 @@ class _LibraryActionButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(27),
         child: Ink(
-          height: 54,
-          padding: const EdgeInsets.symmetric(horizontal: 18),
+          height: buttonHeight,
+          padding: EdgeInsets.symmetric(
+            horizontal: AppResponsive.spacing(context, 18),
+          ),
           decoration: BoxDecoration(
             color: isPrimary ? const Color(0xFFFF6B6B) : Colors.white,
-            borderRadius: BorderRadius.circular(27),
+            borderRadius: BorderRadius.circular(buttonHeight / 2),
             border: isPrimary
                 ? null
                 : Border.all(color: const Color(0xFFE5E7EB), width: 2),
@@ -586,14 +698,14 @@ class _LibraryActionButton extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                size: 20,
+                size: AppResponsive.iconSize(context, 20),
                 color: isPrimary ? Colors.white : const Color(0xFF6B7280),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: AppResponsive.spacing(context, 8)),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: AppResponsive.fontSize(context, 16),
                   fontWeight: FontWeight.w700,
                   color: isPrimary ? Colors.white : const Color(0xFF374151),
                 ),
@@ -623,6 +735,8 @@ class _RoundIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final buttonSize = AppResponsive.buttonSize(context);
+
     return Semantics(
       label: semanticLabel,
       button: true,
@@ -630,13 +744,17 @@ class _RoundIconButton extends StatelessWidget {
         onTap: onPressed,
         borderRadius: BorderRadius.circular(18),
         child: Ink(
-          width: 54,
-          height: 54,
+          width: buttonSize,
+          height: buttonSize,
           decoration: BoxDecoration(
             color: backgroundColor,
             borderRadius: BorderRadius.circular(18),
           ),
-          child: Icon(icon, color: foregroundColor, size: 24),
+          child: Icon(
+            icon,
+            color: foregroundColor,
+            size: AppResponsive.iconSize(context, 24),
+          ),
         ),
       ),
     );

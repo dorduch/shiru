@@ -1,0 +1,8 @@
+{"type":"server-started","port":61287,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:61287","screen_dir":"/Users/dor.d/yoto-diy-2/.superpowers/brainstorm/3801-1775498298/content","state_dir":"/Users/dor.d/yoto-diy-2/.superpowers/brainstorm/3801-1775498298/state"}
+{"type":"screen-added","file":"/Users/dor.d/yoto-diy-2/.superpowers/brainstorm/3801-1775498298/content/kid-portrait-layout.html"}
+{"type":"screen-added","file":"/Users/dor.d/yoto-diy-2/.superpowers/brainstorm/3801-1775498298/content/parent-edit-portrait.html"}
+{"type":"screen-added","file":"/Users/dor.d/yoto-diy-2/.superpowers/brainstorm/3801-1775498298/content/waiting-1.html"}
+{"type":"screen-added","file":"/Users/dor.d/yoto-diy-2/.superpowers/brainstorm/3801-1775498298/content/breakpoints.html"}
+{"type":"screen-added","file":"/Users/dor.d/yoto-diy-2/.superpowers/brainstorm/3801-1775498298/content/screen-changes.html"}
+{"type":"screen-added","file":"/Users/dor.d/yoto-diy-2/.superpowers/brainstorm/3801-1775498298/content/waiting-2.html"}
+{"type":"server-stopped","reason":"idle timeout"}

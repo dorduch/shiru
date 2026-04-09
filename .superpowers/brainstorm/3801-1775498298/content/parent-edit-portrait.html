@@ -1,0 +1,121 @@
+<h2>Parent Edit Screen — Portrait Layout</h2>
+<p class="subtitle">The edit screen has a form + card preview. How should they stack in portrait?</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#1a1a2e;padding:12px;border-radius:8px;display:flex;justify-content:center;gap:12px;align-items:flex-start;">
+      <!-- Portrait phone mockup -->
+      <div style="width:90px;height:190px;background:#111;border-radius:12px;border:2px solid #333;display:flex;flex-direction:column;overflow:hidden;">
+        <!-- Header -->
+        <div style="height:22px;background:#1a1a2e;display:flex;align-items:center;padding:0 6px;">
+          <div style="height:6px;width:12px;background:#555;border-radius:2px;"></div>
+          <div style="flex:1;"></div>
+          <div style="height:14px;width:28px;background:#6c63ff;border-radius:4px;"></div>
+        </div>
+        <!-- Preview card at top -->
+        <div style="margin:5px;background:#2a1a4a;border-radius:8px;padding:6px;display:flex;flex-direction:column;align-items:center;gap:3px;">
+          <div style="width:28px;height:28px;background:#6c63ff;border-radius:4px;"></div>
+          <div style="height:4px;width:36px;background:#888;border-radius:2px;"></div>
+        </div>
+        <!-- Form fields below -->
+        <div style="flex:1;padding:4px 5px;display:flex;flex-direction:column;gap:3px;overflow:hidden;">
+          <div style="height:5px;width:30px;background:#555;border-radius:2px;"></div>
+          <div style="height:14px;background:#222;border-radius:4px;border:1px solid #444;"></div>
+          <div style="height:5px;width:40px;background:#555;border-radius:2px;margin-top:2px;"></div>
+          <div style="height:14px;background:#222;border-radius:4px;border:1px solid #444;"></div>
+          <div style="height:5px;width:35px;background:#555;border-radius:2px;margin-top:2px;"></div>
+          <div style="height:22px;background:#222;border-radius:4px;border:1px solid #444;display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;padding:2px;">
+            <div style="background:#2a1a4a;border-radius:2px;"></div>
+            <div style="background:#1a2a4a;border-radius:2px;"></div>
+            <div style="background:#2a4a1a;border-radius:2px;border:1px solid #6c63ff;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Preview on Top, Form Below</h3>
+      <p>Card preview at the top, scrollable form below. User sees their card live as they fill the form by scrolling up. Clean separation, natural mobile flow.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#1a1a2e;padding:12px;border-radius:8px;display:flex;justify-content:center;gap:12px;align-items:flex-start;">
+      <!-- Portrait phone mockup - tabs -->
+      <div style="width:90px;height:190px;background:#111;border-radius:12px;border:2px solid #333;display:flex;flex-direction:column;overflow:hidden;">
+        <!-- Header -->
+        <div style="height:22px;background:#1a1a2e;display:flex;align-items:center;padding:0 6px;">
+          <div style="height:6px;width:12px;background:#555;border-radius:2px;"></div>
+          <div style="flex:1;"></div>
+          <div style="height:14px;width:28px;background:#6c63ff;border-radius:4px;"></div>
+        </div>
+        <!-- Tabs -->
+        <div style="display:flex;border-bottom:1px solid #333;">
+          <div style="flex:1;height:16px;display:flex;align-items:center;justify-content:center;border-bottom:2px solid #6c63ff;">
+            <div style="height:4px;width:20px;background:#6c63ff;border-radius:2px;"></div>
+          </div>
+          <div style="flex:1;height:16px;display:flex;align-items:center;justify-content:center;">
+            <div style="height:4px;width:20px;background:#444;border-radius:2px;"></div>
+          </div>
+        </div>
+        <!-- Form tab content -->
+        <div style="flex:1;padding:4px 5px;display:flex;flex-direction:column;gap:3px;">
+          <div style="height:5px;width:30px;background:#555;border-radius:2px;"></div>
+          <div style="height:14px;background:#222;border-radius:4px;border:1px solid #444;"></div>
+          <div style="height:5px;width:40px;background:#555;border-radius:2px;margin-top:2px;"></div>
+          <div style="height:14px;background:#222;border-radius:4px;border:1px solid #444;"></div>
+          <div style="height:5px;width:35px;background:#555;border-radius:2px;margin-top:2px;"></div>
+          <div style="height:24px;background:#222;border-radius:4px;border:1px solid #444;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:2px;padding:2px;">
+            <div style="background:#2a1a4a;border-radius:2px;"></div>
+            <div style="background:#1a2a4a;border-radius:2px;border:1px solid #6c63ff;"></div>
+            <div style="background:#2a4a1a;border-radius:2px;"></div>
+            <div style="background:#4a2a1a;border-radius:2px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Tabbed (Edit / Preview)</h3>
+      <p>Two tabs: "Edit" shows the form, "Preview" shows the card. Maximizes space for each. But requires an extra tap to see the card — interrupts the feedback loop.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#1a1a2e;padding:12px;border-radius:8px;display:flex;justify-content:center;gap:12px;align-items:flex-start;">
+      <!-- Portrait - side by side stays, just narrower -->
+      <div style="width:90px;height:190px;background:#111;border-radius:12px;border:2px solid #333;display:flex;flex-direction:column;overflow:hidden;">
+        <!-- Header -->
+        <div style="height:22px;background:#1a1a2e;display:flex;align-items:center;padding:0 6px;">
+          <div style="height:6px;width:12px;background:#555;border-radius:2px;"></div>
+          <div style="flex:1;"></div>
+          <div style="height:14px;width:28px;background:#6c63ff;border-radius:4px;"></div>
+        </div>
+        <!-- Side by side but compact -->
+        <div style="flex:1;display:flex;gap:3px;padding:4px;overflow:hidden;">
+          <!-- Preview panel -->
+          <div style="width:30px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:4px;gap:3px;">
+            <div style="width:24px;height:24px;background:#6c63ff;border-radius:4px;"></div>
+            <div style="height:3px;width:22px;background:#888;border-radius:1px;"></div>
+          </div>
+          <!-- Form panel -->
+          <div style="flex:1;display:flex;flex-direction:column;gap:3px;">
+            <div style="height:12px;background:#222;border-radius:3px;border:1px solid #444;"></div>
+            <div style="height:12px;background:#222;border-radius:3px;border:1px solid #444;"></div>
+            <div style="height:18px;background:#222;border-radius:3px;border:1px solid #444;display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:2px;">
+              <div style="background:#2a1a4a;border-radius:2px;border:1px solid #6c63ff;"></div>
+              <div style="background:#1a2a4a;border-radius:2px;"></div>
+            </div>
+            <div style="height:12px;background:#222;border-radius:3px;border:1px solid #444;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Keep Side-by-Side</h3>
+      <p>Same layout on all sizes, just compressed. Preview stays small on the left, form on the right. Consistent across orientations but cramped on small phones — preview becomes tiny.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">Click to select, or reply in the terminal.</p>

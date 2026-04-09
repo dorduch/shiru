@@ -1,0 +1,130 @@
+<h2>Sprite Picker — Design Options</h2>
+<p class="subtitle">How should the creature picker appear in the Parent Edit screen?</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="bottom-sheet" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:16px;background:#1a1a2e;">
+      <!-- Simulated ParentEditScreen -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+        <!-- Sprite preview -->
+        <div style="width:90px;height:90px;background:#2d2d4e;border-radius:12px;display:flex;align-items:center;justify-content:center;">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;width:48px;height:48px;">
+            <div style="background:#ff6b9d;border-radius:1px"></div>
+            <div style="background:#ff6b9d;border-radius:1px"></div>
+            <div style="background:#ff6b9d;border-radius:1px"></div>
+            <div style="background:#ff6b9d;border-radius:1px"></div>
+            <div style="background:transparent"></div>
+            <div style="background:#ffcc00;border-radius:1px"></div>
+            <div style="background:#ffcc00;border-radius:1px"></div>
+            <div style="background:transparent"></div>
+            <div style="background:#ff6b9d;border-radius:1px"></div>
+            <div style="background:#ff6b9d;border-radius:1px"></div>
+            <div style="background:#ff6b9d;border-radius:1px"></div>
+            <div style="background:#ff6b9d;border-radius:1px"></div>
+            <div style="background:#ff6b9d;border-radius:1px"></div>
+            <div style="background:transparent"></div>
+            <div style="background:transparent"></div>
+            <div style="background:#ff6b9d;border-radius:1px"></div>
+          </div>
+        </div>
+        <!-- Change button -->
+        <div style="background:#ff6b9d;color:white;font-size:9px;font-weight:bold;padding:4px 12px;border-radius:20px;letter-spacing:0.5px;">CHANGE CREATURE</div>
+        <!-- Bottom sheet -->
+        <div style="width:100%;background:#16213e;border-radius:12px 12px 0 0;padding:8px;">
+          <!-- Category tabs -->
+          <div style="display:flex;gap:4px;margin-bottom:8px;">
+            <div style="background:#ff6b9d;color:white;font-size:7px;font-weight:bold;padding:3px 7px;border-radius:10px;">ANIMALS</div>
+            <div style="background:#2d2d4e;color:#888;font-size:7px;font-weight:bold;padding:3px 7px;border-radius:10px;">FANTASY</div>
+            <div style="background:#2d2d4e;color:#888;font-size:7px;font-weight:bold;padding:3px 7px;border-radius:10px;">SCI-FI</div>
+          </div>
+          <!-- Sprite grid -->
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;">
+            <div style="background:#ff6b9d33;border:1.5px solid #ff6b9d;border-radius:6px;height:22px;display:flex;align-items:center;justify-content:center;font-size:10px;">🐱</div>
+            <div style="background:#2d2d4e;border-radius:6px;height:22px;display:flex;align-items:center;justify-content:center;font-size:10px;">🐶</div>
+            <div style="background:#2d2d4e;border-radius:6px;height:22px;display:flex;align-items:center;justify-content:center;font-size:10px;">🐸</div>
+            <div style="background:#2d2d4e;border-radius:6px;height:22px;display:flex;align-items:center;justify-content:center;font-size:10px;">🐻</div>
+            <div style="background:#2d2d4e;border-radius:6px;height:22px;display:flex;align-items:center;justify-content:center;font-size:10px;">🐭</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Bottom Sheet</h3>
+      <p>Slides up from the bottom over the edit form. Category tabs at top, scrollable sprite grid below. Familiar mobile pattern.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="full-screen" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:16px;background:#1a1a2e;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+        <!-- Header -->
+        <div style="display:flex;width:100%;justify-content:space-between;align-items:center;">
+          <div style="color:#888;font-size:8px;">← BACK</div>
+          <div style="color:white;font-size:9px;font-weight:bold;">CHOOSE CREATURE</div>
+          <div style="color:#ff6b9d;font-size:8px;font-weight:bold;">DONE</div>
+        </div>
+        <!-- Big preview -->
+        <div style="width:60px;height:60px;background:#2d2d4e;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;">🐱</div>
+        <div style="color:white;font-size:9px;font-weight:bold;">Cat</div>
+        <!-- Category tabs -->
+        <div style="display:flex;gap:4px;">
+          <div style="background:#ff6b9d;color:white;font-size:7px;font-weight:bold;padding:3px 7px;border-radius:10px;">ANIMALS</div>
+          <div style="background:#2d2d4e;color:#888;font-size:7px;font-weight:bold;padding:3px 7px;border-radius:10px;">FANTASY</div>
+          <div style="background:#2d2d4e;color:#888;font-size:7px;font-weight:bold;padding:3px 7px;border-radius:10px;">SCI-FI</div>
+        </div>
+        <!-- Sprite grid -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;width:100%;">
+          <div style="background:#ff6b9d33;border:1.5px solid #ff6b9d;border-radius:8px;height:32px;display:flex;align-items:center;justify-content:center;font-size:14px;">🐱</div>
+          <div style="background:#2d2d4e;border-radius:8px;height:32px;display:flex;align-items:center;justify-content:center;font-size:14px;">🐶</div>
+          <div style="background:#2d2d4e;border-radius:8px;height:32px;display:flex;align-items:center;justify-content:center;font-size:14px;">🐸</div>
+          <div style="background:#2d2d4e;border-radius:8px;height:32px;display:flex;align-items:center;justify-content:center;font-size:14px;">🐻</div>
+          <div style="background:#2d2d4e;border-radius:8px;height:32px;display:flex;align-items:center;justify-content:center;font-size:14px;">🐭</div>
+          <div style="background:#2d2d4e;border-radius:8px;height:32px;display:flex;align-items:center;justify-content:center;font-size:14px;">🦊</div>
+          <div style="background:#2d2d4e;border-radius:8px;height:32px;display:flex;align-items:center;justify-content:center;font-size:14px;">🐷</div>
+          <div style="background:#2d2d4e;border-radius:8px;height:32px;display:flex;align-items:center;justify-content:center;font-size:14px;">🦁</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Full Screen</h3>
+      <p>Opens a dedicated screen. Large preview of selected creature at top. Bigger tap targets, easier to browse. Back button to return.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="inline" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:16px;background:#1a1a2e;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+        <!-- Sprite preview + inline grid -->
+        <div style="width:60px;height:60px;background:#2d2d4e;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;">🐱</div>
+        <div style="color:white;font-size:8px;font-weight:bold;">Cat  <span style="color:#ff6b9d">▼ change</span></div>
+        <!-- Inline expanded state -->
+        <div style="background:#16213e;border-radius:10px;padding:8px;width:100%;">
+          <div style="display:flex;gap:3px;margin-bottom:6px;">
+            <div style="background:#ff6b9d;color:white;font-size:6px;font-weight:bold;padding:2px 6px;border-radius:8px;">ANIMALS</div>
+            <div style="background:#2d2d4e;color:#888;font-size:6px;font-weight:bold;padding:2px 6px;border-radius:8px;">FANTASY</div>
+            <div style="background:#2d2d4e;color:#888;font-size:6px;font-weight:bold;padding:2px 6px;border-radius:8px;">SCI-FI</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:3px;">
+            <div style="background:#ff6b9d33;border:1px solid #ff6b9d;border-radius:5px;height:22px;display:flex;align-items:center;justify-content:center;font-size:10px;">🐱</div>
+            <div style="background:#2d2d4e;border-radius:5px;height:22px;display:flex;align-items:center;justify-content:center;font-size:10px;">🐶</div>
+            <div style="background:#2d2d4e;border-radius:5px;height:22px;display:flex;align-items:center;justify-content:center;font-size:10px;">🐸</div>
+            <div style="background:#2d2d4e;border-radius:5px;height:22px;display:flex;align-items:center;justify-content:center;font-size:10px;">🐻</div>
+            <div style="background:#2d2d4e;border-radius:5px;height:22px;display:flex;align-items:center;justify-content:center;font-size:10px;">🐭</div>
+            <div style="background:#2d2d4e;border-radius:5px;height:22px;display:flex;align-items:center;justify-content:center;font-size:10px;">🦊</div>
+          </div>
+        </div>
+        <!-- Rest of form faded -->
+        <div style="width:100%;background:#2d2d4e44;border-radius:8px;height:20px;"></div>
+        <div style="width:100%;background:#2d2d4e44;border-radius:8px;height:20px;"></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Inline Expand</h3>
+      <p>No modal — the picker expands in-place inside the edit form. Compact, no context switch. Smaller tap targets but stays on same screen.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">Click to select — or just tell me in the terminal.</p>

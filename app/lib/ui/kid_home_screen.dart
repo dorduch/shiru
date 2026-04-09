@@ -33,6 +33,16 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
     final isPlaying = ref.watch(isPlayingProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
     final categories = categoriesAsync.value ?? [];
+    final basePadding = AppResponsive.basePadding(context);
+    final verticalPadding = AppResponsive.spacing(context, 16);
+    final isCompactPortrait =
+        AppResponsive.isCompact(context) && AppResponsive.isPortrait(context);
+    final gridSpacing = AppResponsive.spacing(
+      context,
+      isCompactPortrait ? 16 : 24,
+    );
+    final iconSize = AppResponsive.iconSize(context, 56);
+    final actionButtonSize = AppResponsive.buttonSize(context);
 
     // Reset to "All" if selected category was deleted
     if (_selectedCategoryId != null &&
@@ -44,7 +54,10 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: EdgeInsets.symmetric(
+            horizontal: basePadding,
+            vertical: verticalPadding,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -58,8 +71,8 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                         borderRadius: BorderRadius.circular(16),
                         child: Image.asset(
                           'assets/images/app_icon.png',
-                          width: 56,
-                          height: 56,
+                          width: iconSize,
+                          height: iconSize,
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -83,8 +96,8 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                         ).toString(),
                       ),
                       child: Container(
-                        width: 56,
-                        height: 56,
+                        width: actionButtonSize,
+                        height: actionButtonSize,
                         decoration: const BoxDecoration(
                           color: Colors.white,
                           shape: BoxShape.circle,
@@ -102,12 +115,12 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: AppResponsive.spacing(context, 16)),
 
               // Category tabs (only shown if categories exist)
               if (categories.isNotEmpty) ...[
                 _buildCategoryTabs(categories),
-                const SizedBox(height: 16),
+                SizedBox(height: AppResponsive.spacing(context, 16)),
               ],
 
               Expanded(
@@ -136,14 +149,22 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                       );
                     }
                     return GridView.builder(
-                      padding: const EdgeInsets.only(bottom: 24),
-                      gridDelegate:
-                          const SliverGridDelegateWithMaxCrossAxisExtent(
-                            maxCrossAxisExtent: 240,
-                            crossAxisSpacing: 24,
-                            mainAxisSpacing: 24,
-                            childAspectRatio: 0.85,
-                          ),
+                      padding: EdgeInsets.only(bottom: gridSpacing),
+                      gridDelegate: isCompactPortrait
+                          ? SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: gridSpacing,
+                              mainAxisSpacing: gridSpacing,
+                              childAspectRatio: 0.82,
+                            )
+                          : SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: AppResponsive.gridMaxExtent(
+                                context,
+                              ),
+                              crossAxisSpacing: gridSpacing,
+                              mainAxisSpacing: gridSpacing,
+                              childAspectRatio: 0.85,
+                            ),
                       itemCount: filtered.length,
                       itemBuilder: (context, index) {
                         final card = filtered[index];
@@ -162,11 +183,12 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                   },
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (err, stack) => const Center(child: Text('Something went wrong')),
+                  error: (err, stack) =>
+                      const Center(child: Text('Something went wrong')),
                 ),
               ),
 
-              const SizedBox(height: 24),
+              SizedBox(height: gridSpacing),
               if (currentlyPlayingId != null)
                 _buildPlayerPill(context, ref, currentlyPlayingId, isPlaying),
             ],
@@ -212,6 +234,9 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
     required bool isActive,
     required VoidCallback onTap,
   }) {
+    final tabHeight = AppResponsive.spacing(context, 44);
+    final horizontalPadding = AppResponsive.spacing(context, 20);
+
     return Semantics(
       label: 'Category: $label',
       button: true,
@@ -219,11 +244,11 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          height: 44,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          height: tabHeight,
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
           decoration: BoxDecoration(
             color: isActive ? const Color(0xFF22C55E) : Colors.white,
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(tabHeight / 2),
             boxShadow: const [
               BoxShadow(
                 color: Colors.black12,
@@ -236,7 +261,7 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: AppResponsive.fontSize(context, 16),
                 fontWeight: FontWeight.w700,
                 color: isActive ? Colors.white : const Color(0xFF6B7280),
               ),
@@ -257,12 +282,25 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
     final card = cardsAsync.value?.firstWhere((c) => c.id == playingId);
     if (card == null) return const SizedBox.shrink();
 
+    final isPortrait = AppResponsive.isPortrait(context);
+    final spriteScale = AppResponsive.spriteScale(context) * 0.6;
+    final stopButtonSize = AppResponsive.buttonSize(context);
+    final playButtonSize = isPortrait
+        ? AppResponsive.spacing(context, 52)
+        : AppResponsive.spacing(context, 64);
+    final artworkSize = isPortrait
+        ? AppResponsive.spacing(context, 52)
+        : AppResponsive.spacing(context, 64);
+    final horizontalPadding = AppResponsive.spacing(context, 16);
+    final verticalPadding = isPortrait
+        ? AppResponsive.spacing(context, 10)
+        : AppResponsive.spacing(context, 12);
     final spriteDef = card.spriteKey != null
         ? (predefinedSprites[card.spriteKey!] ?? autoAssignSprite(card.title))
         : autoAssignSprite(card.title);
     final player = ref.read(audioPlayerProvider);
 
-    return Container(
+    final pill = Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(44),
@@ -280,9 +318,14 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: verticalPadding,
+              ),
               child: SizedBox(
-                height: 64,
+                height: isPortrait
+                    ? AppResponsive.spacing(context, 56)
+                    : AppResponsive.spacing(context, 64),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -290,8 +333,8 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                       child: Row(
                         children: [
                           Container(
-                            width: 64,
-                            height: 64,
+                            width: artworkSize,
+                            height: artworkSize,
                             decoration: BoxDecoration(
                               color: hexOrFallback(card.color),
                               shape: BoxShape.circle,
@@ -303,11 +346,11 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                                 state: isPlayingGlobal
                                     ? SpriteState.active
                                     : SpriteState.idle,
-                                scale: 3.5,
+                                scale: spriteScale,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          SizedBox(width: AppResponsive.spacing(context, 16)),
                           Expanded(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -315,12 +358,15 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                               children: [
                                 Text(
                                   card.title,
-                                  maxLines: 1,
+                                  maxLines: isPortrait ? 2 : 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 20,
+                                  style: TextStyle(
+                                    fontSize: AppResponsive.fontSize(
+                                      context,
+                                      20,
+                                    ),
                                     fontWeight: FontWeight.w800,
-                                    color: Color(0xFF1A1A1A),
+                                    color: const Color(0xFF1A1A1A),
                                   ),
                                   textDirection:
                                       intl.Bidi.detectRtlDirectionality(
@@ -335,7 +381,10 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: 14,
+                                    fontSize: AppResponsive.fontSize(
+                                      context,
+                                      14,
+                                    ),
                                     fontWeight: FontWeight.w600,
                                     color: isPlayingGlobal
                                         ? const Color(0xFF22C55E)
@@ -348,7 +397,7 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: AppResponsive.spacing(context, 8)),
                     Row(
                       children: [
                         Semantics(
@@ -357,21 +406,21 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                           child: GestureDetector(
                             onTap: () => ref.read(audioServiceProvider).stop(),
                             child: Container(
-                              width: 56,
-                              height: 56,
+                              width: stopButtonSize,
+                              height: stopButtonSize,
                               decoration: const BoxDecoration(
                                 color: Color(0xFFF6F7F8),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.stop_rounded,
-                                size: 28,
-                                color: Color(0xFF1A1A1A),
+                                size: AppResponsive.iconSize(context, 28),
+                                color: const Color(0xFF1A1A1A),
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: AppResponsive.spacing(context, 12)),
                         Semantics(
                           label: isPlayingGlobal ? 'Pause' : 'Play',
                           button: true,
@@ -379,8 +428,8 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                             onTap: () =>
                                 ref.read(audioServiceProvider).playCard(card),
                             child: Container(
-                              width: 64,
-                              height: 64,
+                              width: playButtonSize,
+                              height: playButtonSize,
                               decoration: const BoxDecoration(
                                 color: Color(0xFFFF6B6B),
                                 shape: BoxShape.circle,
@@ -396,7 +445,7 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
                                 isPlayingGlobal
                                     ? Icons.pause_rounded
                                     : Icons.play_arrow_rounded,
-                                size: 36,
+                                size: AppResponsive.iconSize(context, 36),
                                 color: Colors.white,
                               ),
                             ),
@@ -428,6 +477,15 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
             ),
           ],
         ),
+      ),
+    );
+
+    if (isPortrait) return pill;
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760),
+        child: pill,
       ),
     );
   }
@@ -498,7 +556,8 @@ class _AudioCardTileState extends ConsumerState<AudioCardTile>
   @override
   Widget build(BuildContext context) {
     final spriteDef = widget.card.spriteKey != null
-        ? (predefinedSprites[widget.card.spriteKey!] ?? autoAssignSprite(widget.card.title))
+        ? (predefinedSprites[widget.card.spriteKey!] ??
+              autoAssignSprite(widget.card.title))
         : autoAssignSprite(widget.card.title);
     final state = widget.isPlayingThis
         ? (widget.isPlayingGlobal ? SpriteState.active : SpriteState.idle)
@@ -506,6 +565,11 @@ class _AudioCardTileState extends ConsumerState<AudioCardTile>
 
     final scale = _isPressed ? 0.93 : 1.0;
     final opacity = widget.isAnotherPlaying ? 0.6 : 1.0;
+    final isCompactPortrait =
+        AppResponsive.isCompact(context) && AppResponsive.isPortrait(context);
+    final titleFontSize = AppResponsive.fontSize(context, 20);
+    final titleLineHeight = isCompactPortrait ? 1.15 : 1.0;
+    final titleMaxLines = isCompactPortrait ? 2 : 1;
 
     return Semantics(
       label: '${widget.card.title}, tap to play',
@@ -594,20 +658,28 @@ class _AudioCardTileState extends ConsumerState<AudioCardTile>
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Text(
-                      widget.card.title,
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF1A1A1A),
+                    SizedBox(
+                      height: titleFontSize * titleLineHeight * titleMaxLines,
+                      child: Center(
+                        child: Text(
+                          widget.card.title,
+                          textAlign: TextAlign.center,
+                          maxLines: titleMaxLines,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: titleFontSize,
+                            height: titleLineHeight,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF1A1A1A),
+                          ),
+                          textDirection:
+                              intl.Bidi.detectRtlDirectionality(
+                                widget.card.title,
+                              )
+                              ? TextDirection.rtl
+                              : TextDirection.ltr,
+                        ),
                       ),
-                      textDirection:
-                          intl.Bidi.detectRtlDirectionality(widget.card.title)
-                          ? TextDirection.rtl
-                          : TextDirection.ltr,
                     ),
                   ],
                 ),

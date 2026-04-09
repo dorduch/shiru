@@ -103,12 +103,16 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('[_AudioRecorderWidgetState] Caught error in _pickAudio: $e');
+        debugPrint(
+          '[_AudioRecorderWidgetState] Caught error in _pickAudio: $e',
+        );
       }
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Couldn\'t open that file. Please try again.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Couldn\'t open that file. Please try again.'),
+          ),
+        );
       }
     } finally {
       // Always reset — even if widget is disposed or picker threw.
@@ -255,9 +259,15 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
     }
   }
 
+  bool get _isCompactLandscape =>
+      MediaQuery.sizeOf(context).height < 500 &&
+      MediaQuery.of(context).orientation == Orientation.landscape;
+
   Widget _buildHasAudio() {
+    final compactLandscape = _isCompactLandscape;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(compactLandscape ? 12 : 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -265,24 +275,34 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
       ),
       child: Row(
         children: [
-          const Icon(Icons.audio_file, color: Color(0xFF22C55E), size: 28),
-          const SizedBox(width: 12),
+          Icon(
+            Icons.audio_file,
+            color: const Color(0xFF22C55E),
+            size: compactLandscape ? 24 : 28,
+          ),
+          SizedBox(width: compactLandscape ? 10 : 12),
           Expanded(
             child: Text(
               path.basename(widget.currentAudioPath!),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: compactLandscape ? 14 : 16,
+                fontWeight: FontWeight.w600,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: compactLandscape ? 6 : 8),
           TextButton(
             onPressed: () {
               setState(() => _recState = RecordingState.idle);
               widget.onAudioSelected(''); // Clear to show source selection
             },
-            child: const Text(
+            child: Text(
               'Change',
-              style: TextStyle(color: Color(0xFFFF6B6B)),
+              style: TextStyle(
+                color: const Color(0xFFFF6B6B),
+                fontSize: compactLandscape ? 13 : null,
+              ),
             ),
           ),
         ],
@@ -291,6 +311,12 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
   }
 
   Widget _buildSourceSelection() {
+    final compactLandscape = _isCompactLandscape;
+    final cardHeight = compactLandscape ? 96.0 : 140.0;
+    final iconSize = compactLandscape ? 24.0 : 32.0;
+    final titleSize = compactLandscape ? 13.0 : 15.0;
+    final subtitleSize = compactLandscape ? 11.0 : 12.0;
+
     return AbsorbPointer(
       absorbing: _isPickerOpen,
       child: Opacity(
@@ -301,7 +327,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
               child: GestureDetector(
                 onTap: _pickAudio,
                 child: Container(
-                  height: 140,
+                  height: cardHeight,
                   decoration: BoxDecoration(
                     color: const Color(0xFFF6F7F8),
                     borderRadius: BorderRadius.circular(16),
@@ -311,29 +337,29 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
                       strokeAlign: BorderSide.strokeAlignInside,
                     ),
                   ),
-                  child: const Column(
+                  child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
                         Icons.folder_open,
-                        color: Color(0xFF6B7280),
-                        size: 32,
+                        color: const Color(0xFF6B7280),
+                        size: iconSize,
                       ),
-                      SizedBox(height: 8),
+                      SizedBox(height: compactLandscape ? 6 : 8),
                       Text(
                         'Choose File',
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: titleSize,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF1A1A1A),
+                          color: const Color(0xFF1A1A1A),
                         ),
                       ),
-                      SizedBox(height: 4),
+                      SizedBox(height: compactLandscape ? 2 : 4),
                       Text(
                         'Import Audio',
                         style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF9CA3AF),
+                          fontSize: subtitleSize,
+                          color: const Color(0xFF9CA3AF),
                         ),
                       ),
                     ],
@@ -341,12 +367,12 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
                 ),
               ),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: compactLandscape ? 12 : 16),
             Expanded(
               child: GestureDetector(
                 onTap: _startRecording,
                 child: Container(
-                  height: 140,
+                  height: cardHeight,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       begin: Alignment.topLeft,
@@ -355,25 +381,25 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
                     ),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Column(
+                  child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.mic, color: Colors.white, size: 32),
-                      SizedBox(height: 8),
+                      Icon(Icons.mic, color: Colors.white, size: iconSize),
+                      SizedBox(height: compactLandscape ? 6 : 8),
                       Text(
                         'Record',
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: titleSize,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      SizedBox(height: compactLandscape ? 2 : 4),
                       Text(
                         'Use Microphone',
                         style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFFFECACA),
+                          fontSize: subtitleSize,
+                          color: const Color(0xFFFECACA),
                         ),
                       ),
                     ],
