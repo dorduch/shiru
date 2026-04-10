@@ -15,6 +15,8 @@ import '../theme/app_colors.dart';
 import '../theme/app_responsive.dart';
 import '../theme/app_typography.dart';
 import 'pixel_sprite.dart';
+import 'widgets/welcome_dialog.dart';
+import '../services/welcome_preferences_service.dart';
 
 class KidHomeScreen extends ConsumerStatefulWidget {
   const KidHomeScreen({Key? key}) : super(key: key);
@@ -25,6 +27,28 @@ class KidHomeScreen extends ConsumerStatefulWidget {
 
 class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
   String? _selectedCategoryId; // null means "All"
+  bool _welcomeChecked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _maybeShowWelcomeDialog();
+    });
+  }
+
+  Future<void> _maybeShowWelcomeDialog() async {
+    if (_welcomeChecked) return;
+    _welcomeChecked = true;
+
+    final service = WelcomePreferencesService.instance;
+    final hasSeen = await service.hasSeenWelcome();
+    if (hasSeen) return;
+    if (!mounted) return;
+
+    await showWelcomeDialog(context, dismissible: false);
+    await service.markWelcomeSeen();
+  }
 
   @override
   Widget build(BuildContext context) {
