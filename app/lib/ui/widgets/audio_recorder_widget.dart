@@ -7,6 +7,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:path/path.dart' as path;
 import 'package:permission_handler/permission_handler.dart';
 
+import '../../providers/auth_provider.dart';
 import '../../providers/audio_player_provider.dart';
 import '../../providers/recording_provider.dart';
 import '../../services/audio_service.dart';
@@ -82,9 +83,12 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
     if (mounted) setState(() {});
 
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['mp3', 'wav', 'm4a', 'aac'],
+      final result = await preserveParentAuthDuringExternalFileFlow(
+        ref,
+        () => FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['mp3', 'wav', 'm4a', 'aac'],
+        ),
       );
       if (result != null && result.files.single.path != null) {
         const maxBytes = 200 * 1024 * 1024; // 200 MB

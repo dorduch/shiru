@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 
 import '../models/audio_card.dart';
 import '../models/category.dart';
+import '../providers/auth_provider.dart';
 import '../providers/cards_provider.dart';
 import '../providers/categories_provider.dart';
 import '../services/library_import_service.dart';
@@ -62,10 +63,13 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
     });
 
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowMultiple: true,
-        allowedExtensions: LibraryImportService.supportedAudioExtensions,
+      final result = await preserveParentAuthDuringExternalFileFlow(
+        ref,
+        () => FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowMultiple: true,
+          allowedExtensions: LibraryImportService.supportedAudioExtensions,
+        ),
       );
 
       if (result == null || result.files.isEmpty) return;

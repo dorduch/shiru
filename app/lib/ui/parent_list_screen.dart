@@ -9,6 +9,7 @@ import 'package:just_audio/just_audio.dart';
 import '../models/audio_card.dart';
 import '../models/category.dart';
 import '../models/sprites.dart';
+import '../providers/auth_provider.dart';
 import '../providers/audio_player_provider.dart';
 import '../providers/cards_provider.dart';
 import '../providers/categories_provider.dart';
@@ -590,7 +591,10 @@ class _LibraryCardTileState extends ConsumerState<_LibraryCardTile> {
   Future<void> _exportCard() async {
     setState(() => _isExporting = true);
     try {
-      await ExportService.shareCard(widget.card);
+      await preserveParentAuthDuringExternalFileFlow(
+        ref,
+        () => ExportService.shareCard(widget.card),
+      );
     } on ExportException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(

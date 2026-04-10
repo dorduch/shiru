@@ -7,6 +7,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'firebase_options.dart';
+import 'logic/auth_lifecycle_logic.dart';
 import 'services/analytics_service.dart';
 import 'providers/auth_provider.dart';
 import 'providers/cards_provider.dart';
@@ -98,9 +99,13 @@ class _ShiruAppState extends ConsumerState<ShiruApp>
     if (kStoreScreenshotMode) {
       return;
     }
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.hidden ||
-        state == AppLifecycleState.detached) {
+    final isExternalFileFlowActive = ref.read(
+      parentAuthExternalFileFlowProvider,
+    );
+    if (shouldResetParentAuthForLifecycle(
+      state: state,
+      isExternalFileFlowActive: isExternalFileFlowActive,
+    )) {
       ref.read(parentAuthProvider.notifier).state = false;
     }
   }
