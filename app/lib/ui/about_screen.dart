@@ -4,6 +4,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
+import 'widgets/welcome_dialog.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -40,6 +41,8 @@ class AboutScreen extends StatelessWidget {
                   children: const [
                     _AboutHero(),
                     SizedBox(height: 20),
+                    _WelcomeNoteRow(),
+                    SizedBox(height: 16),
                     _AboutSection(
                       title: 'Why Shiru exists',
                       body:
@@ -288,6 +291,69 @@ class _AboutFooter extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _WelcomeNoteRow extends StatelessWidget {
+  const _WelcomeNoteRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: () => showWelcomeDialog(context),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.waving_hand_rounded,
+                  color: AppColors.primaryDark,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Welcome note',
+                      style: AppTypography.headlineMedium.copyWith(
+                        color: AppColors.textPrimary,
+                        fontSize: 20,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Re-read the note from the maker.',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textHint,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

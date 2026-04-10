@@ -28,11 +28,23 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('About Shiru'), findsOneWidget);
+    expect(find.text('Welcome note'), findsOneWidget);
     expect(find.text('Why Shiru exists'), findsOneWidget);
     expect(
       find.textContaining('without turning listening time into a content feed'),
       findsOneWidget,
     );
+
+    // Tapping the welcome note row opens the dialog.
+    await tester.tap(find.text('Welcome note'));
+    await tester.pumpAndSettle();
+    expect(find.text('Welcome to Shiru'), findsOneWidget);
+    expect(find.text('Get Started'), findsOneWidget);
+
+    // Dismiss it before continuing the rest of the test.
+    await tester.ensureVisible(find.text('Get Started'));
+    await tester.tap(find.text('Get Started'));
+    await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
       find.text('Private by default'),
