@@ -44,7 +44,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 .env
-!assets/.env
+assets/.env
 env.json
 android/key.properties
 android/keystore/
