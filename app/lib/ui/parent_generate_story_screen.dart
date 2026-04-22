@@ -59,7 +59,9 @@ class _ParentGenerateStoryScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: _step != 3,
+      child: Scaffold(
       backgroundColor: const Color(0xFFF6F7F8),
       appBar: AppBar(
         backgroundColor: const Color(0xFFF6F7F8),
@@ -122,6 +124,7 @@ class _ParentGenerateStoryScreenState
             },
           ),
         ),
+      ),
       ),
     );
   }
