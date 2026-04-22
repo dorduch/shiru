@@ -52,6 +52,7 @@ class ParentListScreen extends ConsumerWidget {
               _LibraryHeader(
                 onBulkImport: () => context.push('/parent/bulk-import'),
                 onAddCard: () => context.go('/parent/edit'),
+                onGenerateStory: () => context.push('/parent/generate-story'),
                 onMenuSelected: (action) {
                   switch (action) {
                     case _LibraryMenuAction.changePin:
@@ -128,11 +129,13 @@ class ParentListScreen extends ConsumerWidget {
 class _LibraryHeader extends StatelessWidget {
   final VoidCallback onBulkImport;
   final VoidCallback onAddCard;
+  final VoidCallback onGenerateStory;
   final ValueChanged<_LibraryMenuAction> onMenuSelected;
 
   const _LibraryHeader({
     required this.onBulkImport,
     required this.onAddCard,
+    required this.onGenerateStory,
     required this.onMenuSelected,
   });
 
@@ -173,6 +176,12 @@ class _LibraryHeader extends StatelessWidget {
                   icon: Icons.folder_open_outlined,
                   variant: _LibraryActionVariant.secondary,
                   onTap: onBulkImport,
+                ),
+                _LibraryActionButton(
+                  label: 'Generate Story',
+                  icon: Icons.auto_awesome_outlined,
+                  variant: _LibraryActionVariant.secondary,
+                  onTap: onGenerateStory,
                 ),
                 _LibraryActionButton(
                   label: 'Add Recording',

@@ -15,6 +15,7 @@ import 'models/category.dart';
 import 'ui/change_pin_screen.dart';
 import 'ui/bulk_import_screen.dart';
 import 'ui/about_screen.dart';
+import 'ui/parent_generate_story_screen.dart';
 
 OnEnterResult _handleParentAreaTransition(
   WidgetRef ref,
@@ -89,6 +90,10 @@ GoRouter createRouter(WidgetRef ref) {
           GoRoute(
             path: 'about',
             builder: (context, state) => const AboutScreen(),
+          ),
+          GoRoute(
+            path: 'generate-story',
+            builder: (context, state) => const ParentGenerateStoryScreen(),
           ),
           GoRoute(
             path: 'categories',
