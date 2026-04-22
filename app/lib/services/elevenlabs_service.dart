@@ -21,13 +21,15 @@ class ElevenLabsService {
 
   ElevenLabsService({http.Client? client, String? apiKey})
       : _client = client ?? http.Client(),
-        _apiKey = apiKey ?? dotenv.env['ELEVENLABS_API_KEY']!;
+        _apiKey = apiKey ?? dotenv.env['ELEVENLABS_API_KEY'] ??
+            (throw ArgumentError('ELEVENLABS_API_KEY is not set in assets/.env'));
 
   static String voiceForLanguage(StoryLanguage language) =>
-      _voiceIds[language]!;
+      _voiceIds[language] ??
+      (throw ArgumentError('No ElevenLabs voice configured for language: $language'));
 
   Future<Uint8List> synthesize(String text, StoryLanguage language) async {
-    final voiceId = _voiceIds[language]!;
+    final voiceId = voiceForLanguage(language);
     final response = await _client.post(
       Uri.parse('$_apiBase/v1/text-to-speech/$voiceId'),
       headers: {
