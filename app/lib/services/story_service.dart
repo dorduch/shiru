@@ -42,12 +42,12 @@ class StoryService {
     final bedtimeExtra = theme == StoryTheme.bedtime
         ? 'Make the ending calm and sleepy, perfect for falling asleep.'
         : '';
-    return '''Write a children\'s story in ${language.promptLabel} for children aged 3–10.
+    return """Write a children's story in ${language.promptLabel} for children aged 3–10.
 The story features a ${hero.promptName} in a ${theme.promptName}.
 The story should be approximately ${length.targetWordCount} words long.
 $bedtimeExtra
 Respond ONLY with a valid JSON object — no other text:
-{"title": "...", "story": "..."}''';
+{"title": "...", "story": "..."}""";
   }
 
   static StoryContent parseClaudeResponse(String text) {
@@ -92,7 +92,7 @@ Respond ONLY with a valid JSON object — no other text:
       },
       body: jsonEncode({
         'model': _model,
-        'max_tokens': 2048,
+        'max_tokens': 4096,
         'messages': [
           {
             'role': 'user',
@@ -105,7 +105,7 @@ Respond ONLY with a valid JSON object — no other text:
           },
         ],
       }),
-    );
+    ).timeout(const Duration(seconds: 60));
 
     if (response.statusCode != 200) {
       throw Exception(
@@ -120,6 +120,11 @@ Respond ONLY with a valid JSON object — no other text:
       orElse: () => throw Exception('No text content in Claude response'),
     );
     return parseClaudeResponse(textItem['text'] as String);
+  }
+
+  void close() {
+    _httpClient.close();
+    _tts.close();
   }
 
   Future<AudioCard> generate({

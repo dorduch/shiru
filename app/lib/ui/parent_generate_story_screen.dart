@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -24,17 +26,40 @@ class _ParentGenerateStoryScreenState
   StoryLength _length = StoryLength.short;
   String? _error;
   String _status = 'Writing story…';
+  bool _cancelled = false;
+  late final StoryService _storyService;
+
+  @override
+  void initState() {
+    super.initState();
+    _storyService = StoryService();
+  }
+
+  @override
+  void dispose() {
+    _storyService.close();
+    super.dispose();
+  }
+
+  void _cancel() {
+    setState(() {
+      _cancelled = true;
+      _step = 2;
+      _error = null;
+    });
+  }
 
   Future<void> _generate() async {
     setState(() {
       _step = 3;
       _error = null;
       _status = 'Writing story…';
+      _cancelled = false;
     });
 
     try {
       final cards = ref.read(cardsProvider).value ?? [];
-      final card = await StoryService().generate(
+      final card = await _storyService.generate(
         hero: _hero!,
         theme: _theme!,
         language: _language,
@@ -44,7 +69,17 @@ class _ParentGenerateStoryScreenState
           if (mounted) setState(() => _status = s);
         },
       );
-      await ref.read(cardsProvider.notifier).addCard(card);
+      if (_cancelled) return;
+
+      try {
+        await ref.read(cardsProvider.notifier).addCard(card);
+      } catch (e) {
+        // Delete audio file to prevent orphaning
+        try { await File(card.audioPath).delete(); } catch (_) {}
+        rethrow;
+      }
+      if (_cancelled) return;
+
       AnalyticsService.instance.logCardCreated(method: 'ai_story');
       if (mounted) context.pop();
     } catch (e) {
@@ -120,7 +155,10 @@ class _ParentGenerateStoryScreenState
                   hero: _hero!,
                   theme: _theme!,
                 ),
-              _ => _LoadingStep(status: _status),
+              _ => _LoadingStep(
+                  status: _status,
+                  onCancel: _cancel,
+                ),
             },
           ),
         ),
@@ -385,7 +423,8 @@ class _OptionsStep extends StatelessWidget {
 
 class _LoadingStep extends StatelessWidget {
   final String status;
-  const _LoadingStep({required this.status});
+  final VoidCallback onCancel;
+  const _LoadingStep({required this.status, required this.onCancel});
 
   @override
   Widget build(BuildContext context) {
@@ -406,6 +445,14 @@ class _LoadingStep extends StatelessWidget {
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: Color(0xFF374151),
+            ),
+          ),
+          const SizedBox(height: 24),
+          TextButton(
+            onPressed: onCancel,
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Color(0xFF6B7280)),
             ),
           ),
         ],

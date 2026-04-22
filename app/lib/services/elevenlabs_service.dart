@@ -28,6 +28,8 @@ class ElevenLabsService {
       _voiceIds[language] ??
       (throw ArgumentError('No ElevenLabs voice configured for language: $language'));
 
+  void close() => _client.close();
+
   Future<Uint8List> synthesize(String text, StoryLanguage language) async {
     final voiceId = voiceForLanguage(language);
     final response = await _client.post(
@@ -42,7 +44,7 @@ class ElevenLabsService {
         'model_id': _modelId,
         'voice_settings': {'stability': 0.5, 'similarity_boost': 0.75},
       }),
-    );
+    ).timeout(const Duration(seconds: 60));
 
     if (response.statusCode != 200) {
       throw Exception(
