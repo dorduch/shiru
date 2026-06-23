@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,8 +14,11 @@ import '../providers/categories_provider.dart';
 import '../models/sprites.dart';
 import '../services/library_import_service.dart';
 import '../services/analytics_service.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_responsive.dart';
+import '../theme/app_typography.dart';
 import 'pixel_sprite.dart';
+import 'video_playback_screen.dart';
 
 class ParentEditScreen extends ConsumerStatefulWidget {
   final String? cardId;
@@ -29,12 +31,14 @@ class ParentEditScreen extends ConsumerStatefulWidget {
 class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
   final _titleController = TextEditingController();
   AudioCard? _existingCard;
-  String? _audioPath;
+  MediaSelection? _mediaSelection;
   String _color = '#F0FDF4';
   String? _selectedCategoryId;
   bool _isLoading = false;
   String? _selectedSpriteKey;
   Timer? _debounce;
+  bool _saved = false;
+  bool _saveOwnsStagedMedia = false;
 
   @override
   void initState() {
@@ -63,7 +67,10 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
 
     _existingCard = card;
     _titleController.text = card.title;
-    _audioPath = card.audioPath;
+    _mediaSelection = MediaSelection(
+      path: card.mediaPath,
+      mediaType: card.mediaType,
+    );
     _color = card.color;
     _selectedCategoryId = card.collectionId;
     _selectedSpriteKey = card.spriteKey;
@@ -72,15 +79,17 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
 
   Future<void> _save() async {
     final title = _titleController.text.trim();
-    final selectedAudioPath = _audioPath;
-    if (title.isEmpty || selectedAudioPath == null) {
+    final selectedMedia = _mediaSelection;
+    if (title.isEmpty || selectedMedia == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add a title and an audio file to save.')),
+        const SnackBar(content: Text('Add a title and a media file to save.')),
       );
       return;
     }
 
     setState(() => _isLoading = true);
+    _saveOwnsStagedMedia = true;
+    var mediaPathToClean = selectedMedia.path;
 
     try {
       final existingCard = widget.cardId == null
@@ -88,14 +97,18 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
           : (_existingCard ??
                 await DatabaseService.instance.readCard(widget.cardId!));
 
-      var finalAudioPath = selectedAudioPath;
-      final audioChanged =
-          existingCard != null && selectedAudioPath != existingCard.audioPath;
-      if (existingCard == null || audioChanged) {
-        finalAudioPath = await LibraryImportService.importAudioToLibrary(
-          selectedAudioPath,
-        );
-      }
+      final mediaChanged =
+          existingCard == null ||
+          selectedMedia.path != existingCard.mediaPath ||
+          selectedMedia.mediaType != existingCard.mediaType;
+      final finalMedia = mediaChanged
+          ? await LibraryImportService.importMediaToLibrary(
+              selectedMedia.path,
+              mediaType: selectedMedia.mediaType,
+              duration: selectedMedia.duration,
+            )
+          : selectedMedia;
+      mediaPathToClean = finalMedia.path;
 
       final cardsList = ref.read(cardsProvider).value ?? [];
 
@@ -105,7 +118,8 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
         title: title,
         color: _color,
         spriteKey: _selectedSpriteKey ?? autoAssignSprite(title).id,
-        audioPath: finalAudioPath,
+        audioPath: finalMedia.path,
+        mediaType: finalMedia.mediaType,
         position: existingCard?.position ?? cardsList.length,
         createdAt:
             existingCard?.createdAt ?? DateTime.now().millisecondsSinceEpoch,
@@ -113,32 +127,34 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
 
       if (existingCard == null) {
         await ref.read(cardsProvider.notifier).addCard(card);
+        _saved = true;
+        _saveOwnsStagedMedia = false;
         AnalyticsService.instance.logCardCreated(method: 'single');
       } else {
         await DatabaseService.instance.updateCard(card);
+        _saved = true;
+        _saveOwnsStagedMedia = false;
         await ref.read(cardsProvider.notifier).loadCards();
 
-        if (audioChanged) {
-          final oldAudioPath = existingCard.audioPath;
-          final oldAudioStillReferenced = await DatabaseService.instance
-              .countCardsWithAudioPath(oldAudioPath);
-          final oldAudioManaged =
-              await LibraryImportService.isImportedLibraryPath(oldAudioPath);
-
-          if (oldAudioManaged &&
-              oldAudioStillReferenced == 0 &&
-              oldAudioPath != finalAudioPath) {
-            final oldAudioFile = File(oldAudioPath);
-            if (await oldAudioFile.exists()) {
-              await oldAudioFile.delete();
+        if (mediaChanged) {
+          try {
+            final oldPath = existingCard.mediaPath;
+            final oldMediaStillReferenced = await DatabaseService.instance
+                .countCardsWithMediaPath(oldPath);
+            if (oldMediaStillReferenced == 0 && oldPath != finalMedia.path) {
+              await LibraryImportService.deleteImportedMedia(oldPath);
             }
-          }
+          } catch (_) {}
         }
       }
 
       if (!mounted) return;
       context.pop();
     } catch (e) {
+      _saveOwnsStagedMedia = false;
+      if (!_saved && !mounted && mediaPathToClean != _existingCard?.mediaPath) {
+        await LibraryImportService.deleteImportedMedia(mediaPathToClean);
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -186,6 +202,13 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
 
   @override
   void dispose() {
+    final stagedPath = _mediaSelection?.path;
+    if (!_saved &&
+        !_saveOwnsStagedMedia &&
+        stagedPath != null &&
+        stagedPath != _existingCard?.mediaPath) {
+      unawaited(LibraryImportService.deleteImportedMedia(stagedPath));
+    }
     _debounce?.cancel();
     _titleController.dispose();
     super.dispose();
@@ -194,141 +217,67 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        backgroundColor: AppColors.backgroundParent,
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primaryStrong),
+        ),
+      );
     }
 
     final isPortrait = AppResponsive.isPortrait(context);
-    final isCompact = AppResponsive.isCompact(context);
-    final isCompactPortrait = isCompact && isPortrait;
     final isShortLandscape =
         !isPortrait && MediaQuery.sizeOf(context).height < 500;
     final basePadding = AppResponsive.basePadding(context);
-    final sectionSpacing = isCompactPortrait
-        ? 18.0
-        : isShortLandscape
-        ? 12.0
-        : AppResponsive.spacing(context, 32);
-    final buttonHeight = AppResponsive.buttonSize(context);
-    final headingSize = isCompact ? 28.0 : AppResponsive.fontSize(context, 32);
-    final saveLabelSize = isCompact
-        ? 16.0
-        : AppResponsive.fontSize(context, 18);
+    final sectionSpacing = isShortLandscape ? 14.0 : 24.0;
     final spriteDef = _selectedSpriteKey != null
         ? (predefinedSprites[_selectedSpriteKey!] ??
               autoAssignSprite(_titleController.text))
         : autoAssignSprite(_titleController.text);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7F8),
+      backgroundColor: AppColors.backgroundParent,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(isShortLandscape ? 10.0 : basePadding),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: basePadding,
+            vertical: isShortLandscape ? 8 : 16,
+          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Semantics(
-                        label: 'Go back',
-                        button: true,
-                        child: IconButton(
-                          icon: Icon(
-                            Icons.arrow_back_ios_new,
-                            size: isCompactPortrait
-                                ? 26.0
-                                : isShortLandscape
-                                ? 24.0
-                                : AppResponsive.iconSize(context, 32),
-                          ),
-                          onPressed: () => context.pop(),
-                        ),
-                      ),
-                      SizedBox(
-                        width: isCompactPortrait
-                            ? 8.0
-                            : isShortLandscape
-                            ? 12.0
-                            : AppResponsive.spacing(context, 16),
-                      ),
-                      Text(
-                        widget.cardId == null ? 'New Card' : 'Edit Card',
-                        style: TextStyle(
-                          fontSize: isCompactPortrait
-                              ? 24.0
-                              : isShortLandscape
-                              ? 20.0
-                              : headingSize,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Semantics(
-                    label: 'Save card',
-                    button: true,
-                    child: GestureDetector(
-                      onTap: _save,
-                      child: Container(
-                        height: buttonHeight,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppResponsive.spacing(context, 24),
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF22C55E),
-                          borderRadius: BorderRadius.circular(buttonHeight / 2),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x4022C55E),
-                              blurRadius: 16,
-                              offset: Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.check,
-                              color: Colors.white,
-                              size: AppResponsive.iconSize(context, 20),
-                            ),
-                            SizedBox(width: AppResponsive.spacing(context, 8)),
-                            Text(
-                              'Save',
-                              style: TextStyle(
-                                fontSize: saveLabelSize,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              _EditHeader(
+                title: widget.cardId == null ? 'New card' : 'Edit card',
+                onBack: () => context.pop(),
+                onSave: _save,
               ),
-              SizedBox(height: sectionSpacing),
-              if (isPortrait) ...[
-                _buildPreview(context, spriteDef),
-                SizedBox(height: sectionSpacing),
-                _buildFormPanel(context),
-              ] else
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildPreview(context, spriteDef),
-                    SizedBox(width: sectionSpacing),
-                    Expanded(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 560),
-                        child: _buildFormPanel(context),
-                      ),
+              SizedBox(height: isShortLandscape ? 10 : 20),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1040),
+                      child: isPortrait
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _buildPreview(context, spriteDef),
+                                SizedBox(height: sectionSpacing),
+                                _buildFormPanel(context),
+                              ],
+                            )
+                          : Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildPreview(context, spriteDef),
+                                SizedBox(width: sectionSpacing),
+                                Expanded(child: _buildFormPanel(context)),
+                              ],
+                            ),
                     ),
-                  ],
+                  ),
                 ),
+              ),
             ],
           ),
         ),
@@ -343,13 +292,13 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
         !AppResponsive.isPortrait(context) &&
         MediaQuery.sizeOf(context).height < 500;
     final sectionLabelSize = isCompact
-        ? 15.0
+        ? 16.0
         : AppResponsive.fontSize(context, 16);
     final fieldTextSize = isCompact
         ? 16.0
         : AppResponsive.fontSize(context, 18);
     final helperTextSize = isCompact
-        ? 13.0
+        ? 14.0
         : AppResponsive.fontSize(context, 14);
 
     return Column(
@@ -357,9 +306,9 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
       children: [
         Text(
           'Title',
-          style: TextStyle(
+          style: AppTypography.bodyMedium.copyWith(
             fontSize: sectionLabelSize,
-            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
           ),
         ),
         SizedBox(
@@ -392,21 +341,18 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                 : TextAlign.left,
             decoration: InputDecoration(
               filled: true,
-              fillColor: Colors.white,
+              fillColor: AppColors.surface,
               contentPadding: EdgeInsets.all(
                 AppResponsive.spacing(context, 16),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(
-                  color: Color(0xFFE5E7EB),
-                  width: 2,
-                ),
+                borderSide: const BorderSide(color: AppColors.border),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: const BorderSide(
-                  color: Color(0xFF3B82F6),
+                  color: AppColors.primaryStrong,
                   width: 2,
                 ),
               ),
@@ -422,9 +368,9 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
         ),
         Text(
           'Category',
-          style: TextStyle(
+          style: AppTypography.bodyMedium.copyWith(
             fontSize: sectionLabelSize,
-            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
           ),
         ),
         SizedBox(
@@ -446,12 +392,9 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                     horizontal: AppResponsive.spacing(context, 16),
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: const Color(0xFFE5E7EB),
-                      width: 2,
-                    ),
+                    border: Border.all(color: AppColors.border),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String?>(
@@ -490,23 +433,24 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
                       ? 2.0
                       : AppResponsive.spacing(context, 8),
                 ),
-                GestureDetector(
+                InkWell(
                   onTap: _showNewCategoryDialog,
+                  borderRadius: BorderRadius.circular(12),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         Icons.add_circle_outline,
                         size: AppResponsive.iconSize(context, 16),
-                        color: const Color(0xFF3B82F6),
+                        color: AppColors.primaryInk,
                       ),
                       SizedBox(width: AppResponsive.spacing(context, 6)),
                       Text(
-                        'New Category',
+                        'Create category',
                         style: TextStyle(
                           fontSize: helperTextSize,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFF3B82F6),
+                          color: AppColors.primaryInk,
                         ),
                       ),
                     ],
@@ -524,10 +468,10 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
               : AppResponsive.spacing(context, 24),
         ),
         Text(
-          'Audio',
-          style: TextStyle(
+          'Media',
+          style: AppTypography.bodyMedium.copyWith(
             fontSize: sectionLabelSize,
-            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
           ),
         ),
         SizedBox(
@@ -538,206 +482,213 @@ class _ParentEditScreenState extends ConsumerState<ParentEditScreen> {
               : AppResponsive.spacing(context, 8),
         ),
         AudioRecorderWidget(
-          currentAudioPath: _audioPath,
-          onAudioSelected: (selectedPath) {
-            setState(() {
-              if (selectedPath.isEmpty) {
-                _audioPath = null;
-              } else {
-                _audioPath = selectedPath;
-              }
-            });
+          currentSelection: _mediaSelection,
+          onMediaSelected: (selection) {
+            final previous = _mediaSelection;
+            setState(() => _mediaSelection = selection);
+            if (previous != null &&
+                previous.path != selection?.path &&
+                previous.path != _existingCard?.mediaPath) {
+              unawaited(
+                LibraryImportService.deleteImportedMedia(previous.path),
+              );
+            }
           },
+          onPreviewVideo: _mediaSelection?.mediaType == CardMediaType.video
+              ? () => context.push(
+                  '/parent/video-preview',
+                  extra: VideoPlaybackRequest(
+                    path: _mediaSelection!.path,
+                    title: _titleController.text.trim().isEmpty
+                        ? 'Video preview'
+                        : _titleController.text.trim(),
+                  ),
+                )
+              : null,
         ),
       ],
     );
   }
 
   Widget _buildPreview(BuildContext context, SpriteDef sprite) {
-    final isCompact = AppResponsive.isCompact(context);
-    final isCompactPortrait = isCompact && AppResponsive.isPortrait(context);
+    final isPortrait = AppResponsive.isPortrait(context);
+    final compactPortrait =
+        isPortrait && MediaQuery.sizeOf(context).width < 600;
     final isShortLandscape =
-        !AppResponsive.isPortrait(context) &&
-        MediaQuery.sizeOf(context).height < 500;
-    final previewWidth = AppResponsive.isPortrait(context)
-        ? double.infinity
+        !isPortrait && MediaQuery.sizeOf(context).height < 500;
+    final artworkSize = compactPortrait
+        ? 116.0
         : isShortLandscape
-        ? 184.0
-        : AppResponsive.spacing(context, 220);
-    final artworkHeight = isCompactPortrait
         ? 132.0
-        : isShortLandscape
-        ? 104.0
-        : AppResponsive.isPortrait(context)
-        ? AppResponsive.spacing(context, 220)
-        : AppResponsive.spacing(context, 180);
-    final previewLabelSize = isCompact
-        ? 16.0
-        : AppResponsive.fontSize(context, 18);
-    final chipLabelSize = isCompact
-        ? 12.0
-        : AppResponsive.fontSize(context, 13);
-    final previewTitleSize = isCompact
-        ? 18.0
-        : AppResponsive.fontSize(context, 20);
+        : isPortrait
+        ? 220.0
+        : 210.0;
+    final title = _titleController.text.trim().isEmpty
+        ? 'New card'
+        : _titleController.text.trim();
+
+    Widget artwork() => Container(
+      width: compactPortrait ? artworkSize : double.infinity,
+      height: artworkSize,
+      decoration: BoxDecoration(
+        color: hexOrFallback(_color),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      alignment: Alignment.center,
+      child: FittedBox(
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: PixelSprite(
+            sprite: sprite,
+            state: SpriteState.active,
+            scale: compactPortrait ? 4.4 : AppResponsive.spriteScale(context),
+          ),
+        ),
+      ),
+    );
+
+    Widget changeButton() => OutlinedButton.icon(
+      onPressed: _showSpritePicker,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.textMuted,
+        minimumSize: const Size(0, 48),
+        side: const BorderSide(color: AppColors.border),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      icon: const Icon(Icons.shuffle_rounded, size: 18),
+      label: const Text('Change artwork'),
+    );
 
     return ConstrainedBox(
       constraints: BoxConstraints(
-        maxWidth: AppResponsive.isPortrait(context)
-            ? 360
-            : isShortLandscape
-            ? 198.0
-            : AppResponsive.spacing(context, 260),
+        maxWidth: isPortrait ? double.infinity : (isShortLandscape ? 210 : 300),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (!isShortLandscape) ...[
-            Text(
-              'Preview',
-              style: TextStyle(
-                fontSize: previewLabelSize,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF6B7280),
-              ),
+          Text(
+            'Card preview',
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.textPrimary,
             ),
-            SizedBox(height: AppResponsive.spacing(context, 16)),
-          ],
+          ),
+          const SizedBox(height: 8),
           Container(
-            width: previewWidth,
+            padding: EdgeInsets.all(compactPortrait ? 12 : 16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(24),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 24,
-                  offset: Offset(0, 12),
-                ),
-              ],
+              border: Border.all(color: AppColors.border),
             ),
-            padding: EdgeInsets.all(
-              isCompactPortrait
-                  ? 12.0
-                  : isShortLandscape
-                  ? 10.0
-                  : AppResponsive.spacing(context, 16),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Container(
-                  width: double.infinity,
-                  height: artworkHeight,
-                  decoration: BoxDecoration(
-                    color: hexOrFallback(_color),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  alignment: Alignment.center,
-                  child: FittedBox(
-                    child: Padding(
-                      padding: EdgeInsets.all(
-                        isCompactPortrait
-                            ? 12.0
-                            : isShortLandscape
-                            ? 10.0
-                            : AppResponsive.spacing(context, 16),
-                      ),
-                      child: PixelSprite(
-                        sprite: sprite,
-                        state: SpriteState.active,
-                        scale: isCompactPortrait
-                            ? 4.6
-                            : isShortLandscape
-                            ? 4.4
-                            : AppResponsive.spriteScale(context),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  height: isCompactPortrait
-                      ? 10.0
-                      : isShortLandscape
-                      ? 6.0
-                      : AppResponsive.spacing(context, 16),
-                ),
-                GestureDetector(
-                  onTap: _showSpritePicker,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isCompactPortrait
-                          ? 12.0
-                          : isShortLandscape
-                          ? 8.0
-                          : AppResponsive.spacing(context, 16),
-                      vertical: isCompactPortrait
-                          ? 6.0
-                          : isShortLandscape
-                          ? 4.0
-                          : AppResponsive.spacing(context, 8),
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: const Color(0xFFE5E7EB),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.shuffle_rounded,
-                          size: AppResponsive.iconSize(context, 16),
-                          color: const Color(0xFF6B7280),
+            child: compactPortrait
+                ? Row(
+                    children: [
+                      artwork(),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.titleLarge.copyWith(
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            changeButton(),
+                          ],
                         ),
-                        SizedBox(width: AppResponsive.spacing(context, 6)),
-                        Text(
-                          'Change Creature',
-                          style: TextStyle(
-                            fontSize: isCompactPortrait
-                                ? 11.0
-                                : isShortLandscape
-                                ? 9.0
-                                : chipLabelSize,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF6B7280),
-                          ),
+                      ),
+                    ],
+                  )
+                : Column(
+                    children: [
+                      artwork(),
+                      const SizedBox(height: 14),
+                      Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: AppTypography.titleLarge.copyWith(
+                          color: AppColors.textPrimary,
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 10),
+                      changeButton(),
+                    ],
                   ),
-                ),
-                if (!isShortLandscape) ...[
-                  SizedBox(
-                    height: isCompactPortrait
-                        ? 6.0
-                        : AppResponsive.spacing(context, 8),
-                  ),
-                  Text(
-                    _titleController.text.isEmpty
-                        ? 'New Card'
-                        : _titleController.text,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: isCompactPortrait ? 16.0 : previewTitleSize,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF1A1A1A),
-                    ),
-                    textDirection:
-                        intl.Bidi.detectRtlDirectionality(_titleController.text)
-                        ? TextDirection.rtl
-                        : TextDirection.ltr,
-                  ),
-                ],
-              ],
-            ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _EditHeader extends StatelessWidget {
+  final String title;
+  final VoidCallback onBack;
+  final VoidCallback onSave;
+
+  const _EditHeader({
+    required this.title,
+    required this.onBack,
+    required this.onSave,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final buttonSize = AppResponsive.buttonSize(
+      context,
+    ).clamp(48.0, 64.0).toDouble();
+    final compact = AppResponsive.isCompact(context);
+
+    return Row(
+      children: [
+        IconButton(
+          tooltip: 'Back to library',
+          constraints: BoxConstraints.tightFor(
+            width: buttonSize,
+            height: buttonSize,
+          ),
+          onPressed: onBack,
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: AppResponsive.iconSize(context, 24),
+            color: AppColors.textMuted,
+          ),
+        ),
+        SizedBox(width: AppResponsive.spacing(context, 8)),
+        Expanded(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.displayLarge.copyWith(
+              fontSize: AppResponsive.fontSize(context, compact ? 30 : 32),
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        FilledButton.icon(
+          onPressed: onSave,
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.primaryStrong,
+            foregroundColor: AppColors.surface,
+            minimumSize: Size(compact ? 96 : 116, buttonSize),
+            padding: EdgeInsets.symmetric(horizontal: compact ? 16 : 22),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+          ),
+          icon: const Icon(Icons.check_rounded, size: 20),
+          label: const Text('Save'),
+        ),
+      ],
     );
   }
 }

@@ -13,6 +13,13 @@ import '../services/key_value_store.dart';
 const _kDbPasswordKey = 'db_encryption_key';
 
 class DatabaseService {
+  static const int schemaVersion = 8;
+  static const String addMediaTypeMigration =
+      "ALTER TABLE cards ADD COLUMN media_type TEXT NOT NULL DEFAULT 'audio'";
+  static final List<Category> defaultCategories = List.unmodifiable([
+    Category(id: 'default-stories', name: 'Stories', emoji: '📖', position: 0),
+    Category(id: 'default-songs', name: 'Songs', emoji: '🎵', position: 1),
+  ]);
   static final DatabaseService instance = DatabaseService._init();
   static Database? _database;
 
@@ -69,7 +76,7 @@ class DatabaseService {
     if (!fileExists) {
       return await openDatabase(
         path,
-        version: 6,
+        version: schemaVersion,
         password: password,
         onCreate: _createDB,
         onUpgrade: _upgradeDB,
@@ -80,7 +87,7 @@ class DatabaseService {
     try {
       return await openDatabase(
         path,
-        version: 6,
+        version: schemaVersion,
         password: password,
         onCreate: _createDB,
         onUpgrade: _upgradeDB,
@@ -118,7 +125,7 @@ class DatabaseService {
       await dbFile.delete();
       return await openDatabase(
         path,
-        version: 6,
+        version: schemaVersion,
         password: password,
         onCreate: _createDB,
         onUpgrade: _upgradeDB,
@@ -129,19 +136,23 @@ class DatabaseService {
 
     final newDb = await openDatabase(
       path,
-      version: 6,
+      version: schemaVersion,
       password: password,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
 
     await newDb.transaction((txn) async {
+      // _createDB seeded defaults. Restore the legacy categories first so an
+      // existing category named Stories or Songs remains the user's category.
+      await txn.delete('categories');
       for (final row in legacyCards) {
         await txn.insert('cards', row);
       }
       for (final row in legacyCategories) {
         await txn.insert('categories', row);
       }
+      await _ensureDefaultCategories(txn);
     });
 
     return newDb;
@@ -161,6 +172,7 @@ CREATE TABLE cards (
   sprite_key TEXT,
   custom_image_path TEXT,
   audio_path TEXT NOT NULL,
+  media_type TEXT NOT NULL DEFAULT 'audio',
   playback_position INTEGER DEFAULT 0,
   position INTEGER DEFAULT 0,
   created_at INTEGER NOT NULL
@@ -175,6 +187,8 @@ CREATE TABLE categories (
   position INTEGER DEFAULT 0
 )
 ''');
+
+    await _ensureDefaultCategories(db);
   }
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
@@ -187,6 +201,66 @@ CREATE TABLE categories (
   position INTEGER DEFAULT 0
 )
 ''');
+    }
+    await applyVersion7Migration(oldVersion, db.execute);
+    await applyVersion8Migration(
+      oldVersion,
+      () => _ensureDefaultCategories(db),
+    );
+  }
+
+  @visibleForTesting
+  static Future<void> applyVersion7Migration(
+    int oldVersion,
+    Future<void> Function(String sql) execute,
+  ) async {
+    if (oldVersion < 7) await execute(addMediaTypeMigration);
+  }
+
+  @visibleForTesting
+  static Future<void> applyVersion8Migration(
+    int oldVersion,
+    Future<void> Function() seedDefaults,
+  ) async {
+    if (oldVersion < 8) await seedDefaults();
+  }
+
+  @visibleForTesting
+  static List<Category> missingDefaultCategories(
+    Iterable<Category> existingCategories,
+  ) {
+    final existing = existingCategories.toList();
+    final existingIds = existing.map((category) => category.id).toSet();
+    final existingNames = existing
+        .map((category) => category.name.trim().toLowerCase())
+        .toSet();
+    var nextPosition = existing.fold<int>(
+      0,
+      (next, category) => max(next, category.position + 1),
+    );
+
+    final missing = <Category>[];
+    for (final category in defaultCategories) {
+      final normalizedName = category.name.toLowerCase();
+      if (existingIds.contains(category.id) ||
+          existingNames.contains(normalizedName)) {
+        continue;
+      }
+
+      missing.add(category.copyWith(position: nextPosition++));
+    }
+    return missing;
+  }
+
+  static Future<void> _ensureDefaultCategories(DatabaseExecutor db) async {
+    final rows = await db.query('categories');
+    final existing = rows.map(Category.fromMap);
+    for (final category in missingDefaultCategories(existing)) {
+      await db.insert(
+        'categories',
+        category.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.ignore,
+      );
     }
   }
 
@@ -262,10 +336,14 @@ CREATE TABLE categories (
   }
 
   Future<int> countCardsWithAudioPath(String audioPath) async {
+    return countCardsWithMediaPath(audioPath);
+  }
+
+  Future<int> countCardsWithMediaPath(String mediaPath) async {
     final db = await instance.database;
     final result = await db.rawQuery(
       'SELECT COUNT(*) AS count FROM cards WHERE audio_path = ?',
-      [audioPath],
+      [mediaPath],
     );
     return Sqflite.firstIntValue(result) ?? 0;
   }

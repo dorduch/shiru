@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/audio_card.dart';
 import '../db/database_service.dart';
@@ -51,17 +49,11 @@ class CardsNotifier extends StateNotifier<AsyncValue<List<AudioCard>>> {
     AnalyticsService.instance.logCardDeleted();
 
     if (deletedCard != null) {
-      final audioPath = deletedCard.audioPath;
+      final mediaPath = deletedCard.mediaPath;
       final remainingReferences = await DatabaseService.instance
-          .countCardsWithAudioPath(audioPath);
-      final isManagedAudioPath =
-          await LibraryImportService.isImportedLibraryPath(audioPath);
-
-      if (remainingReferences == 0 && isManagedAudioPath) {
-        final audioFile = File(audioPath);
-        if (await audioFile.exists()) {
-          await audioFile.delete();
-        }
+          .countCardsWithMediaPath(mediaPath);
+      if (remainingReferences == 0) {
+        await LibraryImportService.deleteImportedMedia(mediaPath);
       }
     }
 

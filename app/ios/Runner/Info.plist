@@ -42,7 +42,11 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Shiru needs microphone access to record audio for cards.</string>
+	<string>Shiru needs microphone access to record audio and sound for video cards.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Shiru uses the camera when you record a video card.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Shiru uses your photo library when you choose a video for a card.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

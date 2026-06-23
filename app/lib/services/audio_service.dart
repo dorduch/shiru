@@ -20,6 +20,11 @@ class AudioService {
   }
 
   Future<void> playCard(AudioCard card) async {
+    if (card.mediaType == CardMediaType.video) {
+      await stop();
+      return;
+    }
+
     final currentlyPlaying = ref.read(currentPlayingCardIdProvider);
     if (currentlyPlaying == card.id) {
       if (_player.playing) {
@@ -33,7 +38,7 @@ class AudioService {
     try {
       await _player.stop();
       ref.read(currentPlayingCardIdProvider.notifier).state = card.id;
-      await _player.setFilePath(card.audioPath);
+      await _player.setFilePath(card.mediaPath);
       await _player.play();
       AnalyticsService.instance.logCardPlayed();
     } catch (e) {

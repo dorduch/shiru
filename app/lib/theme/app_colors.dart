@@ -39,11 +39,20 @@ class AppColors {
   /// Green — primary action (save, active tab, "Now Playing")
   static const primary = Color(0xFF22C55E);
   static const primaryDark = Color(0xFF16A34A);
+
+  /// Darker green for filled controls with light text (WCAG AA contrast).
+  static const primaryStrong = Color(0xFF15803D);
+
+  /// Deep green for text and icons on pale green surfaces.
+  static const primaryInk = Color(0xFF166534);
   static const primaryLight = Color(0xFF4ADE80);
   static const primaryShadow = Color(0x4022C55E);
 
   /// Red — destructive actions only (delete, error borders, playing card glow)
   static const destructive = Color(0xFFFF6B6B);
+
+  /// Accessible destructive foreground for pale surfaces and text actions.
+  static const destructiveDark = Color(0xFFB91C1C);
   static const destructiveShadow = Color(0x40FF6B6B);
 
   /// Purple — story builder accent

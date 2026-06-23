@@ -104,27 +104,30 @@
 <body>
   <div class="wrap">
     <div class="logo">Shiru</div>
-    <div class="tagline">A DIY audio player for kids</div>
+    <div class="tagline">A DIY audio and video player for kids</div>
 
     <h1>Privacy Policy</h1>
-    <div class="updated">Last updated: April 3, 2026</div>
+    <div class="updated">Last updated: June 22, 2026</div>
 
     <div class="highlight">
       Shiru is a local-only app. It has no account system, no cloud sync, and no server of its own. Almost everything stays on your device.
     </div>
 
     <h2>Who this app is for</h2>
-    <p>Shiru is designed for families. Parents set up the audio card library; children tap cards to play them. The app is intended to be set up and managed by an adult.</p>
+    <p>Shiru is designed for families. Parents set up the local audio and video card library; children tap cards to play them. The app is intended to be set up and managed by an adult.</p>
 
     <h2>What data we collect</h2>
 
     <h2>1. Data stored only on your device <span class="pill">local only</span></h2>
     <p>The following data never leaves your device:</p>
     <ul>
-      <li><strong>Audio recordings</strong> — voice recordings made inside the app are stored in your device's private app storage and are never uploaded anywhere.</li>
-      <li><strong>Card library</strong> — card titles, categories, colors, and audio file paths are stored in an encrypted local database.</li>
+      <li><strong>Audio and video media</strong> — imported files and recordings made through the app are copied to your device's private app storage and are never uploaded by the library or playback features.</li>
+      <li><strong>Card library</strong> — card titles, categories, colors, media types, and local media file paths are stored in an encrypted local database.</li>
       <li><strong>Parent PIN</strong> — stored in the device's secure storage (Android Keystore / iOS Keychain). We never see it.</li>
     </ul>
+
+    <h2>Device permissions</h2>
+    <p>Shiru asks for microphone access when you record audio. On iOS, the system may also ask for camera, photo-library, and microphone access when you choose or record a video. On Android, video choosing and recording use system gallery and camera activities rather than broad camera or storage permissions. Media you do not select is not copied into Shiru.</p>
 
     <h2>2. Crash reports (Firebase Crashlytics)</h2>
     <p>If the app crashes, an anonymous crash report is automatically sent to Google's Firebase Crashlytics service. This report includes:</p>
@@ -133,7 +136,7 @@
       <li>Device model, OS version, and app version</li>
       <li>A randomly generated installation ID (not linked to any account or person)</li>
     </ul>
-    <p>No audio, card content, or PIN data is ever included in crash reports.</p>
+    <p>No audio, video, card content, or PIN data is ever included in crash reports.</p>
 
     <h2>3. Usage analytics (Firebase Analytics)</h2>
     <p>We collect anonymous usage events to understand how the app is used and where to focus improvements. Examples of events logged:</p>
@@ -142,7 +145,7 @@
       <li>A card was created or deleted</li>
       <li>The parent area was accessed</li>
     </ul>
-    <p>Analytics are disabled in development builds. No event contains audio content, card titles, or any personally identifiable information.</p>
+    <p>Analytics are disabled in development builds. No event contains audio or video content, card titles, or any personally identifiable information.</p>
 
     <h2>Children's privacy</h2>
     <p>Shiru does not knowingly collect personal information from children. The app is operated entirely by a parent or guardian. Children interact only with the playback interface — they cannot create accounts, enter personal information, or trigger any network activity.</p>
@@ -157,7 +160,7 @@
     <p>We do not sell, rent, or share your data with any other third parties.</p>
 
     <h2>Data retention</h2>
-    <p>Local data (recordings, cards, PIN) remains on your device until you uninstall the app or delete it manually. Crashlytics and Analytics data is retained by Google per their standard policies (typically 90 days for crash data, 14 months for analytics).</p>
+    <p>Local data (imported media, recordings, cards, PIN) remains on your device until you delete it or uninstall the app. Crashlytics and Analytics data is retained by Google per their standard policies (typically 90 days for crash data, 14 months for analytics).</p>
 
     <h2>Your rights</h2>
     <p>Because Shiru stores no personal data on any server, there is nothing for us to delete or export on your behalf. To remove all local app data, uninstall Shiru from your device.</p>

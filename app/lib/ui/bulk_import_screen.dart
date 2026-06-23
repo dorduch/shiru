@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:async';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -13,10 +13,23 @@ import '../providers/cards_provider.dart';
 import '../providers/categories_provider.dart';
 import '../services/library_import_service.dart';
 import '../services/analytics_service.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_responsive.dart';
+import '../theme/app_typography.dart';
+
+typedef BulkFilePicker = Future<FilePickerResult?> Function();
+typedef BulkMediaImporter =
+    Future<MediaSelection> Function(
+      String path,
+      CardMediaType mediaType,
+      Duration? duration,
+    );
 
 class BulkImportScreen extends ConsumerStatefulWidget {
-  const BulkImportScreen({super.key});
+  const BulkImportScreen({super.key, this.pickFiles, this.importMedia});
+
+  final BulkFilePicker? pickFiles;
+  final BulkMediaImporter? importMedia;
 
   @override
   ConsumerState<BulkImportScreen> createState() => _BulkImportScreenState();
@@ -24,15 +37,36 @@ class BulkImportScreen extends ConsumerStatefulWidget {
 
 class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
   final List<_BulkImportDraft> _drafts = [];
+  final Set<String> _pendingPersistencePaths = {};
 
   String? _selectedCategoryId;
   bool _isPickingFiles = false;
   bool _isImporting = false;
   _BulkImportSummary? _summary;
 
+  Future<MediaSelection> _importMedia(
+    String path,
+    CardMediaType mediaType, [
+    Duration? duration,
+  ]) {
+    if (widget.importMedia != null) {
+      return widget.importMedia!(path, mediaType, duration);
+    }
+    return LibraryImportService.importMediaToLibrary(
+      path,
+      mediaType: mediaType,
+      duration: duration,
+    );
+  }
+
   @override
   void dispose() {
     for (final draft in _drafts) {
+      if (draft.isStagedCopy &&
+          draft.status != _BulkImportStatus.imported &&
+          !_pendingPersistencePaths.contains(draft.sourcePath)) {
+        unawaited(LibraryImportService.deleteImportedMedia(draft.sourcePath!));
+      }
       draft.dispose();
     }
     super.dispose();
@@ -65,11 +99,15 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
     try {
       final result = await preserveParentAuthDuringExternalFileFlow(
         ref,
-        () => FilePicker.platform.pickFiles(
-          type: FileType.custom,
-          allowMultiple: true,
-          allowedExtensions: LibraryImportService.supportedAudioExtensions,
-        ),
+        widget.pickFiles ??
+            () => FilePicker.platform.pickFiles(
+              type: FileType.custom,
+              allowMultiple: true,
+              allowedExtensions: [
+                ...LibraryImportService.supportedAudioExtensions,
+                ...LibraryImportService.supportedVideoExtensions,
+              ],
+            ),
       );
 
       if (result == null || result.files.isEmpty) return;
@@ -87,31 +125,83 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
           continue;
         }
 
-        final validationError = LibraryImportService.validateAudioSelection(
+        final mediaType = LibraryImportService.inferMediaType(sourcePath);
+        final validationError = LibraryImportService.validateMediaSelection(
           sourcePath: sourcePath,
           sizeBytes: file.size,
+          mediaType: mediaType,
         );
-
-        drafts.add(
-          _BulkImportDraft(
-            sourcePath: sourcePath,
-            fileName: file.name,
-            titleController: TextEditingController(
-              text: LibraryImportService.deriveTitleFromSourcePath(sourcePath),
+        if (validationError != null || mediaType == null) {
+          drafts.add(
+            _BulkImportDraft(
+              sourcePath: sourcePath,
+              fileName: file.name,
+              mediaType: mediaType,
+              titleController: TextEditingController(
+                text: LibraryImportService.deriveTitleFromSourcePath(
+                  sourcePath,
+                ),
+              ),
+              status: _BulkImportStatus.invalid,
+              errorMessage: validationError,
             ),
-            status: validationError == null
-                ? _BulkImportStatus.ready
-                : _BulkImportStatus.invalid,
-            errorMessage: validationError,
-          ),
-        );
+          );
+          continue;
+        }
+
+        try {
+          final selection = await _importMedia(sourcePath, mediaType);
+          drafts.add(
+            _BulkImportDraft(
+              sourcePath: selection.path,
+              fileName: file.name,
+              mediaType: selection.mediaType,
+              duration: selection.duration,
+              isStagedCopy: selection.path != sourcePath,
+              titleController: TextEditingController(
+                text: LibraryImportService.deriveTitleFromSourcePath(
+                  sourcePath,
+                ),
+              ),
+              status: _BulkImportStatus.ready,
+            ),
+          );
+        } catch (e) {
+          drafts.add(
+            _BulkImportDraft(
+              sourcePath: sourcePath,
+              fileName: file.name,
+              mediaType: mediaType,
+              titleController: TextEditingController(
+                text: LibraryImportService.deriveTitleFromSourcePath(
+                  sourcePath,
+                ),
+              ),
+              status: _BulkImportStatus.invalid,
+              errorMessage: e.toString().replaceFirst('Exception: ', ''),
+            ),
+          );
+        }
       }
 
       for (final draft in _drafts) {
+        if (draft.isStagedCopy && draft.status != _BulkImportStatus.imported) {
+          unawaited(
+            LibraryImportService.deleteImportedMedia(draft.sourcePath!),
+          );
+        }
         draft.dispose();
       }
 
-      if (!mounted) return;
+      if (!mounted) {
+        for (final draft in drafts) {
+          if (draft.isStagedCopy) {
+            await LibraryImportService.deleteImportedMedia(draft.sourcePath!);
+          }
+          draft.dispose();
+        }
+        return;
+      }
       setState(() {
         _drafts
           ..clear()
@@ -146,6 +236,16 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
       _isImporting = true;
       _summary = null;
     });
+    _pendingPersistencePaths.addAll(
+      _drafts
+          .where(
+            (draft) =>
+                draft.isStagedCopy &&
+                (draft.status == _BulkImportStatus.ready ||
+                    draft.status == _BulkImportStatus.failed),
+          )
+          .map((draft) => draft.sourcePath!),
+    );
 
     final preparedImports = <_PreparedImport>[];
     var nextPosition = basePosition;
@@ -162,24 +262,27 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
       });
 
       try {
-        final importedPath = await LibraryImportService.importAudioToLibrary(
+        final selection = await _importMedia(
           draft.sourcePath!,
+          draft.mediaType!,
+          draft.duration,
         );
         final rawTitle = draft.titleController.text.trim();
         final title = rawTitle.isEmpty
-            ? LibraryImportService.deriveTitleFromSourcePath(draft.sourcePath!)
+            ? LibraryImportService.deriveTitleFromSourcePath(draft.fileName)
             : rawTitle;
 
         preparedImports.add(
           _PreparedImport(
             draft: draft,
-            importedPath: importedPath,
+            importedPath: selection.path,
             card: AudioCard(
               id: const Uuid().v4(),
               collectionId: _selectedCategoryId,
               title: title,
               color: '#F0FDF4',
-              audioPath: importedPath,
+              audioPath: selection.path,
+              mediaType: selection.mediaType,
               position: nextPosition,
               createdAt: DateTime.now().millisecondsSinceEpoch,
             ),
@@ -190,7 +293,13 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
         if (!mounted) return;
         setState(() => draft.status = _BulkImportStatus.ready);
       } catch (e) {
-        if (!mounted) return;
+        _pendingPersistencePaths.remove(draft.sourcePath);
+        if (!mounted) {
+          if (draft.isStagedCopy) {
+            await LibraryImportService.deleteImportedMedia(draft.sourcePath!);
+          }
+          return;
+        }
         setState(() {
           draft.status = _BulkImportStatus.failed;
           draft.errorMessage = e.toString().replaceFirst('Exception: ', '');
@@ -204,28 +313,27 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
             .read(cardsProvider.notifier)
             .addCards(preparedImports.map((entry) => entry.card).toList());
 
-        if (!mounted) return;
-        setState(() {
-          for (final entry in preparedImports) {
-            entry.draft.status = _BulkImportStatus.imported;
-            entry.draft.errorMessage = null;
-          }
-        });
+        for (final entry in preparedImports) {
+          entry.draft.status = _BulkImportStatus.imported;
+          entry.draft.errorMessage = null;
+          _pendingPersistencePaths.remove(entry.importedPath);
+        }
+        if (mounted) setState(() {});
         AnalyticsService.instance.logBulkImport(count: preparedImports.length);
       } catch (_) {
         for (final entry in preparedImports) {
-          try {
-            await File(entry.importedPath).delete();
-          } catch (_) {}
+          if (entry.draft.isStagedCopy) {
+            await LibraryImportService.deleteImportedMedia(entry.importedPath);
+          }
+          _pendingPersistencePaths.remove(entry.importedPath);
+          entry.draft.status = entry.draft.isStagedCopy
+              ? _BulkImportStatus.invalid
+              : _BulkImportStatus.failed;
+          entry.draft.errorMessage = 'Failed to save imported cards.';
         }
 
         if (!mounted) return;
-        setState(() {
-          for (final entry in preparedImports) {
-            entry.draft.status = _BulkImportStatus.failed;
-            entry.draft.errorMessage = 'Failed to save imported cards.';
-          }
-        });
+        setState(() {});
       }
     }
 
@@ -247,7 +355,7 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
     final basePadding = AppResponsive.basePadding(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7F8),
+      backgroundColor: AppColors.backgroundParent,
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(
@@ -257,26 +365,8 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.arrow_back_ios_new,
-                      size: AppResponsive.iconSize(context, 28),
-                    ),
-                    onPressed: () => context.pop(),
-                  ),
-                  SizedBox(width: AppResponsive.spacing(context, 8)),
-                  Text(
-                    'Import Audio',
-                    style: TextStyle(
-                      fontSize: AppResponsive.fontSize(context, 32),
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: AppResponsive.spacing(context, 24)),
+              const _ImportHeader(),
+              SizedBox(height: AppResponsive.spacing(context, 20)),
               Expanded(
                 child: _drafts.isEmpty
                     ? _buildEmptyState(context)
@@ -290,172 +380,18 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return SingleChildScrollView(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 760),
-          child: Container(
-            padding: EdgeInsets.all(AppResponsive.spacing(context, 28)),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x120F172A),
-                  blurRadius: 24,
-                  offset: Offset(0, 12),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: AppResponsive.spacing(context, 72),
-                  height: AppResponsive.spacing(context, 72),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF4E8),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Icon(
-                    Icons.folder_copy_outlined,
-                    size: AppResponsive.iconSize(context, 36),
-                    color: const Color(0xFFF97316),
-                  ),
-                ),
-                SizedBox(height: AppResponsive.spacing(context, 20)),
-                Text(
-                  'Bring a whole set of stories in at once',
-                  style: TextStyle(
-                    fontSize: AppResponsive.fontSize(context, 28),
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF111827),
-                  ),
-                ),
-                SizedBox(height: AppResponsive.spacing(context, 12)),
-                Text(
-                  'Choose several audio files, give them warm names, add a shared category if you want, and save them together in one pass.',
-                  style: TextStyle(
-                    fontSize: AppResponsive.fontSize(context, 18),
-                    height: 1.45,
-                    color: const Color(0xFF6B7280),
-                  ),
-                ),
-                SizedBox(height: AppResponsive.spacing(context, 20)),
-                const _ChecklistRow(
-                  icon: Icons.check_circle_outline,
-                  text: 'Pick a handful of files from the device',
-                ),
-                SizedBox(height: AppResponsive.spacing(context, 12)),
-                const _ChecklistRow(
-                  icon: Icons.check_circle_outline,
-                  text: 'Rename each one so it feels personal',
-                ),
-                SizedBox(height: AppResponsive.spacing(context, 12)),
-                const _ChecklistRow(
-                  icon: Icons.check_circle_outline,
-                  text: 'Keep them together with one shared category',
-                ),
-                SizedBox(height: AppResponsive.spacing(context, 28)),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: _isPickingFiles ? null : _pickFiles,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF6B6B),
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppResponsive.spacing(context, 22),
-                          vertical: AppResponsive.spacing(context, 18),
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      icon: _isPickingFiles
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            )
-                          : const Icon(Icons.upload_file_outlined),
-                      label: Text(
-                        _isPickingFiles
-                            ? 'Choosing Files...'
-                            : 'Choose Audio Files',
-                        style: TextStyle(
-                          fontSize: AppResponsive.fontSize(context, 16),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () => context.go('/parent/edit'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF374151),
-                        side: const BorderSide(color: Color(0xFFE5E7EB)),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppResponsive.spacing(context, 22),
-                          vertical: AppResponsive.spacing(context, 18),
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      icon: const Icon(Icons.add),
-                      label: Text(
-                        'Add One Story Instead',
-                        style: TextStyle(
-                          fontSize: AppResponsive.fontSize(context, 16),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () => context.pop(),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF374151),
-                        side: const BorderSide(color: Color(0xFFE5E7EB)),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppResponsive.spacing(context, 22),
-                          vertical: AppResponsive.spacing(context, 18),
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      icon: const Icon(Icons.arrow_back),
-                      label: Text(
-                        'Back to Library',
-                        style: TextStyle(
-                          fontSize: AppResponsive.fontSize(context, 16),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    return _BulkImportEmptyState(
+      isPickingFiles: _isPickingFiles,
+      onPickFiles: _pickFiles,
+      onAddOne: () => context.go('/parent/edit'),
     );
   }
 
   Widget _buildReviewState(BuildContext context, List<Category> categories) {
-    final storyLabel = _importableCount == 1 ? 'Story' : 'Stories';
+    final cardLabel = _importableCount == 1 ? 'card' : 'cards';
     final importButtonLabel = _isImporting
         ? 'Importing...'
-        : 'Import $_importableCount $storyLabel';
+        : 'Import $_importableCount $cardLabel';
 
     return Center(
       child: ConstrainedBox(
@@ -470,15 +406,9 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(24),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x120F172A),
-                    blurRadius: 20,
-                    offset: Offset(0, 10),
-                  ),
-                ],
+                border: Border.all(color: AppColors.border),
               ),
               child: Wrap(
                 spacing: 16,
@@ -499,22 +429,30 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
                   ),
                   OutlinedButton.icon(
                     onPressed: _isImporting ? null : _pickFiles,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.textMuted,
+                      minimumSize: const Size(0, 52),
+                      side: const BorderSide(color: AppColors.border),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
                     icon: const Icon(Icons.restart_alt),
                     label: const Text('Choose Again'),
                   ),
-                  ElevatedButton.icon(
+                  FilledButton.icon(
                     onPressed: _isImporting || _importableCount == 0
                         ? null
                         : _importAll,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF6B6B),
-                      foregroundColor: Colors.white,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primaryStrong,
+                      foregroundColor: AppColors.surface,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
                         vertical: 16,
                       ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                     icon: _isImporting
@@ -524,7 +462,7 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
+                                AppColors.surface,
                               ),
                             ),
                           )
@@ -540,6 +478,14 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
                   if (_summary != null && _summary!.importedCount > 0)
                     OutlinedButton.icon(
                       onPressed: _isImporting ? null : () => context.pop(),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textMuted,
+                        minimumSize: const Size(0, 52),
+                        side: const BorderSide(color: AppColors.border),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
                       icon: const Icon(Icons.library_music_outlined),
                       label: const Text('Back to Library'),
                     ),
@@ -571,6 +517,204 @@ class _BulkImportScreenState extends ConsumerState<BulkImportScreen> {
   }
 }
 
+class _ImportHeader extends StatelessWidget {
+  const _ImportHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final buttonSize = AppResponsive.buttonSize(
+      context,
+    ).clamp(48.0, 64.0).toDouble();
+
+    return Row(
+      children: [
+        IconButton(
+          tooltip: 'Back to library',
+          constraints: BoxConstraints.tightFor(
+            width: buttonSize,
+            height: buttonSize,
+          ),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: AppResponsive.iconSize(context, 24),
+            color: AppColors.textMuted,
+          ),
+          onPressed: () => context.pop(),
+        ),
+        SizedBox(width: AppResponsive.spacing(context, 8)),
+        Expanded(
+          child: Text(
+            'Import media',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.displayLarge.copyWith(
+              fontSize: AppResponsive.fontSize(context, 32),
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BulkImportEmptyState extends StatelessWidget {
+  final bool isPickingFiles;
+  final VoidCallback onPickFiles;
+  final VoidCallback onAddOne;
+
+  const _BulkImportEmptyState({
+    required this.isPickingFiles,
+    required this.onPickFiles,
+    required this.onAddOne,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final isWide =
+        media.size.width >= 720 && media.orientation == Orientation.landscape;
+
+    final intro = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 72,
+          height: 72,
+          decoration: BoxDecoration(
+            color: AppColors.logoSurface,
+            borderRadius: BorderRadius.circular(22),
+          ),
+          child: const Icon(
+            Icons.folder_copy_outlined,
+            size: 34,
+            color: AppColors.textDark,
+          ),
+        ),
+        const SizedBox(height: 22),
+        Text(
+          'Add several cards at once',
+          style: AppTypography.displayLarge.copyWith(
+            fontSize: AppResponsive.fontSize(context, isWide ? 34 : 30),
+            height: 1.12,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Choose audio and video files, review their titles, then import everything together.',
+          style: AppTypography.bodySmall.copyWith(
+            fontSize: AppResponsive.fontSize(
+              context,
+              17,
+            ).clamp(14.0, 21.0).toDouble(),
+            height: 1.45,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+
+    final nextSteps = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: const Column(
+            children: [
+              _ChecklistRow(
+                icon: Icons.check_circle_outline,
+                text: 'Choose audio and video files',
+              ),
+              SizedBox(height: 14),
+              _ChecklistRow(
+                icon: Icons.check_circle_outline,
+                text: 'Review each card title',
+              ),
+              SizedBox(height: 14),
+              _ChecklistRow(
+                icon: Icons.check_circle_outline,
+                text: 'Optionally add one shared category',
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        FilledButton.icon(
+          onPressed: isPickingFiles ? null : onPickFiles,
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.primaryStrong,
+            foregroundColor: AppColors.surface,
+            disabledBackgroundColor: AppColors.textDisabled,
+            minimumSize: const Size.fromHeight(56),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+          ),
+          icon: isPickingFiles
+              ? const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.surface,
+                  ),
+                )
+              : const Icon(Icons.folder_open_outlined),
+          label: Text(isPickingFiles ? 'Choosing files...' : 'Choose files'),
+        ),
+        const SizedBox(height: 8),
+        TextButton.icon(
+          onPressed: onAddOne,
+          style: TextButton.styleFrom(
+            foregroundColor: AppColors.textMuted,
+            minimumSize: const Size.fromHeight(48),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          icon: const Icon(Icons.add_rounded),
+          label: const Text('Add one card instead'),
+        ),
+      ],
+    );
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.only(
+        top: isWide ? 24 : (media.size.height * 0.05).clamp(16.0, 52.0),
+        bottom: 24,
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 920),
+          child: isWide
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(child: intro),
+                    const SizedBox(width: 56),
+                    Expanded(child: nextSteps),
+                  ],
+                )
+              : ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 560),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [intro, const SizedBox(height: 28), nextSteps],
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ChecklistRow extends StatelessWidget {
   final IconData icon;
   final String text;
@@ -582,7 +726,7 @@ class _ChecklistRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: const Color(0xFF22C55E), size: 22),
+        Icon(icon, color: AppColors.primaryStrong, size: 22),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
@@ -590,7 +734,7 @@ class _ChecklistRow extends StatelessWidget {
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF374151),
+              color: AppColors.textMuted,
             ),
           ),
         ),
@@ -604,6 +748,9 @@ enum _BulkImportStatus { ready, invalid, importing, imported, failed }
 class _BulkImportDraft {
   final String? sourcePath;
   final String fileName;
+  final CardMediaType? mediaType;
+  final Duration? duration;
+  final bool isStagedCopy;
   final TextEditingController titleController;
   _BulkImportStatus status;
   String? errorMessage;
@@ -611,6 +758,9 @@ class _BulkImportDraft {
   _BulkImportDraft({
     required this.sourcePath,
     required this.fileName,
+    required this.mediaType,
+    this.duration,
+    this.isStagedCopy = false,
     required this.titleController,
     required this.status,
     this.errorMessage,
@@ -623,6 +773,7 @@ class _BulkImportDraft {
     return _BulkImportDraft(
       sourcePath: null,
       fileName: fileName,
+      mediaType: null,
       titleController: TextEditingController(text: 'New Card'),
       status: _BulkImportStatus.invalid,
       errorMessage: errorMessage,
@@ -672,9 +823,9 @@ class _CategoryDropdown extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB), width: 2),
+        border: Border.all(color: AppColors.border),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String?>(
@@ -732,8 +883,8 @@ class _ImportSummaryBanner extends StatelessWidget {
           Expanded(
             child: Text(
               hasFailures
-                  ? 'Imported ${summary.importedCount} stories. ${summary.failedCount} still need attention.'
-                  : 'Imported ${summary.importedCount} stories successfully.',
+                  ? 'Imported ${summary.importedCount} cards. ${summary.failedCount} still need attention.'
+                  : 'Imported ${summary.importedCount} cards successfully.',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
@@ -788,21 +939,25 @@ class _BulkImportRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(22),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x120F172A),
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
+              Icon(
+                draft.mediaType == CardMediaType.video
+                    ? Icons.video_file_outlined
+                    : Icons.audio_file_outlined,
+                color: AppColors.textSecondary,
+                semanticLabel: draft.mediaType == CardMediaType.video
+                    ? 'Video file'
+                    : 'Audio file',
+              ),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   draft.fileName,
@@ -811,7 +966,7 @@ class _BulkImportRow extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF111827),
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),
@@ -843,26 +998,22 @@ class _BulkImportRow extends StatelessWidget {
             decoration: InputDecoration(
               labelText: 'Card title',
               filled: true,
-              fillColor: enabled ? Colors.white : const Color(0xFFF9FAFB),
+              fillColor: enabled
+                  ? AppColors.surface
+                  : AppColors.backgroundMuted,
               contentPadding: const EdgeInsets.all(16),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(
-                  color: Color(0xFFE5E7EB),
-                  width: 2,
-                ),
+                borderSide: const BorderSide(color: AppColors.border),
               ),
               disabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(
-                  color: Color(0xFFE5E7EB),
-                  width: 2,
-                ),
+                borderSide: const BorderSide(color: AppColors.border),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: const BorderSide(
-                  color: Color(0xFF3B82F6),
+                  color: AppColors.primaryStrong,
                   width: 2,
                 ),
               ),

@@ -49,9 +49,7 @@ class _ParentCategoryEditScreenState
     final notifier = ref.read(categoriesProvider.notifier);
 
     if (widget.category != null) {
-      await notifier.updateCategory(
-        widget.category!.copyWith(name: name),
-      );
+      await notifier.updateCategory(widget.category!.copyWith(name: name));
     } else {
       final existing = ref.read(categoriesProvider).value ?? [];
       final maxPos = existing.isEmpty
@@ -144,10 +142,7 @@ class _ParentCategoryEditScreenState
               // Name field
               const Text(
                 'Category Name',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -306,6 +301,7 @@ class _ParentCategoryEditScreenState
       spriteKey: card.spriteKey,
       customImagePath: card.customImagePath,
       audioPath: card.audioPath,
+      mediaType: card.mediaType,
       playbackPosition: card.playbackPosition,
       position: card.position,
       createdAt: card.createdAt,

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shiru/models/audio_card.dart';
 import 'package:shiru/services/export_service.dart';
 
 void main() {
@@ -38,10 +39,61 @@ void main() {
       );
     });
 
-    test('falls back to "audio" for a title that becomes empty after sanitization', () {
+    test(
+      'falls back to "audio" for a title that becomes empty after sanitization',
+      () {
+        expect(ExportService.sanitizeTitle('///'), equals('audio'));
+      },
+    );
+
+    test('supports a video-specific fallback filename', () {
       expect(
-        ExportService.sanitizeTitle('///'),
-        equals('audio'),
+        ExportService.sanitizeTitle('///', fallback: 'video'),
+        equals('video'),
+      );
+    });
+  });
+
+  group('ExportService.mimeTypeForCard', () {
+    AudioCard card(String mediaPath, CardMediaType mediaType) {
+      return AudioCard(
+        id: 'card-1',
+        title: 'Card',
+        color: '#FFFFFF',
+        audioPath: mediaPath,
+        mediaType: mediaType,
+        position: 0,
+        createdAt: 0,
+      );
+    }
+
+    test('returns exact video MIME types', () {
+      expect(
+        ExportService.mimeTypeForCard(
+          card('/library/movie.mp4', CardMediaType.video),
+        ),
+        'video/mp4',
+      );
+      expect(
+        ExportService.mimeTypeForCard(
+          card('/library/movie.mov', CardMediaType.video),
+        ),
+        'video/quicktime',
+      );
+      expect(
+        ExportService.mimeTypeForCard(
+          card('/library/movie.m4v', CardMediaType.video),
+        ),
+        'video/x-m4v',
+      );
+    });
+
+    test('falls back according to the card media type', () {
+      expect(
+        ExportService.mimeTypeForCard(
+          card('/library/movie.bin', CardMediaType.video),
+        ),
+        'video/*',
       );
     });
   });

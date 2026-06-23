@@ -1,3 +1,5 @@
+enum CardMediaType { audio, video }
+
 class AudioCard {
   final String id;
   final String? collectionId;
@@ -6,6 +8,7 @@ class AudioCard {
   final String? spriteKey;
   final String? customImagePath;
   final String audioPath;
+  final CardMediaType mediaType;
   final int playbackPosition;
   final int position;
   final int createdAt;
@@ -18,6 +21,7 @@ class AudioCard {
     this.spriteKey,
     this.customImagePath,
     required this.audioPath,
+    this.mediaType = CardMediaType.audio,
     this.playbackPosition = 0,
     required this.position,
     required this.createdAt,
@@ -32,6 +36,10 @@ class AudioCard {
       spriteKey: map['sprite_key'],
       customImagePath: map['custom_image_path'],
       audioPath: map['audio_path'],
+      mediaType: CardMediaType.values.firstWhere(
+        (type) => type.name == map['media_type'],
+        orElse: () => CardMediaType.audio,
+      ),
       playbackPosition: map['playback_position'] ?? 0,
       position: map['position'] ?? 0,
       createdAt: map['created_at'],
@@ -47,11 +55,16 @@ class AudioCard {
       'sprite_key': spriteKey,
       'custom_image_path': customImagePath,
       'audio_path': audioPath,
+      'media_type': mediaType.name,
       'playback_position': playbackPosition,
       'position': position,
       'created_at': createdAt,
     };
   }
+
+  /// Neutral alias for [audioPath] while the persisted column remains
+  /// `audio_path` for backwards compatibility.
+  String get mediaPath => audioPath;
 
   AudioCard copyWith({
     String? collectionId,
@@ -61,6 +74,7 @@ class AudioCard {
     String? spriteKey,
     String? customImagePath,
     String? audioPath,
+    CardMediaType? mediaType,
     int? playbackPosition,
     int? position,
   }) {
@@ -74,6 +88,7 @@ class AudioCard {
       spriteKey: spriteKey ?? this.spriteKey,
       customImagePath: customImagePath ?? this.customImagePath,
       audioPath: audioPath ?? this.audioPath,
+      mediaType: mediaType ?? this.mediaType,
       playbackPosition: playbackPosition ?? this.playbackPosition,
       position: position ?? this.position,
       createdAt: createdAt,

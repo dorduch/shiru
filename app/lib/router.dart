@@ -16,6 +16,7 @@ import 'ui/change_pin_screen.dart';
 import 'ui/bulk_import_screen.dart';
 import 'ui/about_screen.dart';
 import 'ui/parent_generate_story_screen.dart';
+import 'ui/video_playback_screen.dart';
 
 OnEnterResult _handleParentAreaTransition(
   WidgetRef ref,
@@ -49,6 +50,11 @@ GoRouter createRouter(WidgetRef ref) {
         _handleParentAreaTransition(ref, currentState, nextState),
     routes: [
       GoRoute(path: '/', builder: (context, state) => const KidHomeScreen()),
+      GoRoute(
+        path: '/video/:cardId',
+        builder: (context, state) =>
+            VideoCardPlaybackScreen(cardId: state.pathParameters['cardId']!),
+      ),
       GoRoute(
         path: '/parent-access',
         builder: (context, state) => ParentAccessScreen(
@@ -94,6 +100,26 @@ GoRouter createRouter(WidgetRef ref) {
           GoRoute(
             path: 'generate-story',
             builder: (context, state) => const ParentGenerateStoryScreen(),
+          ),
+          GoRoute(
+            path: 'video/:cardId',
+            builder: (context, state) => VideoCardPlaybackScreen(
+              cardId: state.pathParameters['cardId']!,
+            ),
+          ),
+          GoRoute(
+            path: 'video-preview',
+            builder: (context, state) {
+              final request = state.extra as VideoPlaybackRequest?;
+              return VideoPlaybackScreen(
+                request:
+                    request ??
+                    const VideoPlaybackRequest(
+                      path: '',
+                      title: 'Video preview',
+                    ),
+              );
+            },
           ),
           GoRoute(
             path: 'categories',

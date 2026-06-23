@@ -305,6 +305,9 @@ class _KidHomeScreenState extends ConsumerState<KidHomeScreen> {
     final cardsAsync = ref.read(cardsProvider);
     final card = cardsAsync.value?.firstWhere((c) => c.id == playingId);
     if (card == null) return const SizedBox.shrink();
+    if (card.mediaType == CardMediaType.video) {
+      return const SizedBox.shrink();
+    }
 
     final isPortrait = AppResponsive.isPortrait(context);
     final spriteScale = AppResponsive.spriteScale(context) * 0.6;
@@ -595,8 +598,12 @@ class _AudioCardTileState extends ConsumerState<AudioCardTile>
     final titleLineHeight = isCompactPortrait ? 1.15 : 1.0;
     final titleMaxLines = isCompactPortrait ? 2 : 1;
 
+    final isVideo = widget.card.mediaType == CardMediaType.video;
+
     return Semantics(
-      label: '${widget.card.title}, tap to play',
+      label: isVideo
+          ? '${widget.card.title}, video, tap to watch'
+          : '${widget.card.title}, audio, tap to play',
       button: true,
       enabled: !widget.isAnotherPlaying,
       child: AnimatedOpacity(
@@ -615,7 +622,11 @@ class _AudioCardTileState extends ConsumerState<AudioCardTile>
           },
           onTap: () {
             HapticFeedback.mediumImpact();
-            ref.read(audioServiceProvider).playCard(widget.card);
+            if (isVideo) {
+              context.push('/video/${Uri.encodeComponent(widget.card.id)}');
+            } else {
+              ref.read(audioServiceProvider).playCard(widget.card);
+            }
           },
           child: AnimatedScale(
             scale: scale,
@@ -662,23 +673,34 @@ class _AudioCardTileState extends ConsumerState<AudioCardTile>
                 child: Column(
                   children: [
                     Expanded(
-                      child: Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: hexOrFallback(widget.card.color),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        alignment: Alignment.center,
-                        child: FittedBox(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: PixelSprite(
-                              sprite: spriteDef,
-                              state: state,
-                              scale: AppResponsive.spriteScale(context),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: hexOrFallback(widget.card.color),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            alignment: Alignment.center,
+                            child: FittedBox(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: PixelSprite(
+                                  sprite: spriteDef,
+                                  state: state,
+                                  scale: AppResponsive.spriteScale(context),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                          if (isVideo)
+                            const PositionedDirectional(
+                              top: 8,
+                              end: 8,
+                              child: ExcludeSemantics(child: _VideoBadge()),
+                            ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -711,6 +733,37 @@ class _AudioCardTileState extends ConsumerState<AudioCardTile>
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _VideoBadge extends StatelessWidget {
+  const _VideoBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xE6111827),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.videocam_rounded, size: 15, color: Color(0xFFF8FAFC)),
+          SizedBox(width: 4),
+          Text(
+            'VIDEO',
+            style: TextStyle(
+              color: Color(0xFFF8FAFC),
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.4,
+            ),
+          ),
+        ],
       ),
     );
   }
