@@ -1,4 +1,4 @@
-# Shiru Flutter app
+# Storytime Flutter app
 
 Run commands from this directory:
 
@@ -9,6 +9,6 @@ flutter analyze
 flutter test
 ```
 
-Supported video imports are MP4, MOV, and M4V, limited to 15 minutes and 1 GB.
-Native codec support varies by device, so release verification must include the
-physical-device matrix in `RELEASE.md`.
+The app keeps child profiles, story audio, favorites, and playback position in
+encrypted local storage. It sends only allowlisted story choices and an age
+band to authenticated Firebase Functions.

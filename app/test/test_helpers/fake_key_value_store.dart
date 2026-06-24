@@ -16,5 +16,10 @@ class FakeKeyValueStore implements KeyValueStore {
     _values[key] = value;
   }
 
+  @override
+  Future<void> delete({required String key}) async {
+    _values.remove(key);
+  }
+
   String? operator [](String key) => _values[key];
 }

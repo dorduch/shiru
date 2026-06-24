@@ -1,0 +1,20 @@
+{
+  "name": "storytime-functions",
+  "private": true,
+  "main": "lib/index.js",
+  "engines": {"node": "22"},
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run src",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.0",
+    "firebase-functions": "^6.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

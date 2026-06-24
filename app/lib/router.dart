@@ -3,20 +3,11 @@ import 'package:go_router/go_router.dart';
 import 'services/analytics_service.dart';
 import 'logic/parent_flow_logic.dart';
 import 'providers/auth_provider.dart';
-import 'ui/kid_home_screen.dart';
 import 'ui/age_gate_screen.dart';
 import 'ui/pin_gate_screen.dart';
 import 'ui/parent_access_screen.dart';
-import 'ui/parent_list_screen.dart';
-import 'ui/parent_edit_screen.dart';
-import 'ui/parent_categories_screen.dart';
-import 'ui/parent_category_edit_screen.dart';
-import 'models/category.dart';
 import 'ui/change_pin_screen.dart';
-import 'ui/bulk_import_screen.dart';
-import 'ui/about_screen.dart';
-import 'ui/parent_generate_story_screen.dart';
-import 'ui/video_playback_screen.dart';
+import 'ui/storytime_screens.dart';
 
 OnEnterResult _handleParentAreaTransition(
   WidgetRef ref,
@@ -49,11 +40,56 @@ GoRouter createRouter(WidgetRef ref) {
     onEnter: (context, currentState, nextState, router) =>
         _handleParentAreaTransition(ref, currentState, nextState),
     routes: [
-      GoRoute(path: '/', builder: (context, state) => const KidHomeScreen()),
       GoRoute(
-        path: '/video/:cardId',
+        path: '/',
+        builder: (context, state) => const StorytimeLaunchScreen(),
+      ),
+      GoRoute(
+        path: '/welcome',
+        builder: (context, state) => const StorytimeWelcomeScreen(),
+      ),
+      GoRoute(
+        path: '/auth',
+        builder: (context, state) => StorytimeAuthScreen(
+          createMode: state.uri.queryParameters['mode'] != 'signin',
+        ),
+      ),
+      GoRoute(
+        path: '/child-setup',
+        builder: (context, state) => const ChildSetupScreen(),
+      ),
+      GoRoute(
+        path: '/home',
+        builder: (context, state) => const StorytimeHomeScreen(),
+      ),
+      GoRoute(
+        path: '/make/:step',
         builder: (context, state) =>
-            VideoCardPlaybackScreen(cardId: state.pathParameters['cardId']!),
+            StoryWizardScreen(step: state.pathParameters['step']!),
+      ),
+      GoRoute(
+        path: '/review',
+        builder: (context, state) => const StoryReviewScreen(),
+      ),
+      GoRoute(
+        path: '/generate',
+        builder: (context, state) => StoryGeneratingScreen(
+          existingJobId: state.uri.queryParameters['jobId'],
+        ),
+      ),
+      GoRoute(
+        path: '/listen',
+        builder: (context, state) => const StoryLibraryScreen(),
+      ),
+      GoRoute(
+        path: '/story/:cardId/end',
+        builder: (context, state) =>
+            StoryEndScreen(cardId: state.pathParameters['cardId']!),
+      ),
+      GoRoute(
+        path: '/story/:cardId',
+        builder: (context, state) =>
+            StoryPlayerScreen(cardId: state.pathParameters['cardId']!),
       ),
       GoRoute(
         path: '/parent-access',
@@ -76,63 +112,33 @@ GoRouter createRouter(WidgetRef ref) {
       GoRoute(
         path: '/parent',
         redirect: (context, state) => _protectAdultRoute(ref, state),
-        builder: (context, state) => const ParentListScreen(),
+        builder: (context, state) => const StorytimeParentDashboard(),
         routes: [
           GoRoute(
-            path: 'edit',
-            builder: (context, state) {
-              final cardId = state.extra as String?;
-              return ParentEditScreen(cardId: cardId);
-            },
+            path: 'child',
+            builder: (context, state) =>
+                const ChildSetupScreen(returnLocation: '/parent'),
+          ),
+          GoRoute(
+            path: 'stories',
+            builder: (context, state) =>
+                const StoryLibraryScreen(parentMode: true),
+          ),
+          GoRoute(
+            path: 'account',
+            builder: (context, state) => const StorytimeAccountScreen(),
+          ),
+          GoRoute(
+            path: 'privacy',
+            builder: (context, state) => const StorytimePrivacyScreen(),
+          ),
+          GoRoute(
+            path: 'family-voices',
+            builder: (context, state) => const FamilyVoicesTeaserScreen(),
           ),
           GoRoute(
             path: 'change-pin',
             builder: (context, state) => const ChangePinScreen(),
-          ),
-          GoRoute(
-            path: 'bulk-import',
-            builder: (context, state) => const BulkImportScreen(),
-          ),
-          GoRoute(
-            path: 'about',
-            builder: (context, state) => const AboutScreen(),
-          ),
-          GoRoute(
-            path: 'generate-story',
-            builder: (context, state) => const ParentGenerateStoryScreen(),
-          ),
-          GoRoute(
-            path: 'video/:cardId',
-            builder: (context, state) => VideoCardPlaybackScreen(
-              cardId: state.pathParameters['cardId']!,
-            ),
-          ),
-          GoRoute(
-            path: 'video-preview',
-            builder: (context, state) {
-              final request = state.extra as VideoPlaybackRequest?;
-              return VideoPlaybackScreen(
-                request:
-                    request ??
-                    const VideoPlaybackRequest(
-                      path: '',
-                      title: 'Video preview',
-                    ),
-              );
-            },
-          ),
-          GoRoute(
-            path: 'categories',
-            builder: (context, state) => const ParentCategoriesScreen(),
-            routes: [
-              GoRoute(
-                path: 'edit',
-                builder: (context, state) {
-                  final category = state.extra as Category?;
-                  return ParentCategoryEditScreen(category: category);
-                },
-              ),
-            ],
           ),
         ],
       ),

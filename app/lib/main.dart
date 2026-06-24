@@ -1,11 +1,12 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'firebase_options.dart';
 import 'logic/auth_lifecycle_logic.dart';
@@ -16,14 +17,27 @@ import 'providers/categories_provider.dart';
 import 'router.dart';
 import 'screenshot_mode.dart';
 import 'services/screenshot_seed_service.dart';
-import 'theme/app_colors.dart';
+import 'services/storytime_migration_service.dart';
+import 'services/diagnostics_preferences_service.dart';
+import 'theme/storytime_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: 'assets/.env');
-
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await AnalyticsService.instance.ensureConsent();
+  await FirebaseAppCheck.instance.activate(
+    providerAndroid: kDebugMode
+        ? const AndroidDebugProvider()
+        : const AndroidPlayIntegrityProvider(),
+    providerApple: kDebugMode
+        ? const AppleDebugProvider()
+        : const AppleAppAttestWithDeviceCheckFallbackProvider(),
+  );
+  await StorytimeMigrationService().runIfNeeded();
+  final diagnosticsEnabled = await DiagnosticsPreferencesService().isEnabled();
+  await AnalyticsService.instance.ensureConsent(enabled: diagnosticsEnabled);
+  await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
+    diagnosticsEnabled,
+  );
   FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
   PlatformDispatcher.instance.onError = (error, stack) {
     FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
@@ -117,7 +131,7 @@ class _ShiruAppState extends ConsumerState<ShiruApp>
     return Directionality(
       textDirection: TextDirection.ltr,
       child: MaterialApp.router(
-        title: 'Shiru',
+        title: 'Storytime',
         locale: const Locale('en'),
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
@@ -125,10 +139,7 @@ class _ShiruAppState extends ConsumerState<ShiruApp>
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [Locale('en', '')],
-        theme: ThemeData(
-          scaffoldBackgroundColor: AppColors.background,
-          fontFamily: 'sans-serif',
-        ),
+        theme: storytimeTheme(),
         routerConfig: _router,
       ),
     );

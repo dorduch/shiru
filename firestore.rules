@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function owns(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    match /users/{uid}/storyJobs/{jobId} {
+      allow read: if owns(uid);
+      allow write: if false;
+    }
+
+    match /users/{uid}/generationUsage/{day} {
+      allow read: if owns(uid);
+      allow write: if false;
+    }
+
+    match /familyVoiceWaitlist/{uid} {
+      allow read, write: if false;
+    }
+
+    match /storytimeConfig/{document} {
+      allow read, write: if false;
+    }
+  }
+}

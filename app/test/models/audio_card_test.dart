@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiru/models/audio_card.dart';
+import 'package:shiru/models/storytime_models.dart';
 
 void main() {
   AudioCard buildCard({CardMediaType mediaType = CardMediaType.audio}) {
@@ -34,5 +35,25 @@ void main() {
 
     expect(video.mediaType, CardMediaType.video);
     expect(video.copyWith().mediaType, CardMediaType.video);
+  });
+
+  test('Storytime metadata round trips through persistence map', () {
+    final card = buildCard().copyWith(
+      storyOrigin: StoryOrigin.curated,
+      narratorKey: NarratorKey.fairyFern,
+      isFavorite: true,
+      durationMs: 120000,
+      lastPlayedAt: 456,
+      playbackPosition: 30000,
+    );
+
+    final restored = AudioCard.fromMap(card.toMap());
+
+    expect(restored.storyOrigin, StoryOrigin.curated);
+    expect(restored.narratorKey, NarratorKey.fairyFern);
+    expect(restored.isFavorite, isTrue);
+    expect(restored.durationMs, 120000);
+    expect(restored.lastPlayedAt, 456);
+    expect(restored.playbackPosition, 30000);
   });
 }

@@ -1,28 +1,14 @@
-# Shiru
+# Storytime
 
-Shiru is a local-first Flutter audio and video player for kids. Parents create
-visual cards from media already on the device or record new audio and video;
-children tap a card to listen or watch in a focused player.
+Storytime is a Flutter app for children ages 3–10. A parent creates an account
+and one local child profile; the child chooses a character, scene, theme, plot,
+and narrator to make a safe audio story. Stories are downloaded into an
+encrypted on-device library for independent listening and resume.
 
-The application is implemented in `app/`. It uses Riverpod for state,
-`just_audio` and `video_player` for playback, encrypted SQLite persistence, and
-a custom `PixelSprite` renderer for animated pixel art.
-
-## Supported media
-
-- Audio: MP3, M4A, WAV, and AAC, up to 200 MB per file.
-- Video: MP4, MOV, and M4V, up to 15 minutes and 1 GB per file.
-- Video codecs still depend on native Android/iOS playback support. Shiru
-  validates a video with the platform player before copying it into the local
-  library.
-- Media and card metadata stay in app-private local storage. There is no Shiru
-  account, backend, cloud library, transcoding, or compression.
-
-Video selection and recording use the operating system's gallery and camera
-flows. iOS displays camera, photo-library, and microphone permission prompts as
-needed. Android uses system intents for gallery/camera access and does not add
-storage or camera permissions; audio recording still requests microphone
-access.
+The Flutter app lives in `app/`. Firebase Auth handles parent accounts, while
+the TypeScript project in `functions/` performs generation, safety review,
+narration, quota enforcement, and temporary audio cleanup. Anthropic and
+ElevenLabs credentials exist only in Firebase Secret Manager.
 
 ## Development
 
@@ -32,7 +18,13 @@ flutter pub get
 flutter run
 flutter analyze
 flutter test
+
+cd ../functions
+npm install
+npm run build
+npm test
 ```
 
-See `app/RELEASE.md` for release builds and the physical-device verification
-matrix.
+See `docs/STORYTIME_FIREBASE_SETUP.md` before testing authentication or cloud
+generation. The Firebase providers, App Check registrations, Functions
+secrets, and production narrator voice IDs are console-owned prerequisites.

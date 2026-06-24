@@ -1,5 +1,8 @@
 # AI-Generated Stories Implementation Plan
 
+> Superseded by the Storytime MVP. Do not bundle `.env` files or provider
+> credentials in Flutter assets; generation now runs in Firebase Functions.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add a parent-facing "Generate Story" wizard that uses Claude to write a children's story and ElevenLabs to convert it to audio, then saves it as a playable card in the library.

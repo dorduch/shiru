@@ -1,5 +1,8 @@
 # AI-Generated Stories — Design Spec
 
+> Superseded by the Storytime MVP. Do not bundle `.env` files or provider
+> credentials in Flutter assets; generation now runs in Firebase Functions.
+
 **Date:** 2026-04-21  
 **Status:** Approved
 

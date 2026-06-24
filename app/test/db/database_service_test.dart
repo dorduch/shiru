@@ -11,7 +11,7 @@ void main() {
       (sql) async => executedStatements.add(sql),
     );
 
-    expect(DatabaseService.schemaVersion, 8);
+    expect(DatabaseService.schemaVersion, 9);
     expect(executedStatements, [DatabaseService.addMediaTypeMigration]);
     expect(executedStatements.single, contains("DEFAULT 'audio'"));
   });
@@ -28,7 +28,7 @@ void main() {
   });
 
   group('default category migration', () {
-    test('fresh databases receive Stories and Songs in order', () {
+    test('fresh databases receive only the Storytime Stories category', () {
       final defaults = DatabaseService.missingDefaultCategories(const []);
 
       expect(
@@ -37,7 +37,7 @@ void main() {
               (category) => (category.name, category.emoji, category.position),
             )
             .toList(),
-        [('Stories', '📖', 0), ('Songs', '🎵', 1)],
+        [('Stories', '📖', 0)],
       );
     });
 
@@ -53,8 +53,8 @@ void main() {
 
         final defaults = DatabaseService.missingDefaultCategories([existing]);
 
-        expect(defaults.map((category) => category.name), ['Stories', 'Songs']);
-        expect(defaults.map((category) => category.position), [5, 6]);
+        expect(defaults.map((category) => category.name), ['Stories']);
+        expect(defaults.map((category) => category.position), [5]);
       },
     );
 
@@ -74,7 +74,7 @@ void main() {
         ...firstPass,
       ]);
 
-      expect(firstPass.map((category) => category.name), ['Songs']);
+      expect(firstPass, isEmpty);
       expect(secondPass, isEmpty);
     });
 
@@ -85,6 +85,26 @@ void main() {
       await DatabaseService.applyVersion8Migration(8, () async => seedCount++);
 
       expect(seedCount, 1);
+    });
+
+    test('v8 to v9 migration adds Storytime playback metadata once', () async {
+      final statements = <String>[];
+
+      await DatabaseService.applyVersion9Migration(
+        8,
+        (sql) async => statements.add(sql),
+      );
+
+      expect(statements, DatabaseService.addStoryMetadataMigration);
+      expect(statements.join(' '), contains('is_favorite'));
+      expect(statements.join(' '), contains('last_played_at'));
+
+      statements.clear();
+      await DatabaseService.applyVersion9Migration(
+        9,
+        (sql) async => statements.add(sql),
+      );
+      expect(statements, isEmpty);
     });
   });
 }

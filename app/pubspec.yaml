@@ -1,5 +1,5 @@
 name: shiru
-description: "Shiru – a playful DIY audio player for kids."
+description: "Storytime – magical stories for little listeners."
 publish_to: 'none'
 version: 1.0.1+2
 
@@ -31,10 +31,15 @@ dependencies:
   package_info_plus: ^9.0.0
   wakelock_plus: ^1.5.1
   http: ^1.2.0
-  flutter_dotenv: ^5.2.1
   firebase_core: ^4.6.0
+  firebase_auth: ^6.5.4
+  cloud_firestore: ^6.6.0
+  cloud_functions: ^6.3.3
+  firebase_app_check: ^0.4.5
   firebase_analytics: ^12.2.0
   firebase_crashlytics: ^5.1.0
+  google_sign_in: ^7.2.0
+  flutter_tts: ^4.2.5
 
 dev_dependencies:
   flutter_test:
@@ -47,7 +52,7 @@ flutter:
 
   assets:
     - assets/images/app_icon.png
-    - assets/.env
+    - assets/storytime/
 
 flutter_launcher_icons:
   android: true
