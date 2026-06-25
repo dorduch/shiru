@@ -150,7 +150,7 @@ codex/v2 = main + 1 commit. Audit verdict + recommended path: **keep `main` as b
 - [x] **Audio path breaks across reinstalls** — FIXED. `AppPaths` (`services/app_paths.dart`) caches docs dir (init in `main()`); `AudioCard.fromMap` resolves stored value → current-container absolute, `toMap` relativizes → basename. In-memory paths stay absolute (consumers unchanged); `resolve()` self-heals legacy absolute rows. Verified non-regressive on sim (existing library still plays).
 - ~~Home greets "Hi MMMM!"~~ NOT a bug. `KeyValueStore` = `flutter_secure_storage` (keychain) and Firebase Auth both persist in the iOS keychain, which survives `simctl uninstall`. "MMMM" is leftover test data from a prior child-setup. Launch routing IS correct (null user→/welcome, null child→/child-setup). To actually test onboarding: sign out (parent → account) or wipe keychain. (Code even has a comment re: stale keychain entries across reinstalls — `key_value_store.dart:35`.)
 - Note: yoto.db is ENCRYPTED (sqflite + cipher) — can't inspect with plain `sqlite3`.
-- ⚠️ Onboarding flow (welcome→auth→child-setup) NOT yet exercised live — blocked by persisted test account. Verify with a signed-out state next session.
+- ⚠️ Onboarding RENDERING verified (Auth/Create-account s2 confirmed on design system via throwaway entrypoint — StTextField, ember CTA, Apple/Google ghost buttons, disclaimer). Full INTERACTIVE flow (welcome→auth→child-setup→home, actually creating an account) still not run end-to-end — blocked by persisted keychain test account. To test: sign out (parent→account) or erase sim keychain.
 
 ## Notes / scratch (update freely across sessions)
 - _Decision B requires `story` text on job doc — see Milestone 2 backend tasks + must-fix #1 above._
