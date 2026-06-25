@@ -8,6 +8,7 @@ import 'ui/pin_gate_screen.dart';
 import 'ui/parent_access_screen.dart';
 import 'ui/change_pin_screen.dart';
 import 'ui/storytime_screens.dart';
+import 'ui/widgets/storytime/component_gallery_screen.dart';
 
 OnEnterResult _handleParentAreaTransition(
   WidgetRef ref,
@@ -90,6 +91,11 @@ GoRouter createRouter(WidgetRef ref) {
         path: '/story/:cardId',
         builder: (context, state) =>
             StoryPlayerScreen(cardId: state.pathParameters['cardId']!),
+      ),
+      // dev only — remove before prod
+      GoRoute(
+        path: '/dev/gallery',
+        builder: (c, s) => const ComponentGalleryScreen(),
       ),
       GoRoute(
         path: '/parent-access',

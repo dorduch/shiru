@@ -19,7 +19,7 @@ import 'screenshot_mode.dart';
 import 'services/screenshot_seed_service.dart';
 import 'services/storytime_migration_service.dart';
 import 'services/diagnostics_preferences_service.dart';
-import 'theme/storytime_theme.dart';
+import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,7 +44,7 @@ void main() async {
     return true;
   };
 
-  await SystemChrome.setPreferredOrientations([]);
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   WakelockPlus.enable();
   if (kStoreScreenshotMode) {
@@ -139,7 +139,8 @@ class _ShiruAppState extends ConsumerState<ShiruApp>
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [Locale('en', '')],
-        theme: storytimeTheme(),
+        theme: StorytimeTheme.day,
+        darkTheme: StorytimeTheme.bedtime,
         routerConfig: _router,
       ),
     );

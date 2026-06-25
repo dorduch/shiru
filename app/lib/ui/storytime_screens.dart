@@ -22,7 +22,10 @@ import '../services/library_import_service.dart';
 import '../services/starter_story_service.dart';
 import '../services/story_generation_repository.dart';
 import '../services/analytics_service.dart';
-import '../theme/storytime_theme.dart';
+import '../theme/app_theme.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_typography.dart';
+import 'widgets/storytime/storytime.dart';
 import 'pixel_sprite.dart';
 
 class StorytimeLaunchScreen extends ConsumerWidget {
@@ -31,30 +34,40 @@ class StorytimeLaunchScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authUserProvider);
-    return user.when(
-      loading: () => const _LoadingScaffold(),
-      error: (error, stackTrace) =>
-          _LaunchError(onRetry: () => ref.invalidate(authUserProvider)),
-      data: (authUser) {
-        if (authUser == null) {
-          _goAfterBuild(context, '/welcome');
-          return const _LoadingScaffold();
-        }
-        final profile = ref.watch(childProfileProvider);
-        return profile.when(
-          loading: () => const _LoadingScaffold(),
+    return Theme(
+      data: StorytimeTheme.bedtime,
+      child: Builder(builder: (context) {
+        final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+        Widget content = user.when(
+          loading: () => const _NightLoadingScaffold(),
           error: (error, stackTrace) =>
-              _LaunchError(onRetry: () => ref.invalidate(childProfileProvider)),
-          data: (child) {
-            if (child == null) {
-              _goAfterBuild(context, '/child-setup');
-            } else {
-              _resumeOrGoHome(context, ref, authUser.uid);
+              _LaunchError(onRetry: () => ref.invalidate(authUserProvider)),
+          data: (authUser) {
+            if (authUser == null) {
+              _goAfterBuild(context, '/welcome');
+              return const _NightLoadingScaffold();
             }
-            return const _LoadingScaffold();
+            final profile = ref.watch(childProfileProvider);
+            return profile.when(
+              loading: () => const _NightLoadingScaffold(),
+              error: (error, stackTrace) =>
+                  _LaunchError(onRetry: () => ref.invalidate(childProfileProvider)),
+              data: (child) {
+                if (child == null) {
+                  _goAfterBuild(context, '/child-setup');
+                } else {
+                  _resumeOrGoHome(context, ref, authUser.uid);
+                }
+                return const _NightLoadingScaffold();
+              },
+            );
           },
         );
-      },
+        return Container(
+          color: tokens.night1,
+          child: content,
+        );
+      }),
     );
   }
 
@@ -89,6 +102,21 @@ class _LoadingScaffold extends StatelessWidget {
       const Scaffold(body: Center(child: CircularProgressIndicator()));
 }
 
+class _NightLoadingScaffold extends StatelessWidget {
+  const _NightLoadingScaffold();
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    return Scaffold(
+      backgroundColor: tokens.night1,
+      body: Center(
+        child: CircularProgressIndicator(color: tokens.gold),
+      ),
+    );
+  }
+}
+
 class _LaunchError extends StatelessWidget {
   const _LaunchError({required this.onRetry});
   final VoidCallback onRetry;
@@ -112,87 +140,79 @@ class StorytimeWelcomeScreen extends StatelessWidget {
   const StorytimeWelcomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    body: SafeArea(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 560),
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 148,
-                  height: 148,
-                  decoration: BoxDecoration(
-                    color: StorytimeColors.accentSoft,
-                    borderRadius: BorderRadius.circular(38),
-                  ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      PixelSprite(
-                        sprite: autoAssignSprite('storybook'),
-                        scale: 7,
-                      ),
-                      const Positioned(
-                        right: 20,
-                        top: 16,
-                        child: Text(
-                          '✦',
-                          style: TextStyle(
-                            fontSize: 34,
-                            color: StorytimeColors.accent,
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 148,
+                    height: 148,
+                    decoration: BoxDecoration(
+                      color: tokens.ember.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(38),
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        PixelSprite(
+                          sprite: autoAssignSprite('storybook'),
+                          scale: 7,
+                        ),
+                        Positioned(
+                          right: 20,
+                          top: 16,
+                          child: Text(
+                            '✦',
+                            style: TextStyle(
+                              fontSize: 34,
+                              color: tokens.accentColor,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 28),
-                Text(
-                  'Storytime',
-                  style: Theme.of(context).textTheme.headlineLarge,
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Magical stories for little listeners.',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const SizedBox(height: 36),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () => context.go('/auth?mode=create'),
-                    child: const Text('Get started'),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () => context.go('/auth?mode=signin'),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(64, 56),
+                      ],
                     ),
-                    child: const Text('I already have an account'),
                   ),
-                ),
-                const SizedBox(height: 22),
-                const Text(
-                  'A grown-up creates the account. Child names and listening history stay on this device.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: StorytimeColors.muted, height: 1.4),
-                ),
-              ],
+                  const SizedBox(height: 28),
+                  StSectionHeader(
+                    title: 'Storytime',
+                    sub: 'Magical stories for little listeners.',
+                    centerAlign: true,
+                  ),
+                  const SizedBox(height: 36),
+                  StButton(
+                    label: 'Get started',
+                    fullWidth: true,
+                    onTap: () => context.go('/auth?mode=create'),
+                  ),
+                  const SizedBox(height: 12),
+                  StButton(
+                    label: 'I already have an account',
+                    variant: StButtonVariant.ghost,
+                    fullWidth: true,
+                    onTap: () => context.go('/auth?mode=signin'),
+                  ),
+                  const SizedBox(height: 22),
+                  Text(
+                    'A grown-up creates the account. Child names and listening history stay on this device.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: tokens.ink2, height: 1.4),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class StorytimeAuthScreen extends ConsumerStatefulWidget {
@@ -253,105 +273,111 @@ class _StorytimeAuthScreenState extends ConsumerState<StorytimeAuthScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: Text(widget.createMode ? 'Create account' : 'Sign in'),
-    ),
-    body: SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Grown-ups set up the account. This takes a minute.',
-                ),
-                const SizedBox(height: 24),
-                TextField(
-                  controller: _email,
-                  keyboardType: TextInputType.emailAddress,
-                  autofillHints: const [AutofillHints.email],
-                  decoration: const InputDecoration(labelText: 'Email'),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: _password,
-                  obscureText: true,
-                  autofillHints: const [AutofillHints.password],
-                  decoration: const InputDecoration(labelText: 'Password'),
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 12),
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.createMode ? 'Create account' : 'Sign in'),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Grown-ups set up the account. This takes a minute.',
+                  ),
+                  const SizedBox(height: 24),
+                  StTextField(
+                    controller: _email,
+                    label: 'Email',
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 14),
+                  StTextField(
+                    controller: _password,
+                    label: 'Password',
+                    obscureText: true,
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      _error!,
+                      style: const TextStyle(color: AppColors.destructive),
+                    ),
+                  ],
+                  const SizedBox(height: 18),
+                  StButton(
+                    label: _busy ? 'Please wait…' : 'Continue',
+                    fullWidth: true,
+                    onTap: _busy
+                        ? null
+                        : () => _run(() {
+                            final auth = ref.read(authRepositoryProvider);
+                            return widget.createMode
+                                ? auth.createWithEmail(
+                                    _email.text,
+                                    _password.text,
+                                  )
+                                : auth.signInWithEmail(
+                                    _email.text,
+                                    _password.text,
+                                  );
+                          }),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 18),
+                    child: Row(
+                      children: [
+                        Expanded(child: Divider()),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 12),
+                          child: Text('or'),
+                        ),
+                        Expanded(child: Divider()),
+                      ],
+                    ),
+                  ),
+                  StButton(
+                    label: 'Continue with Apple',
+                    variant: StButtonVariant.ghost,
+                    fullWidth: true,
+                    leading: const Icon(Icons.apple),
+                    onTap: _busy
+                        ? null
+                        : () => _run(
+                            ref.read(authRepositoryProvider).signInWithApple,
+                          ),
+                  ),
+                  const SizedBox(height: 10),
+                  StButton(
+                    label: 'Continue with Google',
+                    variant: StButtonVariant.ghost,
+                    fullWidth: true,
+                    leading: const Icon(Icons.account_circle_outlined),
+                    onTap: _busy
+                        ? null
+                        : () => _run(
+                            ref.read(authRepositoryProvider).signInWithGoogle,
+                          ),
+                  ),
+                  const SizedBox(height: 24),
                   Text(
-                    _error!,
-                    style: const TextStyle(color: StorytimeColors.danger),
+                    "By continuing, the grown-up agrees that Storytime may send story choices and an age band to our generation providers. We never send the child's name.",
+                    style: TextStyle(color: tokens.ink2, height: 1.45),
                   ),
                 ],
-                const SizedBox(height: 18),
-                FilledButton(
-                  onPressed: _busy
-                      ? null
-                      : () => _run(() {
-                          final auth = ref.read(authRepositoryProvider);
-                          return widget.createMode
-                              ? auth.createWithEmail(
-                                  _email.text,
-                                  _password.text,
-                                )
-                              : auth.signInWithEmail(
-                                  _email.text,
-                                  _password.text,
-                                );
-                        }),
-                  child: Text(_busy ? 'Please wait…' : 'Continue'),
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 18),
-                  child: Row(
-                    children: [
-                      Expanded(child: Divider()),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12),
-                        child: Text('or'),
-                      ),
-                      Expanded(child: Divider()),
-                    ],
-                  ),
-                ),
-                OutlinedButton.icon(
-                  onPressed: _busy
-                      ? null
-                      : () => _run(
-                          ref.read(authRepositoryProvider).signInWithApple,
-                        ),
-                  icon: const Icon(Icons.apple),
-                  label: const Text('Continue with Apple'),
-                ),
-                const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  onPressed: _busy
-                      ? null
-                      : () => _run(
-                          ref.read(authRepositoryProvider).signInWithGoogle,
-                        ),
-                  icon: const Icon(Icons.account_circle_outlined),
-                  label: const Text('Continue with Google'),
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'By continuing, the grown-up agrees that Storytime may send story choices and an age band to our generation providers. We never send the child’s name.',
-                  style: TextStyle(color: StorytimeColors.muted, height: 1.45),
-                ),
-              ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class ChildSetupScreen extends ConsumerStatefulWidget {
@@ -442,38 +468,29 @@ class _ChildSetupScreenState extends ConsumerState<ChildSetupScreen> {
                       .toList(),
                 ),
                 const SizedBox(height: 24),
-                TextField(
+                StTextField(
                   controller: _name,
-                  decoration: const InputDecoration(labelText: 'First name'),
+                  label: 'First name',
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  'Age',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 8),
-                SegmentedButton<AgeBand>(
-                  segments: AgeBand.values
-                      .map(
-                        (band) =>
-                            ButtonSegment(value: band, label: Text(band.label)),
-                      )
-                      .toList(),
-                  selected: {_ageBand},
-                  onSelectionChanged: (value) =>
-                      setState(() => _ageBand = value.first),
+                StSegment(
+                  options: AgeBand.values.map((b) => b.label).toList(),
+                  selectedIndex: AgeBand.values.indexOf(_ageBand),
+                  onChanged: (i) =>
+                      setState(() => _ageBand = AgeBand.values[i]),
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 12),
                   Text(
                     _error!,
-                    style: const TextStyle(color: StorytimeColors.danger),
+                    style: const TextStyle(color: AppColors.destructive),
                   ),
                 ],
                 const SizedBox(height: 28),
-                FilledButton(
-                  onPressed: _busy ? null : _save,
-                  child: Text(_busy ? 'Setting up…' : 'Done'),
+                StButton(
+                  label: _busy ? 'Setting up…' : 'Done',
+                  fullWidth: true,
+                  onTap: _busy ? null : _save,
                 ),
               ],
             ),
@@ -495,37 +512,40 @@ class _AvatarChoice extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-    label: label,
-    selected: selected,
-    button: true,
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(22),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        width: 116,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: selected
-              ? StorytimeColors.accentSoft
-              : StorytimeColors.surface,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: selected ? StorytimeColors.accent : StorytimeColors.border,
-            width: 2,
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    return Semantics(
+      label: label,
+      selected: selected,
+      button: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: 116,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: selected
+                ? tokens.ember.withValues(alpha: 0.12)
+                : tokens.paper,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: selected ? tokens.ember : tokens.line,
+              width: 2,
+            ),
+          ),
+          child: Column(
+            children: [
+              PixelSprite(sprite: autoAssignSprite(label), scale: 4.5),
+              const SizedBox(height: 6),
+              Text(label, textAlign: TextAlign.center),
+            ],
           ),
         ),
-        child: Column(
-          children: [
-            PixelSprite(sprite: autoAssignSprite(label), scale: 4.5),
-            const SizedBox(height: 6),
-            Text(label, textAlign: TextAlign.center),
-          ],
-        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class StorytimeHomeScreen extends ConsumerWidget {
@@ -533,6 +553,7 @@ class StorytimeHomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
     final profile = ref.watch(childProfileProvider).valueOrNull;
     final cards = ref.watch(cardsProvider).valueOrNull ?? const <AudioCard>[];
     final resumable =
@@ -540,6 +561,7 @@ class StorytimeHomeScreen extends ConsumerWidget {
           (a, b) => (b.lastPlayedAt ?? 0).compareTo(a.lastPlayedAt ?? 0),
         );
     return Scaffold(
+      backgroundColor: tokens.cream,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -556,9 +578,12 @@ class StorytimeHomeScreen extends ConsumerWidget {
               ),
               Text(
                 'Hi ${profile?.name ?? 'there'}!',
-                style: Theme.of(context).textTheme.headlineMedium,
+                style: AppTypography.headlineMedium.copyWith(color: tokens.ink),
               ),
-              const Text('What should we do today?'),
+              Text(
+                'What should we do today?',
+                style: AppTypography.bodySmall.copyWith(color: tokens.ink2),
+              ),
               if (resumable.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 _ResumeStrip(card: resumable.first),
@@ -568,44 +593,44 @@ class StorytimeHomeScreen extends ConsumerWidget {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final horizontal = constraints.maxWidth > 680;
-                    final children = [
-                      _HomeAction(
-                        color: StorytimeColors.yellow,
-                        title: 'Make a Story',
-                        subtitle: 'Build your own adventure',
-                        spriteLabel: 'magic story book',
-                        onTap: () {
-                          ref.read(storyDraftProvider.notifier).reset();
-                          context.go('/make/character');
-                        },
-                        onSpeak: () => ref
-                            .read(audioLabelServiceProvider)
-                            .speak('Make a Story. Build your own adventure.'),
+                    final makeAction = StTile(
+                      label: 'Make a Story',
+                      sublabel: 'Build your own adventure',
+                      color: const Color(0xFFFFD66B),
+                      big: true,
+                      child: PixelSprite(
+                        sprite: autoAssignSprite('magic story book'),
+                        scale: 6,
                       ),
-                      _HomeAction(
-                        color: StorytimeColors.mint,
-                        title: 'Listen',
-                        subtitle: '${cards.length} stories',
-                        spriteLabel: 'headphones story',
-                        onTap: () => context.go('/listen'),
-                        onSpeak: () => ref
-                            .read(audioLabelServiceProvider)
-                            .speak('Listen to your stories.'),
+                      onTap: () {
+                        ref.read(storyDraftProvider.notifier).reset();
+                        context.go('/make/character');
+                      },
+                    );
+                    final listenAction = StTile(
+                      label: 'Listen',
+                      sublabel: '${cards.length} stories',
+                      color: const Color(0xFF7FD1C4),
+                      big: true,
+                      child: PixelSprite(
+                        sprite: autoAssignSprite('headphones story'),
+                        scale: 6,
                       ),
-                    ];
+                      onTap: () => context.go('/listen'),
+                    );
                     return horizontal
                         ? Row(
                             children: [
-                              Expanded(flex: 2, child: children[0]),
+                              Expanded(flex: 2, child: makeAction),
                               const SizedBox(width: 16),
-                              Expanded(child: children[1]),
+                              Expanded(child: listenAction),
                             ],
                           )
                         : Column(
                             children: [
-                              Expanded(flex: 2, child: children[0]),
+                              Expanded(flex: 2, child: makeAction),
                               const SizedBox(height: 14),
-                              Expanded(child: children[1]),
+                              Expanded(child: listenAction),
                             ],
                           );
                   },
@@ -627,112 +652,17 @@ class _ResumeStrip extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
     button: true,
     label: 'Keep going with ${card.title}',
-    child: InkWell(
+    child: StRow(
+      title: 'Keep going',
+      subtitle: card.title,
+      avatarInitial: '▶',
+      avatarColor: AppColors.ember,
+      trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.ink3, size: 20),
       onTap: () => context.go('/story/${card.id}'),
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: StorytimeColors.accentSoft,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Row(
-          children: [
-            const CircleAvatar(
-              backgroundColor: StorytimeColors.accent,
-              foregroundColor: Colors.white,
-              child: Icon(Icons.play_arrow_rounded),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Keep going',
-                    style: TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                  Text(card.title, overflow: TextOverflow.ellipsis),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right),
-          ],
-        ),
-      ),
     ),
   );
 }
 
-class _HomeAction extends StatelessWidget {
-  const _HomeAction({
-    required this.color,
-    required this.title,
-    required this.subtitle,
-    required this.spriteLabel,
-    required this.onTap,
-    required this.onSpeak,
-  });
-  final Color color;
-  final String title;
-  final String subtitle;
-  final String spriteLabel;
-  final VoidCallback onTap;
-  final VoidCallback onSpeak;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    label: '$title. $subtitle',
-    button: true,
-    child: Material(
-      color: color,
-      borderRadius: BorderRadius.circular(28),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(28),
-        child: Padding(
-          padding: const EdgeInsets.all(22),
-          child: Stack(
-            children: [
-              Align(
-                alignment: Alignment.center,
-                child: PixelSprite(
-                  sprite: autoAssignSprite(spriteLabel),
-                  scale: 6,
-                ),
-              ),
-              Align(
-                alignment: Alignment.bottomLeft,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    Text(subtitle),
-                  ],
-                ),
-              ),
-              Align(
-                alignment: Alignment.topRight,
-                child: IconButton.filledTonal(
-                  onPressed: onSpeak,
-                  tooltip: 'Hear label',
-                  icon: const Icon(Icons.volume_up_rounded),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
-}
 
 class StoryWizardScreen extends ConsumerWidget {
   const StoryWizardScreen({super.key, required this.step});
@@ -740,34 +670,38 @@ class StoryWizardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
     final draft = ref.watch(storyDraftProvider);
     final index = _stepIndex(step);
     final items = _itemsFor(step);
     final selected = _selectedFor(draft, step);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Make a Story'),
-        leading: BackButton(
-          onPressed: () {
-            if (index == 0) {
-              context.go('/home');
-            } else {
-              context.go('/make/${_steps[index - 1]}');
-            }
-          },
-        ),
-      ),
+      backgroundColor: tokens.cream,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 18),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _StepDots(index: index),
+              Row(
+                children: [
+                  BackButton(
+                    onPressed: () {
+                      if (index == 0) {
+                        context.go('/home');
+                      } else {
+                        context.go('/make/${_steps[index - 1]}');
+                      }
+                    },
+                  ),
+                  const Spacer(),
+                ],
+              ),
+              Center(child: StDots(totalSteps: _steps.length, activeStep: index)),
               const SizedBox(height: 16),
-              Text(
-                _questionFor(step),
-                style: Theme.of(context).textTheme.headlineMedium,
+              StSectionHeader(
+                eyebrow: 'Step ${index + 1} of ${_steps.length}',
+                title: _questionFor(step),
               ),
               const SizedBox(height: 14),
               Expanded(
@@ -778,7 +712,7 @@ class StoryWizardScreen extends ConsumerWidget {
                         : 2,
                     mainAxisSpacing: 12,
                     crossAxisSpacing: 12,
-                    childAspectRatio: 1.15,
+                    childAspectRatio: 1.0,
                   ),
                   itemCount: items.length,
                   itemBuilder: (context, itemIndex) {
@@ -794,23 +728,24 @@ class StoryWizardScreen extends ConsumerWidget {
                   },
                 ),
               ),
-              OutlinedButton.icon(
-                onPressed: () {
+              StButton(
+                label: 'Surprise me',
+                variant: StButtonVariant.ghost,
+                leading: const Icon(Icons.casino_outlined),
+                fullWidth: true,
+                onTap: () {
                   final item = items[Random().nextInt(items.length)];
                   _setSelection(ref, step, item.value);
                   ref
                       .read(audioLabelServiceProvider)
                       .speak('Surprise! ${item.label}');
                 },
-                icon: const Icon(Icons.casino_outlined),
-                label: const Text('Surprise me'),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(64, 54),
-                ),
               ),
               const SizedBox(height: 10),
-              FilledButton(
-                onPressed: selected == null
+              StButton(
+                label: 'Continue',
+                fullWidth: true,
+                onTap: selected == null
                     ? null
                     : () {
                         context.go(
@@ -819,7 +754,6 @@ class StoryWizardScreen extends ConsumerWidget {
                               : '/make/${_steps[index + 1]}',
                         );
                       },
-                child: const Text('Continue'),
               ),
             ],
           ),
@@ -890,29 +824,6 @@ class _ChoiceItem {
   final String? subtitle;
 }
 
-class _StepDots extends StatelessWidget {
-  const _StepDots({required this.index});
-  final int index;
-
-  @override
-  Widget build(BuildContext context) => Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: List.generate(
-      5,
-      (dot) => AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        width: dot == index ? 26 : 9,
-        height: 9,
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        decoration: BoxDecoration(
-          color: dot == index ? StorytimeColors.accent : StorytimeColors.border,
-          borderRadius: BorderRadius.circular(99),
-        ),
-      ),
-    ),
-  );
-}
-
 class _WizardChoice extends StatelessWidget {
   const _WizardChoice({
     required this.item,
@@ -930,52 +841,28 @@ class _WizardChoice extends StatelessWidget {
         : '${item.label}, ${item.subtitle}',
     selected: selected,
     button: true,
-    child: Material(
-      color: selected ? StorytimeColors.accentSoft : StorytimeColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22),
-        side: BorderSide(
-          color: selected ? StorytimeColors.accent : StorytimeColors.border,
-          width: 2,
-        ),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              PixelSprite(sprite: autoAssignSprite(item.label), scale: 3.7),
-              const SizedBox(height: 8),
-              Text(
-                item.label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontWeight: FontWeight.w800),
+    child: StChoiceCard(
+      name: item.label,
+      selected: selected,
+      onTap: onTap,
+      thumbnail: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          PixelSprite(sprite: autoAssignSprite(item.label), scale: 3.7),
+          if (item.value is NarratorKey)
+            Consumer(
+              builder: (context, ref, _) => IconButton(
+                tooltip: 'Preview ${item.label}',
+                onPressed: () => ref
+                    .read(narratorPreviewServiceProvider)
+                    .play(item.value as NarratorKey),
+                icon: const Icon(Icons.play_circle_outline),
+                iconSize: 20,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
               ),
-              if (item.subtitle != null)
-                Text(
-                  item.subtitle!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: StorytimeColors.muted,
-                  ),
-                ),
-              if (item.value is NarratorKey)
-                Consumer(
-                  builder: (context, ref, _) => IconButton(
-                    tooltip: 'Preview ${item.label}',
-                    onPressed: () => ref
-                        .read(narratorPreviewServiceProvider)
-                        .play(item.value as NarratorKey),
-                    icon: const Icon(Icons.play_circle_outline),
-                  ),
-                ),
-            ],
-          ),
-        ),
+            ),
+        ],
       ),
     ),
   );
@@ -986,6 +873,7 @@ class StoryReviewScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
     final draft = ref.watch(storyDraftProvider);
     if (!draft.isComplete) {
       _goAfterBuild(context, '/make/character');
@@ -999,18 +887,19 @@ class StoryReviewScreen extends ConsumerWidget {
       ('narrator', draft.narrator!.label, draft.narrator!.emoji),
     ];
     return Scaffold(
-      appBar: AppBar(title: const Text('Ready?')),
+      backgroundColor: tokens.cream,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Your story',
-                style: Theme.of(context).textTheme.headlineMedium,
+              const SizedBox(height: 8),
+              StSectionHeader(
+                eyebrow: 'Ready?',
+                title: 'Your story',
+                sub: 'Tap any choice to change it.',
               ),
-              const Text('Tap any choice to change it.'),
               const SizedBox(height: 18),
               Expanded(
                 child: GridView.builder(
@@ -1023,15 +912,14 @@ class StoryReviewScreen extends ConsumerWidget {
                   itemCount: choices.length,
                   itemBuilder: (context, index) {
                     final choice = choices[index];
-                    return InkWell(
+                    return GestureDetector(
                       onTap: () => context.go('/make/${choice.$1}'),
-                      borderRadius: BorderRadius.circular(20),
                       child: Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: StorytimeColors.accentSoft,
+                          color: tokens.paper,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: StorytimeColors.accent),
+                          border: Border.all(color: tokens.ember, width: 1.5),
                         ),
                         child: Row(
                           children: [
@@ -1043,8 +931,9 @@ class StoryReviewScreen extends ConsumerWidget {
                             Expanded(
                               child: Text(
                                 choice.$2,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
+                                style: AppTypography.titleLarge.copyWith(
+                                  fontSize: 15,
+                                  color: tokens.ink,
                                 ),
                               ),
                             ),
@@ -1055,10 +944,12 @@ class StoryReviewScreen extends ConsumerWidget {
                   },
                 ),
               ),
-              FilledButton.icon(
-                onPressed: () => context.go('/generate'),
-                icon: const Icon(Icons.auto_awesome),
-                label: const Text('Make my story'),
+              const SizedBox(height: 12),
+              StButton(
+                label: 'Make my story',
+                fullWidth: true,
+                leading: const Icon(Icons.auto_awesome),
+                onTap: () => context.go('/generate'),
               ),
             ],
           ),
@@ -1155,7 +1046,7 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
         StoryJobStatus.queued => 'Gathering a little magic…',
         StoryJobStatus.writing => 'Writing your story…',
         StoryJobStatus.checking => 'Making sure it feels just right…',
-        StoryJobStatus.narrating => 'Adding the storyteller’s voice…',
+        StoryJobStatus.narrating => "Adding the storyteller's voice…",
         StoryJobStatus.ready => 'Saving your story…',
         StoryJobStatus.failed => 'The story magic fizzled this time.',
       },
@@ -1216,52 +1107,75 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    body: SafeArea(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
-          child: Padding(
-            padding: const EdgeInsets.all(28),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                PixelSprite(sprite: autoAssignSprite('magic story'), scale: 7),
-                const SizedBox(height: 24),
-                Text(
-                  _status,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineMedium,
+  Widget build(BuildContext context) {
+    return Theme(
+      data: StorytimeTheme.bedtime,
+      child: Builder(
+        builder: (context) {
+          final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+          return Scaffold(
+            body: Container(
+              decoration: BoxDecoration(gradient: tokens.nightGradient),
+              child: SafeArea(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: Padding(
+                      padding: const EdgeInsets.all(28),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          PixelSprite(sprite: autoAssignSprite('magic story'), scale: 7),
+                          const SizedBox(height: 24),
+                          Text(
+                            _status,
+                            textAlign: TextAlign.center,
+                            style: AppTypography.headlineMedium.copyWith(color: tokens.cream),
+                          ),
+                          const SizedBox(height: 20),
+                          if (_error == null)
+                            LinearProgressIndicator(
+                              minHeight: 8,
+                              color: tokens.gold,
+                              backgroundColor: tokens.cream.withValues(alpha: 0.18),
+                            )
+                          else ...[
+                            Text(
+                              _error!,
+                              textAlign: TextAlign.center,
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.destructive,
+                              ),
+                            ),
+                            const SizedBox(height: 18),
+                            StButton(
+                              label: 'Try again',
+                              fullWidth: true,
+                              onTap: () {
+                                setState(() => _error = null);
+                                _start();
+                              },
+                            ),
+                            const SizedBox(height: 8),
+                            StButton(
+                              label: 'Back home',
+                              variant: StButtonVariant.line,
+                              fullWidth: true,
+                              onTap: () => context.go('/home'),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 20),
-                if (_error == null)
-                  const LinearProgressIndicator(minHeight: 8)
-                else ...[
-                  Text(
-                    _error!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: StorytimeColors.danger),
-                  ),
-                  const SizedBox(height: 18),
-                  FilledButton(
-                    onPressed: () {
-                      setState(() => _error = null);
-                      _start();
-                    },
-                    child: const Text('Try again'),
-                  ),
-                  TextButton(
-                    onPressed: () => context.go('/home'),
-                    child: const Text('Back home'),
-                  ),
-                ],
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
-    ),
-  );
+    );
+  }
 }
 
 class StoryLibraryScreen extends ConsumerWidget {
@@ -1270,10 +1184,16 @@ class StoryLibraryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
     final cards = ref.watch(cardsProvider);
     return Scaffold(
+      backgroundColor: tokens.cream,
       appBar: AppBar(
-        title: Text(parentMode ? 'Manage stories' : 'Listen'),
+        backgroundColor: tokens.cream,
+        title: Text(
+          parentMode ? 'Manage stories' : 'Listen',
+          style: AppTypography.headlineSmall.copyWith(color: tokens.ink),
+        ),
         leading: BackButton(
           onPressed: () => context.go(parentMode ? '/parent' : '/home'),
         ),
@@ -1282,28 +1202,24 @@ class StoryLibraryScreen extends ConsumerWidget {
         child: cards.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stackTrace) => Center(
-            child: FilledButton(
-              onPressed: ref.read(cardsProvider.notifier).loadCards,
-              child: const Text('Try again'),
+            child: StButton(
+              label: 'Try again',
+              onTap: ref.read(cardsProvider.notifier).loadCards,
             ),
           ),
           data: (stories) {
             if (stories.isEmpty) {
-              return const Center(
-                child: Text('No stories yet. Make one from Home.'),
+              return Center(
+                child: Text(
+                  'No stories yet. Make one from Home.',
+                  style: AppTypography.bodySmall.copyWith(color: tokens.ink2),
+                ),
               );
             }
-            return GridView.builder(
+            return ListView.separated(
               padding: const EdgeInsets.all(18),
-              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: MediaQuery.sizeOf(context).width > 700
-                    ? 300
-                    : 230,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                childAspectRatio: 0.92,
-              ),
               itemCount: stories.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 10),
               itemBuilder: (context, index) =>
                   _StoryTile(card: stories[index], parentMode: parentMode),
             );
@@ -1319,79 +1235,23 @@ class _StoryTile extends ConsumerWidget {
   final AudioCard card;
   final bool parentMode;
 
-  Color get color => hexOrFallback(card.color);
-
   @override
   Widget build(BuildContext context, WidgetRef ref) => Semantics(
     label:
         '${card.title}, ${card.storyOrigin == StoryOrigin.curated ? 'ready-made story' : 'your story'}',
     button: !parentMode,
-    child: Material(
-      color: color,
-      borderRadius: BorderRadius.circular(24),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(24),
-        onTap: parentMode ? null : () => context.go('/story/${card.id}'),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: Icon(
-                  card.isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: StorytimeColors.ink,
-                ),
-              ),
-              Expanded(
-                child: Center(
-                  child: PixelSprite(
-                    sprite:
-                        predefinedSprites[card.spriteKey] ??
-                        autoAssignSprite(card.title),
-                    scale: 5,
-                  ),
-                ),
-              ),
-              Text(
-                card.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 8),
-              if (parentMode)
-                OutlinedButton.icon(
-                  onPressed: () => _delete(context, ref),
-                  icon: const Icon(Icons.delete_outline),
-                  label: const Text('Delete'),
-                )
-              else
-                Row(
-                  children: [
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed: () => context.go('/story/${card.id}'),
-                        icon: const Icon(Icons.play_arrow),
-                        label: const Text('Play'),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () =>
-                          ref.read(audioLabelServiceProvider).speak(card.title),
-                      tooltip: 'Hear title',
-                      icon: const Icon(Icons.volume_up_outlined),
-                    ),
-                  ],
-                ),
-            ],
-          ),
-        ),
-      ),
+    child: StRow(
+      title: card.title,
+      subtitle: card.storyOrigin == StoryOrigin.curated ? 'Ready-made story' : 'Your story',
+      avatarColor: hexOrFallback(card.color),
+      avatarImage: null,
+      trailing: parentMode
+          ? GestureDetector(
+              onTap: () => _delete(context, ref),
+              child: const Icon(Icons.delete_outline, color: AppColors.ink3, size: 20),
+            )
+          : const Icon(Icons.chevron_right_rounded, color: AppColors.ink3, size: 20),
+      onTap: parentMode ? null : () => context.go('/story/${card.id}'),
     ),
   );
 
@@ -1549,106 +1409,98 @@ class _StoryPlayerScreenState extends ConsumerState<StoryPlayerScreen>
       return Scaffold(body: Center(child: Text(_error ?? 'Story not found.')));
     }
     final player = _player!;
-    return Scaffold(
-      appBar: AppBar(
-        leading: BackButton(
-          onPressed: () async {
-            await _savePosition();
-            if (context.mounted) context.go('/listen');
-          },
-        ),
-        actions: [
-          IconButton(
-            onPressed: _favorite,
-            tooltip: _card!.isFavorite
-                ? 'Remove from favorites'
-                : 'Save to favorites',
-            icon: Icon(
-              _card!.isFavorite ? Icons.favorite : Icons.favorite_border,
-            ),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              Expanded(
-                child: Center(
-                  child: Container(
-                    constraints: const BoxConstraints(
-                      maxWidth: 520,
-                      maxHeight: 380,
-                    ),
-                    decoration: BoxDecoration(
-                      color: hexOrFallback(_card!.color),
-                      borderRadius: BorderRadius.circular(36),
-                    ),
-                    child: Center(
-                      child: PixelSprite(
-                        sprite:
-                            predefinedSprites[_card!.spriteKey] ??
-                            autoAssignSprite(_card!.title),
-                        scale: 10,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Text(
-                _card!.title,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              if (_card!.narratorKey != null)
-                Text('Told by ${_card!.narratorKey!.label}'),
-              const SizedBox(height: 22),
-              StreamBuilder<Duration>(
-                stream: player.positionStream,
-                builder: (context, snapshot) {
-                  final position = snapshot.data ?? Duration.zero;
-                  final duration = player.duration ?? Duration.zero;
-                  return Column(
-                    children: [
-                      Slider(
-                        value: min(
-                          position.inMilliseconds.toDouble(),
-                          max(1, duration.inMilliseconds).toDouble(),
+    return Theme(
+      data: StorytimeTheme.bedtime,
+      child: Builder(
+        builder: (context) {
+          final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+          return Scaffold(
+            backgroundColor: tokens.night1,
+            body: SafeArea(
+              child: Column(
+                children: [
+                  // Top action row
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          onPressed: () async {
+                            await _savePosition();
+                            if (context.mounted) context.go('/listen');
+                          },
+                          icon: Icon(Icons.arrow_back_rounded, color: tokens.cream),
                         ),
-                        max: max(1, duration.inMilliseconds).toDouble(),
-                        onChanged: (value) =>
-                            player.seek(Duration(milliseconds: value.round())),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(_clock(position)),
-                          Text(_clock(duration)),
-                        ],
-                      ),
-                    ],
-                  );
-                },
-              ),
-              StreamBuilder<PlayerState>(
-                stream: player.playerStateStream,
-                builder: (context, snapshot) => IconButton.filled(
-                  onPressed: () =>
-                      player.playing ? player.pause() : player.play(),
-                  iconSize: 42,
-                  padding: const EdgeInsets.all(16),
-                  tooltip: player.playing ? 'Pause' : 'Play',
-                  icon: Icon(
-                    player.playing
-                        ? Icons.pause_rounded
-                        : Icons.play_arrow_rounded,
+                        IconButton(
+                          onPressed: _favorite,
+                          tooltip: _card!.isFavorite
+                              ? 'Remove from favorites'
+                              : 'Save to favorites',
+                          icon: Icon(
+                            _card!.isFavorite ? Icons.favorite : Icons.favorite_border,
+                            color: tokens.gold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                  // Scene player
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      child: StreamBuilder<Duration>(
+                        stream: player.positionStream,
+                        builder: (context, posSnap) {
+                          final position = posSnap.data ?? Duration.zero;
+                          final duration = player.duration ?? Duration.zero;
+                          final maxMs = max(1, duration.inMilliseconds).toDouble();
+                          final progress = (position.inMilliseconds.toDouble() / maxMs)
+                              .clamp(0.0, 1.0);
+                          return StreamBuilder<PlayerState>(
+                            stream: player.playerStateStream,
+                            builder: (context, stateSnap) {
+                              final isPlaying = stateSnap.data?.playing ?? false;
+                              return StScenePlayer(
+                                title: _card!.title,
+                                // TODO: follow-along needs local story text
+                                bodyText: _card!.narratorKey != null
+                                    ? 'Told by ${_card!.narratorKey!.label}'
+                                    : '',
+                                isPlaying: isPlaying,
+                                progress: progress,
+                                elapsed: _clock(position),
+                                total: _clock(duration),
+                                artPanel: Container(
+                                  color: hexOrFallback(_card!.color),
+                                  child: Center(
+                                    child: PixelSprite(
+                                      sprite:
+                                          predefinedSprites[_card!.spriteKey] ??
+                                          autoAssignSprite(_card!.title),
+                                      scale: 10,
+                                    ),
+                                  ),
+                                ),
+                                onPlayPause: () =>
+                                    player.playing ? player.pause() : player.play(),
+                                onSeek: (value) => player.seek(
+                                  Duration(
+                                    milliseconds: (value * maxMs).round(),
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -1668,69 +1520,92 @@ class StoryEndScreen extends ConsumerWidget {
     if (card == null) {
       return const Scaffold(body: Center(child: Text('Story not found.')));
     }
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: Padding(
-              padding: const EdgeInsets.all(28),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  PixelSprite(
-                    sprite: autoAssignSprite('celebration stars'),
-                    scale: 7,
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'The end',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(card.title, textAlign: TextAlign.center),
-                  const SizedBox(height: 28),
-                  FilledButton.icon(
-                    onPressed: () => context.go('/story/$cardId'),
-                    icon: const Icon(Icons.replay),
-                    label: const Text('Play again'),
-                  ),
-                  const SizedBox(height: 10),
-                  OutlinedButton.icon(
-                    onPressed: () => ref
-                        .read(cardsProvider.notifier)
-                        .updateCard(
-                          card.copyWith(isFavorite: !card.isFavorite),
-                        ),
-                    icon: Icon(
-                      card.isFavorite ? Icons.favorite : Icons.favorite_border,
+    return Theme(
+      data: StorytimeTheme.bedtime,
+      child: Builder(
+        builder: (context) {
+          final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+          return Scaffold(
+            body: Container(
+              decoration: BoxDecoration(gradient: tokens.nightGradient),
+              child: SafeArea(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: Padding(
+                      padding: const EdgeInsets.all(28),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          PixelSprite(
+                            sprite: autoAssignSprite('celebration stars'),
+                            scale: 7,
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'The end',
+                            textAlign: TextAlign.center,
+                            style: AppTypography.displayLarge.copyWith(color: tokens.gold),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            card.title,
+                            textAlign: TextAlign.center,
+                            style: AppTypography.bodySmall.copyWith(
+                              color: tokens.cream.withValues(alpha: 0.75),
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+                          StButton(
+                            label: 'Play again',
+                            fullWidth: true,
+                            leading: const Icon(Icons.replay),
+                            onTap: () => context.go('/story/$cardId'),
+                          ),
+                          const SizedBox(height: 10),
+                          StButton(
+                            label: card.isFavorite
+                                ? 'Saved to favorites'
+                                : 'Save to favorites',
+                            variant: StButtonVariant.line,
+                            fullWidth: true,
+                            leading: Icon(
+                              card.isFavorite ? Icons.favorite : Icons.favorite_border,
+                            ),
+                            onTap: () => ref
+                                .read(cardsProvider.notifier)
+                                .updateCard(
+                                  card.copyWith(isFavorite: !card.isFavorite),
+                                ),
+                          ),
+                          const SizedBox(height: 10),
+                          StButton(
+                            label: 'Make another',
+                            variant: StButtonVariant.line,
+                            fullWidth: true,
+                            leading: const Icon(Icons.auto_awesome),
+                            onTap: () {
+                              ref.read(storyDraftProvider.notifier).reset();
+                              context.go('/make/character');
+                            },
+                          ),
+                          const SizedBox(height: 4),
+                          StButton(
+                            label: 'Back home',
+                            variant: StButtonVariant.line,
+                            fullWidth: true,
+                            onTap: () => context.go('/home'),
+                          ),
+                        ],
+                      ),
                     ),
-                    label: Text(
-                      card.isFavorite
-                          ? 'Saved to favorites'
-                          : 'Save to favorites',
-                    ),
                   ),
-                  const SizedBox(height: 10),
-                  TextButton.icon(
-                    onPressed: () {
-                      ref.read(storyDraftProvider.notifier).reset();
-                      context.go('/make/character');
-                    },
-                    icon: const Icon(Icons.auto_awesome),
-                    label: const Text('Make another'),
-                  ),
-                  TextButton(
-                    onPressed: () => context.go('/home'),
-                    child: const Text('Back home'),
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -1752,10 +1627,7 @@ class StorytimeParentDashboard extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          Text(
-            'Storytime settings',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
+          const StSectionHeader(title: 'Storytime settings'),
           const SizedBox(height: 18),
           _DashboardEntry(
             icon: Icons.child_care,
@@ -1763,30 +1635,35 @@ class StorytimeParentDashboard extends StatelessWidget {
             subtitle: 'Name, age, and avatar',
             onTap: () => context.go('/parent/child'),
           ),
+          const SizedBox(height: 8),
           _DashboardEntry(
             icon: Icons.menu_book_outlined,
             title: 'Manage stories',
             subtitle: 'Review or delete local stories',
             onTap: () => context.go('/parent/stories'),
           ),
+          const SizedBox(height: 8),
           _DashboardEntry(
             icon: Icons.manage_accounts_outlined,
             title: 'Account',
             subtitle: 'Email, password, and sign out',
             onTap: () => context.go('/parent/account'),
           ),
+          const SizedBox(height: 8),
           _DashboardEntry(
             icon: Icons.pin_outlined,
             title: 'Parent PIN',
             subtitle: 'Change the grown-up access code',
             onTap: () => context.go('/parent/change-pin'),
           ),
+          const SizedBox(height: 8),
           _DashboardEntry(
             icon: Icons.privacy_tip_outlined,
             title: 'Privacy and diagnostics',
             subtitle: 'Review data handling and consent',
             onTap: () => context.go('/parent/privacy'),
           ),
+          const SizedBox(height: 8),
           _DashboardEntry(
             icon: Icons.record_voice_over_outlined,
             title: 'Family voices',
@@ -1812,17 +1689,52 @@ class _DashboardEntry extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => ListTile(
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-    leading: CircleAvatar(
-      backgroundColor: StorytimeColors.accentSoft,
-      child: Icon(icon, color: StorytimeColors.accent),
-    ),
-    title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
-    subtitle: Text(subtitle),
-    trailing: const Icon(Icons.chevron_right),
-    onTap: onTap,
-  );
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: tokens.paper,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: tokens.ember.withValues(alpha: 0.12),
+              child: Icon(icon, color: tokens.ember, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      color: tokens.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 13, color: tokens.ink2),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: tokens.ink3),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class StorytimeAccountScreen extends ConsumerStatefulWidget {
@@ -1922,7 +1834,7 @@ class _StorytimeAccountScreenState
           OutlinedButton(
             onPressed: _busy ? null : _delete,
             style: OutlinedButton.styleFrom(
-              foregroundColor: StorytimeColors.danger,
+              foregroundColor: AppColors.destructive,
             ),
             child: const Text('Delete account and local data'),
           ),
@@ -1965,47 +1877,82 @@ class _StorytimePrivacyScreenState
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Privacy and diagnostics')),
-    body: ListView(
-      padding: const EdgeInsets.all(24),
-      children: [
-        const _PrivacyPoint(
-          icon: Icons.phone_android,
-          title: 'Child profile stays here',
-          body:
-              'The child’s name, avatar, stories, favorites, and listening position stay encrypted on this device.',
-        ),
-        const _PrivacyPoint(
-          icon: Icons.cloud_outlined,
-          title: 'Story choices use the cloud',
-          body:
-              'Character, scene, theme, plot, narrator, and age band are sent for story generation. The child’s name is never sent.',
-        ),
-        const _PrivacyPoint(
-          icon: Icons.delete_sweep_outlined,
-          title: 'Temporary audio is deleted',
-          body:
-              'Cloud audio is removed after the app imports it, or automatically within 24 hours.',
-        ),
-        const _PrivacyPoint(
-          icon: Icons.no_accounts,
-          title: 'No ads or child tracking',
-          body:
-              'Storytime does not show ads to children or create child accounts.',
-        ),
-        const SizedBox(height: 12),
-        SwitchListTile(
-          value: _enabled ?? false,
-          onChanged: _enabled == null ? null : _setEnabled,
-          title: const Text('Share anonymous diagnostics'),
-          subtitle: const Text(
-            'Sends crash and usage signals without child names, story text, email addresses, or audio links.',
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Privacy and diagnostics')),
+      body: ListView(
+        padding: const EdgeInsets.all(24),
+        children: [
+          const StSectionHeader(title: 'How we handle your data'),
+          const SizedBox(height: 16),
+          const _PrivacyPoint(
+            icon: Icons.phone_android,
+            title: 'Child profile stays here',
+            body:
+                "The child's name, avatar, stories, favorites, and listening position stay encrypted on this device.",
           ),
-        ),
-      ],
-    ),
-  );
+          const SizedBox(height: 8),
+          const _PrivacyPoint(
+            icon: Icons.cloud_outlined,
+            title: 'Story choices use the cloud',
+            body:
+                "Character, scene, theme, plot, narrator, and age band are sent for story generation. The child's name is never sent.",
+          ),
+          const SizedBox(height: 8),
+          const _PrivacyPoint(
+            icon: Icons.delete_sweep_outlined,
+            title: 'Temporary audio is deleted',
+            body:
+                'Cloud audio is removed after the app imports it, or automatically within 24 hours.',
+          ),
+          const SizedBox(height: 8),
+          const _PrivacyPoint(
+            icon: Icons.no_accounts,
+            title: 'No ads or child tracking',
+            body:
+                'Storytime does not show ads to children or create child accounts.',
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: tokens.paper,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Share anonymous diagnostics',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: tokens.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Sends crash and usage signals without child names, story text, email addresses, or audio links.',
+                        style: TextStyle(fontSize: 13, color: tokens.ink2),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                StToggle(
+                  value: _enabled ?? false,
+                  onChanged: _enabled == null ? (_) {} : _setEnabled,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _PrivacyPoint extends StatelessWidget {
@@ -2018,11 +1965,17 @@ class _PrivacyPoint extends StatelessWidget {
   final String title;
   final String body;
   @override
-  Widget build(BuildContext context) => ListTile(
-    leading: Icon(icon),
-    title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
-    subtitle: Text(body),
-  );
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    return ListTile(
+      leading: Icon(icon, color: tokens.ember),
+      title: Text(
+        title,
+        style: TextStyle(fontWeight: FontWeight.w700, color: tokens.ink),
+      ),
+      subtitle: Text(body, style: TextStyle(color: tokens.ink2)),
+    );
+  }
 }
 
 class FamilyVoicesTeaserScreen extends ConsumerStatefulWidget {
@@ -2072,33 +2025,34 @@ class _FamilyVoicesTeaserScreenState
                 scale: 7,
               ),
               const SizedBox(height: 22),
-              Text(
-                'A familiar voice, coming soon',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineMedium,
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  StSoonTag(),
+                ],
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Record or upload a family member’s voice for story narration. This feature is not available in the MVP.',
-                textAlign: TextAlign.center,
+              const StSectionHeader(
+                title: 'A familiar voice, coming soon',
+                sub: "Record or upload a family member's voice for story narration. This feature is not available in the MVP.",
+                centerAlign: true,
               ),
               const SizedBox(height: 24),
-              FilledButton(
-                onPressed: _joined || _busy ? null : _join,
-                child: Text(
-                  _joined
-                      ? 'You’re on the waitlist'
-                      : _busy
-                      ? 'Joining…'
-                      : 'Join the waitlist',
-                ),
+              StButton(
+                label: _joined
+                    ? "You're on the waitlist"
+                    : _busy
+                    ? 'Joining…'
+                    : 'Join the waitlist',
+                fullWidth: true,
+                onTap: _joined || _busy ? null : _join,
               ),
               if (_error != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 12),
                   child: Text(
                     _error!,
-                    style: const TextStyle(color: StorytimeColors.danger),
+                    style: const TextStyle(color: AppColors.destructive),
                   ),
                 ),
             ],
