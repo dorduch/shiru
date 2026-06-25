@@ -15,6 +15,7 @@ class StoryJob {
     this.downloadUrl,
     this.errorCode,
     this.remaining,
+    this.story,
   });
 
   final String id;
@@ -25,6 +26,7 @@ class StoryJob {
   final String? downloadUrl;
   final String? errorCode;
   final int? remaining;
+  final String? story;
 
   factory StoryJob.fromSnapshot(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
@@ -39,6 +41,7 @@ class StoryJob {
       downloadUrl: data['downloadUrl'] as String?,
       errorCode: data['errorCode'] as String?,
       remaining: data['remaining'] as int?,
+      story: data['story'] as String?,
     );
   }
 }

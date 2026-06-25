@@ -19,6 +19,7 @@ class AudioCard {
   final int? lastPlayedAt;
   final int position;
   final int createdAt;
+  final String? storyText;
 
   AudioCard({
     required this.id,
@@ -37,6 +38,7 @@ class AudioCard {
     this.lastPlayedAt,
     required this.position,
     required this.createdAt,
+    this.storyText,
   });
 
   factory AudioCard.fromMap(Map<String, dynamic> map) {
@@ -68,6 +70,7 @@ class AudioCard {
       lastPlayedAt: map['last_played_at'],
       position: map['position'] ?? 0,
       createdAt: map['created_at'],
+      storyText: map['story_text'] as String?,
     );
   }
 
@@ -89,6 +92,7 @@ class AudioCard {
       'last_played_at': lastPlayedAt,
       'position': position,
       'created_at': createdAt,
+      'story_text': storyText,
     };
   }
 
@@ -114,6 +118,7 @@ class AudioCard {
     int? lastPlayedAt,
     bool clearLastPlayedAt = false,
     int? position,
+    String? storyText,
   }) {
     return AudioCard(
       id: id,
@@ -136,6 +141,7 @@ class AudioCard {
           : (lastPlayedAt ?? this.lastPlayedAt),
       position: position ?? this.position,
       createdAt: createdAt,
+      storyText: storyText ?? this.storyText,
     );
   }
 }

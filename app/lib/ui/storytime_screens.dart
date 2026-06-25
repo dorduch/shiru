@@ -1029,7 +1029,7 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
       if (!mounted) return;
       setState(
         () => _error = error.code == 'resource-exhausted'
-            ? 'That is three stories today. More story magic will be ready tomorrow.'
+            ? "That's all of today's stories. More story magic will be ready tomorrow."
             : 'Story making is resting right now. Please try again.',
       );
     } catch (_) {
@@ -1088,6 +1088,7 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
         narratorKey: job.narratorKey,
         position: cards.length,
         createdAt: DateTime.now().millisecondsSinceEpoch,
+        storyText: job.story,
       );
       await ref.read(cardsProvider.notifier).addCard(card);
       await ref.read(storyGenerationRepositoryProvider).confirmImported(job.id);
@@ -1461,12 +1462,21 @@ class _StoryPlayerScreenState extends ConsumerState<StoryPlayerScreen>
                             stream: player.playerStateStream,
                             builder: (context, stateSnap) {
                               final isPlaying = stateSnap.data?.playing ?? false;
+                              // NOTE: estimated word position — real per-word
+                              // timing needs ElevenLabs timestamps
+                              final text = _card!.storyText ?? '';
+                              final words = text.split(RegExp(r'\s+'));
+                              final durationMs = duration.inMilliseconds;
+                              final int? highlightedWordIndex = (text.isEmpty ||
+                                      durationMs == 0)
+                                  ? null
+                                  : (progress * words.length)
+                                      .floor()
+                                      .clamp(0, words.length - 1);
                               return StScenePlayer(
                                 title: _card!.title,
-                                // TODO: follow-along needs local story text
-                                bodyText: _card!.narratorKey != null
-                                    ? 'Told by ${_card!.narratorKey!.label}'
-                                    : '',
+                                bodyText: _card!.storyText ?? '',
+                                highlightedWordIndex: highlightedWordIndex,
                                 isPlaying: isPlaying,
                                 progress: progress,
                                 elapsed: _clock(position),

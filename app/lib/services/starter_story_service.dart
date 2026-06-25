@@ -61,6 +61,7 @@ class StarterStoryService {
             ),
             position: existing.length + additions.length,
             createdAt: DateTime.now().millisecondsSinceEpoch + index,
+            storyText: item['storyText'] as String?,
           ),
         );
       }

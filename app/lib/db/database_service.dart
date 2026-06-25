@@ -13,7 +13,7 @@ import '../services/key_value_store.dart';
 const _kDbPasswordKey = 'db_encryption_key';
 
 class DatabaseService {
-  static const int schemaVersion = 9;
+  static const int schemaVersion = 10;
   static const String addMediaTypeMigration =
       "ALTER TABLE cards ADD COLUMN media_type TEXT NOT NULL DEFAULT 'audio'";
   static const List<String> addStoryMetadataMigration = [
@@ -186,7 +186,8 @@ CREATE TABLE cards (
   duration_ms INTEGER NOT NULL DEFAULT 0,
   last_played_at INTEGER,
   position INTEGER DEFAULT 0,
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  story_text TEXT
 )
 ''');
 
@@ -219,6 +220,7 @@ CREATE TABLE categories (
       () => _ensureDefaultCategories(db),
     );
     await applyVersion9Migration(oldVersion, db.execute);
+    await applyVersion10Migration(oldVersion, db.execute);
   }
 
   @visibleForTesting
@@ -246,6 +248,14 @@ CREATE TABLE categories (
     for (final statement in addStoryMetadataMigration) {
       await execute(statement);
     }
+  }
+
+  @visibleForTesting
+  static Future<void> applyVersion10Migration(
+    int oldVersion,
+    Future<void> Function(String sql) execute,
+  ) async {
+    if (oldVersion < 10) await execute('ALTER TABLE cards ADD COLUMN story_text TEXT');
   }
 
   @visibleForTesting

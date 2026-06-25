@@ -5,7 +5,8 @@
     "audioAsset": "assets/storytime/the_brave_little_fox.wav",
     "color": "#FFD66B",
     "spriteKey": "fox",
-    "narratorKey": "wizardWally"
+    "narratorKey": "wizardWally",
+    "storyText": "Pip was the smallest fox in Fernwood, but he had the biggest collection of questions. One windy morning, Pip heard a tiny chirp beside the old bridge. A robin's nest had slipped onto a low branch above the stream, and the robin was too frightened to fly down.\n\nPip's paws trembled when he looked at the water. He did not feel brave. Then he remembered what his mother always said: being brave does not mean feeling no fear. It means taking one careful step while fear walks beside you.\n\nPip found a broad piece of bark and laid it across two stones. He tested it with one paw, then another. Slowly, he crossed. He climbed the willow, nudged the nest into a safe fork, and waited while the robin fluttered home.\n\nOn the way back, Pip still felt shaky. His friends cheered, but Pip smiled for a different reason. He had learned that courage could be quiet, careful, and small enough to fit inside one little fox."
   },
   {
     "id": "curated-sleepy-moon",
@@ -13,7 +14,8 @@
     "audioAsset": "assets/storytime/luna_and_the_sleepy_moon.wav",
     "color": "#B59BFF",
     "spriteKey": "moon",
-    "narratorKey": "fairyFern"
+    "narratorKey": "fairyFern",
+    "storyText": "Luna liked to say goodnight to everything. Goodnight slippers. Goodnight lamp. Goodnight blue cup by the bed. But one evening, the moon outside her window looked wide awake.\n\n\"Perhaps the moon forgot how to get sleepy,\" Luna whispered. She tucked a silver blanket around her toy rabbit and began a quiet bedtime tour. She showed the moon how the curtains swayed slowly. She listened to the soft hum of the night breeze. She counted five calm breaths, in and out.\n\nThe moon seemed to follow. A cloud drifted over its bright face like a pillow. The stars blinked more slowly. Luna told the moon about one happy part of her day, then one thing she could leave until tomorrow.\n\nSoon Luna's eyes grew heavy. The moon became a gentle glow behind its cloud blanket. \"Goodnight, moon,\" Luna murmured.\n\nThe room was still. The night was safe. Luna curled beside her rabbit, breathed one more slow breath, and floated into a peaceful dream."
   },
   {
     "id": "curated-helping-hands",
@@ -21,7 +23,8 @@
     "audioAsset": "assets/storytime/the_bridge_of_helping_hands.wav",
     "color": "#7FD1C4",
     "spriteKey": "friends",
-    "narratorKey": "wizardWally"
+    "narratorKey": "wizardWally",
+    "storyText": "Two villages stood on opposite sides of a bright little river. The children could wave to each other, but the old wooden bridge had lost three boards in a storm.\n\nMara brought a long plank, but it was too heavy to lift alone. Theo brought rope, but he did not know the strongest knot. Sumi knew the knot, and Ben knew how to keep everyone safely back while the grown-ups checked the work.\n\nAt first, each child tried to solve everything alone. The plank thumped down. The rope tangled. Everyone became grumpy.\n\nThen Mara said, \"What if we each do the part we know?\" Theo and Sumi tied the rope. Mara and two friends carried the plank together. Ben counted each careful step. The village carpenter secured the final board.\n\nBy sunset, the bridge was ready. The children met in the middle and shared warm berry buns. The bridge was made of wood and rope, but everyone knew the strongest part was the helping hands on both sides."
   },
   {
     "id": "curated-undersea-map",
@@ -29,7 +32,8 @@
     "audioAsset": "assets/storytime/milos_undersea_map.wav",
     "color": "#83B8FF",
     "spriteKey": "fish",
-    "narratorKey": "roboRay"
+    "narratorKey": "roboRay",
+    "storyText": "Milo the young dolphin found a map tucked inside a bottle. It showed a path through the coral garden to a place marked with a golden shell.\n\nMilo invited his friend Tavi the turtle. They followed three bubble rings, turned beside the purple coral, and swam under an arch where silver fish shimmered like stars. When the current pushed them off course, Tavi noticed a tiny arrow carved into a rock.\n\nThe map led to a quiet cave. Inside, they found no pile of gold. Instead, there was a circle of smooth shells and a note: \"The treasure is a place worth sharing.\"\n\nMilo and Tavi laughed. They decorated the cave with sea flowers, then invited every neighbor they met. Soon the hidden cave was filled with songs, gentle games, and new friends.\n\nMilo kept the map, but he added one new mark beside the golden shell: a little heart, so the next explorer would know what kind of treasure waited there."
   },
   {
     "id": "curated-missing-bell",
@@ -37,7 +41,8 @@
     "audioAsset": "assets/storytime/the_mystery_of_the_missing_bell.wav",
     "color": "#FF9B8A",
     "spriteKey": "detective",
-    "narratorKey": "roboRay"
+    "narratorKey": "roboRay",
+    "storyText": "Every morning, the bakery bell jingled when the door opened. One Tuesday, it was gone. Baker Jo looked under the counter. Niko checked every shelf. No bell.\n\nNiko noticed three clues: a silver thread on the doormat, a trail of floury dots, and a faint jingle from the courtyard. He followed the dots past the mixing bowls and out to the herb garden.\n\nThere sat a magpie, carefully weaving the silver bell into a nest. Niko did not shout or grab. He placed a shiny bottle cap nearby and waited. The magpie tilted its head, chose the bottle cap, and left the bell on the wall.\n\nBaker Jo cleaned the bell and tied it above the door with a stronger ribbon. Jingle!\n\nThe mystery was solved without frightening anyone. Niko wrote the clues in his notebook and added a final detective rule: look closely, move gently, and remember that even a mystery can have a kind answer."
   },
   {
     "id": "curated-kindness-garden",
@@ -45,6 +50,7 @@
     "audioAsset": "assets/storytime/nias_kindness_garden.wav",
     "color": "#F6A6C1",
     "spriteKey": "flower",
-    "narratorKey": "fairyFern"
+    "narratorKey": "fairyFern",
+    "storyText": "Nia planted six sunflower seeds in a patch beside her home. Every morning she carried a small green watering can outside and whispered, \"Grow when you are ready.\"\n\nOne seedling bent after a rainy night. Nia made it a tiny support from two twigs. Another seedling was shaded by a large leaf, so she moved a pot to give it light.\n\nSoon, neighbors began stopping by. Mr. Lee brought compost. Amara painted cheerful plant signs. Little Sam could not carry a watering can, so Nia gave him a cup and a very important corner to water.\n\nBy summer, six bright sunflowers stood taller than everyone. Nia saved their seeds in paper envelopes and gave one to each helper.\n\nThe next spring, sunflowers appeared in gardens all along the street. Nia's small patch had grown into something much bigger, not because the flowers traveled, but because kindness did."
   }
 ]
