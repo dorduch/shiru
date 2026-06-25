@@ -11,6 +11,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'firebase_options.dart';
 import 'logic/auth_lifecycle_logic.dart';
 import 'services/analytics_service.dart';
+import 'services/app_paths.dart';
 import 'providers/auth_provider.dart';
 import 'providers/cards_provider.dart';
 import 'providers/categories_provider.dart';
@@ -23,6 +24,7 @@ import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AppPaths.init();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await FirebaseAppCheck.instance.activate(
     providerAndroid: kDebugMode

@@ -1,3 +1,4 @@
+import '../services/app_paths.dart';
 import 'storytime_models.dart';
 
 enum CardMediaType { audio, video }
@@ -48,8 +49,10 @@ class AudioCard {
       title: map['title'],
       color: map['color'],
       spriteKey: map['sprite_key'],
-      customImagePath: map['custom_image_path'],
-      audioPath: map['audio_path'],
+      customImagePath: map['custom_image_path'] == null
+          ? null
+          : AppPaths.resolve(map['custom_image_path'] as String),
+      audioPath: AppPaths.resolve(map['audio_path'] as String),
       mediaType: CardMediaType.values.firstWhere(
         (type) => type.name == map['media_type'],
         orElse: () => CardMediaType.audio,
@@ -81,8 +84,10 @@ class AudioCard {
       'title': title,
       'color': color,
       'sprite_key': spriteKey,
-      'custom_image_path': customImagePath,
-      'audio_path': audioPath,
+      'custom_image_path': customImagePath == null
+          ? null
+          : AppPaths.relativize(customImagePath!),
+      'audio_path': AppPaths.relativize(audioPath),
       'media_type': mediaType.name,
       'playback_position': playbackPosition,
       'story_origin': storyOrigin.name,
