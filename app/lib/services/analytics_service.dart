@@ -5,22 +5,25 @@ class AnalyticsService {
   static final AnalyticsService instance = AnalyticsService._();
   AnalyticsService._();
 
-  Future<void> ensureConsent() async {
+  Future<void> ensureConsent({required bool enabled}) async {
     if (kDebugMode) {
       // Disable analytics in debug builds so development activity is never sent.
       await _run((analytics) => analytics.setAnalyticsCollectionEnabled(false));
     } else {
-      // In release builds, analytics is enabled for crash/usage reporting.
-      // Ensure this is disclosed in the app's privacy policy.
       await _run(
         (analytics) => analytics.setConsent(
           adStorageConsentGranted: false,
           adUserDataConsentGranted: false,
-          analyticsStorageConsentGranted: true,
+          analyticsStorageConsentGranted: enabled,
         ),
+      );
+      await _run(
+        (analytics) => analytics.setAnalyticsCollectionEnabled(enabled),
       );
     }
   }
+
+  Future<void> setEnabled(bool enabled) => ensureConsent(enabled: enabled);
 
   FirebaseAnalyticsObserver get observer =>
       FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance);
@@ -39,8 +42,7 @@ class AnalyticsService {
 
   Future<void> logCategoryDeleted() => _logEvent(name: 'category_deleted');
 
-  Future<void> logParentAreaEntered() =>
-      _logEvent(name: 'parent_area_entered');
+  Future<void> logParentAreaEntered() => _logEvent(name: 'parent_area_entered');
 
   Future<void> logPinChanged() => _logEvent(name: 'pin_changed');
 
@@ -50,21 +52,17 @@ class AnalyticsService {
   Future<void> logLibraryStats({
     required int cardCount,
     required int categoryCount,
-  }) =>
-      _logEvent(
-        name: 'library_stats',
-        parameters: {
-          'card_count': cardCount,
-          'category_count': categoryCount,
-        },
-      );
+  }) => _logEvent(
+    name: 'library_stats',
+    parameters: {'card_count': cardCount, 'category_count': categoryCount},
+  );
 
   Future<void> _logEvent({
     required String name,
     Map<String, Object>? parameters,
   }) => _run(
-        (analytics) => analytics.logEvent(name: name, parameters: parameters),
-      );
+    (analytics) => analytics.logEvent(name: name, parameters: parameters),
+  );
 
   Future<void> _run(
     Future<void> Function(FirebaseAnalytics analytics) action,

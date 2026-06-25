@@ -28,6 +28,16 @@ class CardsNotifier extends StateNotifier<AsyncValue<List<AudioCard>>> {
     await loadCards();
   }
 
+  Future<void> updateCard(AudioCard card) async {
+    await DatabaseService.instance.updateCard(card);
+    await loadCards();
+  }
+
+  Future<void> replaceCards(List<AudioCard> cards) async {
+    await DatabaseService.instance.replaceCards(cards);
+    await loadCards();
+  }
+
   Future<void> deleteCard(String id) async {
     AudioCard? deletedCard;
     final cards = state.value;

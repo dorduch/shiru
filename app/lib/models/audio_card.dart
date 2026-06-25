@@ -1,3 +1,5 @@
+import 'storytime_models.dart';
+
 enum CardMediaType { audio, video }
 
 class AudioCard {
@@ -10,6 +12,11 @@ class AudioCard {
   final String audioPath;
   final CardMediaType mediaType;
   final int playbackPosition;
+  final StoryOrigin storyOrigin;
+  final NarratorKey? narratorKey;
+  final bool isFavorite;
+  final int durationMs;
+  final int? lastPlayedAt;
   final int position;
   final int createdAt;
 
@@ -23,6 +30,11 @@ class AudioCard {
     required this.audioPath,
     this.mediaType = CardMediaType.audio,
     this.playbackPosition = 0,
+    this.storyOrigin = StoryOrigin.generated,
+    this.narratorKey,
+    this.isFavorite = false,
+    this.durationMs = 0,
+    this.lastPlayedAt,
     required this.position,
     required this.createdAt,
   });
@@ -41,6 +53,19 @@ class AudioCard {
         orElse: () => CardMediaType.audio,
       ),
       playbackPosition: map['playback_position'] ?? 0,
+      storyOrigin: StoryOrigin.values.firstWhere(
+        (origin) => origin.name == map['story_origin'],
+        orElse: () => StoryOrigin.generated,
+      ),
+      narratorKey: map['narrator_key'] == null
+          ? null
+          : NarratorKey.values.firstWhere(
+              (narrator) => narrator.name == map['narrator_key'],
+              orElse: () => NarratorKey.wizardWally,
+            ),
+      isFavorite: (map['is_favorite'] ?? 0) == 1,
+      durationMs: map['duration_ms'] ?? 0,
+      lastPlayedAt: map['last_played_at'],
       position: map['position'] ?? 0,
       createdAt: map['created_at'],
     );
@@ -57,6 +82,11 @@ class AudioCard {
       'audio_path': audioPath,
       'media_type': mediaType.name,
       'playback_position': playbackPosition,
+      'story_origin': storyOrigin.name,
+      'narrator_key': narratorKey?.name,
+      'is_favorite': isFavorite ? 1 : 0,
+      'duration_ms': durationMs,
+      'last_played_at': lastPlayedAt,
       'position': position,
       'created_at': createdAt,
     };
@@ -76,6 +106,13 @@ class AudioCard {
     String? audioPath,
     CardMediaType? mediaType,
     int? playbackPosition,
+    StoryOrigin? storyOrigin,
+    NarratorKey? narratorKey,
+    bool clearNarratorKey = false,
+    bool? isFavorite,
+    int? durationMs,
+    int? lastPlayedAt,
+    bool clearLastPlayedAt = false,
     int? position,
   }) {
     return AudioCard(
@@ -90,6 +127,13 @@ class AudioCard {
       audioPath: audioPath ?? this.audioPath,
       mediaType: mediaType ?? this.mediaType,
       playbackPosition: playbackPosition ?? this.playbackPosition,
+      storyOrigin: storyOrigin ?? this.storyOrigin,
+      narratorKey: clearNarratorKey ? null : (narratorKey ?? this.narratorKey),
+      isFavorite: isFavorite ?? this.isFavorite,
+      durationMs: durationMs ?? this.durationMs,
+      lastPlayedAt: clearLastPlayedAt
+          ? null
+          : (lastPlayedAt ?? this.lastPlayedAt),
       position: position ?? this.position,
       createdAt: createdAt,
     );

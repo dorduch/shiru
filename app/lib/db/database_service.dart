@@ -13,12 +13,18 @@ import '../services/key_value_store.dart';
 const _kDbPasswordKey = 'db_encryption_key';
 
 class DatabaseService {
-  static const int schemaVersion = 8;
+  static const int schemaVersion = 9;
   static const String addMediaTypeMigration =
       "ALTER TABLE cards ADD COLUMN media_type TEXT NOT NULL DEFAULT 'audio'";
+  static const List<String> addStoryMetadataMigration = [
+    "ALTER TABLE cards ADD COLUMN story_origin TEXT NOT NULL DEFAULT 'generated'",
+    'ALTER TABLE cards ADD COLUMN narrator_key TEXT',
+    'ALTER TABLE cards ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0',
+    'ALTER TABLE cards ADD COLUMN duration_ms INTEGER NOT NULL DEFAULT 0',
+    'ALTER TABLE cards ADD COLUMN last_played_at INTEGER',
+  ];
   static final List<Category> defaultCategories = List.unmodifiable([
     Category(id: 'default-stories', name: 'Stories', emoji: '📖', position: 0),
-    Category(id: 'default-songs', name: 'Songs', emoji: '🎵', position: 1),
   ]);
   static final DatabaseService instance = DatabaseService._init();
   static Database? _database;
@@ -174,6 +180,11 @@ CREATE TABLE cards (
   audio_path TEXT NOT NULL,
   media_type TEXT NOT NULL DEFAULT 'audio',
   playback_position INTEGER DEFAULT 0,
+  story_origin TEXT NOT NULL DEFAULT 'generated',
+  narrator_key TEXT,
+  is_favorite INTEGER NOT NULL DEFAULT 0,
+  duration_ms INTEGER NOT NULL DEFAULT 0,
+  last_played_at INTEGER,
   position INTEGER DEFAULT 0,
   created_at INTEGER NOT NULL
 )
@@ -207,6 +218,7 @@ CREATE TABLE categories (
       oldVersion,
       () => _ensureDefaultCategories(db),
     );
+    await applyVersion9Migration(oldVersion, db.execute);
   }
 
   @visibleForTesting
@@ -223,6 +235,17 @@ CREATE TABLE categories (
     Future<void> Function() seedDefaults,
   ) async {
     if (oldVersion < 8) await seedDefaults();
+  }
+
+  @visibleForTesting
+  static Future<void> applyVersion9Migration(
+    int oldVersion,
+    Future<void> Function(String sql) execute,
+  ) async {
+    if (oldVersion >= 9) return;
+    for (final statement in addStoryMetadataMigration) {
+      await execute(statement);
+    }
   }
 
   @visibleForTesting
@@ -292,6 +315,15 @@ CREATE TABLE categories (
       for (final card in cards) {
         await txn.insert('cards', card.toMap());
       }
+    });
+  }
+
+  Future<void> resetForStorytime() async {
+    final db = await instance.database;
+    await db.transaction((txn) async {
+      await txn.delete('cards');
+      await txn.delete('categories');
+      await _ensureDefaultCategories(txn);
     });
   }
 

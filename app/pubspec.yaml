@@ -34,8 +34,14 @@ dependencies:
   flutter_dotenv: ^5.2.1
   google_fonts: ^6.2.1
   firebase_core: ^4.6.0
+  firebase_auth: ^6.5.4
+  cloud_firestore: ^6.6.0
+  cloud_functions: ^6.3.3
+  firebase_app_check: ^0.4.5
   firebase_analytics: ^12.2.0
   firebase_crashlytics: ^5.1.0
+  google_sign_in: ^7.2.0
+  flutter_tts: ^4.2.5
 
 dev_dependencies:
   flutter_test:
@@ -49,6 +55,7 @@ flutter:
   assets:
     - assets/images/app_icon.png
     - assets/.env
+    - assets/storytime/
 
 flutter_launcher_icons:
   android: true

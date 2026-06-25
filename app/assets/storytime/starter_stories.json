@@ -1,0 +1,50 @@
+[
+  {
+    "id": "curated-brave-fox",
+    "title": "The Brave Little Fox",
+    "audioAsset": "assets/storytime/the_brave_little_fox.wav",
+    "color": "#FFD66B",
+    "spriteKey": "fox",
+    "narratorKey": "wizardWally"
+  },
+  {
+    "id": "curated-sleepy-moon",
+    "title": "Luna and the Sleepy Moon",
+    "audioAsset": "assets/storytime/luna_and_the_sleepy_moon.wav",
+    "color": "#B59BFF",
+    "spriteKey": "moon",
+    "narratorKey": "fairyFern"
+  },
+  {
+    "id": "curated-helping-hands",
+    "title": "The Bridge of Helping Hands",
+    "audioAsset": "assets/storytime/the_bridge_of_helping_hands.wav",
+    "color": "#7FD1C4",
+    "spriteKey": "friends",
+    "narratorKey": "wizardWally"
+  },
+  {
+    "id": "curated-undersea-map",
+    "title": "Milo's Undersea Map",
+    "audioAsset": "assets/storytime/milos_undersea_map.wav",
+    "color": "#83B8FF",
+    "spriteKey": "fish",
+    "narratorKey": "roboRay"
+  },
+  {
+    "id": "curated-missing-bell",
+    "title": "The Mystery of the Missing Bell",
+    "audioAsset": "assets/storytime/the_mystery_of_the_missing_bell.wav",
+    "color": "#FF9B8A",
+    "spriteKey": "detective",
+    "narratorKey": "roboRay"
+  },
+  {
+    "id": "curated-kindness-garden",
+    "title": "Nia's Kindness Garden",
+    "audioAsset": "assets/storytime/nias_kindness_garden.wav",
+    "color": "#F6A6C1",
+    "spriteKey": "flower",
+    "narratorKey": "fairyFern"
+  }
+]
