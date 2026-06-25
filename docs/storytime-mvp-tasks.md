@@ -10,7 +10,7 @@
 - Design direction = attached Storytime wireframes + landing (re-skin off legacy Shiru).
 - Backend foundation = existing `functions/` dir (from codex/v2); extend, don't rewrite.
 
-**Current focus:** On branch `feature/storytime-mvp` (uncommitted: M1 design system + lifted backend). ✅ M1 design system done+verified. ✅ codex/v2 audited → keep main, lift backend/wiring, rebuild screens on `St*`. ✅ Backend lifted from codex/v2 + must-fixes #1 (story text) & #2 (quota→10) applied; build clean + tests 4/4 (use `nvm use 22`). ▶ NEXT: lift client wiring (models/services/providers) from codex/v2 AND rebuild M2/M3 screens on the component library + reconcile router (discard codex/v2's `storytime_theme.dart` + `storytime_screens.dart`). These must land together — screens+router+wiring are mutually dependent for compile. flutter at `$HOME/Downloads/flutter/bin`.
+**Current focus:** Branch `feature/storytime-mvp`, 5 commits (docs, M1 design, backend lift, Phase 1 baseline, Phase 2 screen rebuild). ✅ M1 design system. ✅ codex/v2 audited + backend lifted (must-fixes applied; tests 4/4 with `nvm use 22`). ✅ Phase 1 baseline (codex/v2 app lifted, design system preserved). ✅ Phase 2: ALL Storytime screens rebuilt on `St*` components, day/bedtime theme wired, legacy `storytime_theme.dart` deleted, portrait locked. `flutter analyze` 0 errors. iOS build needed `pod repo update` (new firebase pods) — done. ✅ Follow-along player DONE + verified on sim (story text persisted, gold highlight). ▶ NEXT candidates: (1) audio-path-relative fix (stale paths across reinstall — see Bugs); (2) "Hi MMMM!" placeholder child-name bug; (3) child profile → Firestore; (4) parent gate on StParentGate; (5) home TabBar; (6) content-safety levels; (7) re-narrate flow; then M4 Family voice tier. flutter at `$HOME/Downloads/flutter/bin`; iOS pods need `LANG=en_US.UTF-8`.
 
 ---
 
@@ -52,34 +52,36 @@
 - [x] Verified `cleanupExpiredStoryAudio` + `confirmStoryImported` clear ONLY audio fields (downloadUrl/storagePath) — `story`/`title` preserved
 - [x] Confirmed `validateStoryRequest` enums match client `storytime_models.dart` exactly (audit)
 ### Client
-- [ ] Mirror domain enums (character/scene/theme/plot/narrator/ageBand) on client from `domain.js`
-- [ ] Route generation through `createStoryJob` callable (App Check) — stop using on-device `StoryService.callClaudeApi`
-- [ ] Remove/disable on-device Anthropic key path (release blocker)
-- [ ] Job-stream provider subscribing to `users/{uid}/storyJobs/{jobId}`; map states queued→writing→checking→narrating→ready/failed
-- [ ] On `ready`: download audio, save locally (SQLite/files), call `confirmStoryImported`
-- [ ] Re-narrate flow: regenerate audio from stored `story` text when local audio missing (decision B)
+- [x] Mirror domain enums on client — `storytime_models.dart` matches `domain.ts` exactly (lifted)
+- [x] Route generation through `createStoryJob` + job stream — `story_generation_repository.dart` (lifted)
+- [x] On-device Anthropic path removed — `story_service.dart`/`elevenlabs_service.dart` deleted (lifted)
+- [x] Job-stream wiring — `StoryGeneratingScreen` watches job doc, maps all 6 states (lifted)
+- [x] On ready: download → import to SQLite → `confirmStoryImported` (lifted)
+- [x] Follow-along player text — DONE + VERIFIED on sim. `AudioCard.storyText` (SQLite v10), `StoryJob.story`, import saves `job.story`, starter stories carry text (from `content/storytime/*.txt`). Player shows text with gold word highlight ESTIMATED from playback progress.
+- [ ] Re-narrate flow: regenerate audio from stored `story` text when local audio missing. Needs a backend re-narrate path (or reuse createStoryJob). Separate from follow-along.
+- [ ] Follow-along: TRUE per-word sync needs ElevenLabs word timestamps (current highlight is a progress estimate).
 ### Screens
-- [ ] Kid Home (s5)
-- [ ] Wizard: Character (s6)
-- [ ] Wizard: Scene (s7)
-- [ ] Wizard: Theme (s8)
-- [ ] Wizard: Twist (s9)
-- [ ] Wizard: Narrator (s10) — built-in voices only for now
-- [ ] Wizard: Review (s11)
-- [ ] Generating (s12b) — bound to job status
-- [ ] Story Player (s12) — follow-along text + transport
-- [ ] End screen (s13)
-- [ ] Library (s11b) — list durable stories, re-listen / re-narrate
+- [~] Kid Home (s5) — rebuilt on StTile/StRow; MISSING bottom TabBar
+- [x] Wizard: Character (s6) — StChoiceCard/StDots
+- [x] Wizard: Scene (s7)
+- [x] Wizard: Theme (s8)
+- [x] Wizard: Twist (s9)
+- [x] Wizard: Narrator (s10) — built-in voices only (family voices later)
+- [x] Wizard: Review (s11)
+- [x] Generating (s12b) — bedtime theme, bound to job status
+- [x] Story Player (s12) — StScenePlayer transport + follow-along text with gold highlight. VERIFIED playing "The Brave Little Fox" on sim.
+- [x] End screen (s13) — bedtime theme
+- [~] Library (s11b) — list + re-listen done (StRow); re-narrate pending local story text
 
 ## Milestone 3 — Onboarding, account, parent area
-- [ ] Splash / Welcome (s1)
-- [ ] Create account (s2) — Firebase Auth
-- [ ] Add child (s3) — `users/{uid}/child` { name, ageBand }
-- [ ] Add-a-voice invite (s4) — entry to Family flow (can be soft/teaser pre-Family)
-- [ ] Parent gate (s17)
-- [ ] Parent dashboard / Settings (s18)
-- [ ] Content & safety settings (s19)
-- [ ] Account deletion wired to `deleteAccountData`
+- [x] Splash (s1) + Welcome (s2) — rebuilt, bedtime/day
+- [x] Create account / sign-in (s2) — StTextField/StButton, Firebase Auth (lifted)
+- [~] Add child (s3) — rebuilt (StSegment age band); stored in SharedPreferences, NOT Firestore yet
+- [ ] Add-a-voice invite (s4) — MISSING (only FamilyVoicesTeaser exists)
+- [~] Parent gate (s17) — uses legacy `ParentAccessScreen`; not yet on `StParentGate`
+- [x] Parent dashboard (s18) — StRow entries
+- [~] Content & safety (s19) — rebuilt but diagnostics-only; no content-filter levels
+- [x] Account deletion wired to `deleteAccountData` (lifted)
 
 ## Milestone 4 — Family voice tier (cloning)
 ### Backend (new)
@@ -138,6 +140,16 @@ codex/v2 = main + 1 commit. Audit verdict + recommended path: **keep `main` as b
 
 **codex/v2 screen coverage:** 13 full / 4 partial / 7 missing. Missing = s4 + all Family voice s20–s24 (only a `FamilyVoicesTeaserScreen` waitlist exists). Partial: s5 (no TabBar), s10 (no family voices), s12 (no follow-along text), s19 (diagnostics only, no content-safety levels).
 **codex/v2 extras not in plan:** migration service, starter stories seeding, narrator preview WAVs, favorites (isFavorite/lastPlayedAt), age gate, crashlytics opt-in.
+
+## Build / env gotchas
+- Flutter: `export PATH="$HOME/Downloads/flutter/bin:$PATH"`. Default shell node is v16 (too old for functions/vitest) → `nvm use 22` for backend.
+- iOS CocoaPods on this toolchain (Ruby 3.4): MUST `export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8` or `pod install` crashes (Encoding::CompatibilityError). Firebase pods needed a fresh resolve (`rm Podfile.lock Pods/ && pod install`). Podfile.lock committed.
+- ✅ Full app VERIFIED running on iOS sim (iPhone 17 Pro): Kid Home (s5), wizard Character (s6), Library (s11b), and Story Player (s12, dark, follow-along text + gold highlight, audio playing) all render correctly on the design system. Firebase init + routing + starter-story seeding (6 stories) work. To reach the player on sim do a CLEAN install (`simctl uninstall com.shiru.app`) first — stale audio paths otherwise (see Bugs).
+
+## Bugs / quirks found during verification (2026-06-25)
+- [ ] **Audio path breaks across reinstalls**: starter (and likely generated) story audio is stored as an ABSOLUTE path in the encrypted SQLite DB. On iOS the app container UUID changes on delete+reinstall, so old DB rows → "This story could not be played." Clean install reseeds and works. FIX: store paths RELATIVE to the documents dir and resolve at play time. Lower severity in prod (container stable across app updates), but real for testers reinstalling.
+- [ ] **Home greets "Hi MMMM!"** even with no child profile (fresh install) — placeholder/default child name leaks to the kid home. Trace `childProfileProvider` default; should gate on real profile or route to child setup.
+- Note: yoto.db is ENCRYPTED (sqflite + cipher) — can't inspect with plain `sqlite3`.
 
 ## Notes / scratch (update freely across sessions)
 - _Decision B requires `story` text on job doc — see Milestone 2 backend tasks + must-fix #1 above._
