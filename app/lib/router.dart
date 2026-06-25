@@ -17,6 +17,7 @@ import 'ui/bulk_import_screen.dart';
 import 'ui/about_screen.dart';
 import 'ui/parent_generate_story_screen.dart';
 import 'ui/video_playback_screen.dart';
+import 'ui/widgets/storytime/component_gallery_screen.dart';
 
 OnEnterResult _handleParentAreaTransition(
   WidgetRef ref,
@@ -50,6 +51,11 @@ GoRouter createRouter(WidgetRef ref) {
         _handleParentAreaTransition(ref, currentState, nextState),
     routes: [
       GoRoute(path: '/', builder: (context, state) => const KidHomeScreen()),
+      // ── Dev route (component gallery) — DO NOT ship to production ──────────
+      GoRoute(
+        path: '/dev/gallery',
+        builder: (context, state) => const ComponentGalleryScreen(),
+      ),
       GoRoute(
         path: '/video/:cardId',
         builder: (context, state) =>

@@ -16,7 +16,7 @@ import 'providers/categories_provider.dart';
 import 'router.dart';
 import 'screenshot_mode.dart';
 import 'services/screenshot_seed_service.dart';
-import 'theme/app_colors.dart';
+import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -125,10 +125,9 @@ class _ShiruAppState extends ConsumerState<ShiruApp>
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [Locale('en', '')],
-        theme: ThemeData(
-          scaffoldBackgroundColor: AppColors.background,
-          fontFamily: 'sans-serif',
-        ),
+        theme: StorytimeTheme.day,
+        darkTheme: StorytimeTheme.bedtime,
+        themeMode: ThemeMode.light,
         routerConfig: _router,
       ),
     );

@@ -1,80 +1,155 @@
 import 'package:flutter/material.dart';
 
+/// Storytime color palette.
+///
+/// Canonical source — derived from the Storytime wireframes (§4.1 of the
+/// MVP plan).  All tokens are `const Color` so they can be used in const
+/// widget constructors and decoration fields.
+///
+/// Two surface modes:
+///   • **day** — cream/paper backgrounds, ink text, ember primary action.
+///   • **bedtime** — night-gradient backgrounds, cream text, gold accents.
+///
+/// Legacy Shiru field names are preserved as aliases at the bottom of the
+/// class so that callers that haven't been re-skinned yet continue to compile
+/// without modification.
 class AppColors {
   AppColors._();
 
-  // ─── Backgrounds ─────────────────────────────────────────────────────────
-  /// Warm parchment — primary Shiru canvas
-  static const background = Color(0xFFF4F1EC);
+  // ─── Night gradient ("bedtime" mode) ──────────────────────────────────────
+  /// Deepest night — splash/player background base
+  static const night1 = Color(0xFF171228);
 
-  /// Cool gray — parent screens & pin screen
-  static const backgroundParent = Color(0xFFF6F7F8);
+  /// Mid-night — gradient midpoint
+  static const night2 = Color(0xFF2A1B3D);
 
-  /// Slightly lighter gray — muted buttons (DEL key, stop button)
-  static const backgroundMuted = Color(0xFFF3F4F6);
+  /// Warm night edge — gradient top / richer violet
+  static const night3 = Color(0xFF5B2E48);
 
-  /// Pure white — cards, inputs, surface containers
-  static const surface = Colors.white;
+  // ─── Warm accent palette ──────────────────────────────────────────────────
+  /// Warm dusk rose — secondary warm accent
+  static const dusk = Color(0xFF9C4A4A);
+
+  /// Ember orange — warm accent fills, button glow
+  static const ember = Color(0xFFE2885A);
+
+  // ─── Light surfaces ("day" mode) ──────────────────────────────────────────
+  /// Cream — primary day canvas / large surface
+  static const cream = Color(0xFFFBF6EE);
+
+  /// Paper — card and input surface, slightly cooler cream
+  static const paper = Color(0xFFFFFDF9);
 
   // ─── Text ─────────────────────────────────────────────────────────────────
-  /// Near-black — card titles, primary body text, keypad numbers
-  static const textPrimary = Color(0xFF1A1A1A);
+  /// Ink — primary body text and headings on light surfaces
+  static const ink = Color(0xFF241F2E);
 
-  /// Deep navy — Shiru wordmark and brand ink
-  static const textDark = Color(0xFF243B67);
+  /// Ink-2 — secondary / subdued text
+  static const ink2 = Color(0xFF5C5566);
 
-  /// Medium gray — subtitles, button labels, empty-state text hint
-  static const textSecondary = Color(0xFF6B7280);
+  /// Ink-3 — tertiary / placeholder / caption text
+  static const ink3 = Color(0xFFA49CB2);
 
-  /// Slightly darker gray — voice section labels, back button icon
-  static const textMuted = Color(0xFF374151);
+  // ─── CTA gradient endpoints ───────────────────────────────────────────────
+  /// Accent — ember CTA gradient start (warm orange)
+  static const accent = Color(0xFFE08A5B);
 
-  /// Light gray — placeholder / hint text
-  static const textHint = Color(0xFF9CA3AF);
+  /// Accent-2 — ember CTA gradient end (deep terracotta)
+  static const accent2 = Color(0xFFC9685A);
 
-  /// Very light gray — PIN empty dots, disabled states
-  static const textDisabled = Color(0xFFD1D5DB);
+  // ─── Highlight / "voice" moments ──────────────────────────────────────────
+  /// Gold — follow-along word highlight, voice-moments accent
+  static const gold = Color(0xFFE9B873);
 
-  // ─── Brand / Actions ──────────────────────────────────────────────────────
-  /// Green — primary action (save, active tab, "Now Playing")
-  static const primary = Color(0xFF22C55E);
-  static const primaryDark = Color(0xFF16A34A);
+  // ─── Borders & dividers ───────────────────────────────────────────────────
+  /// Line — standard border / divider on light surfaces
+  static const line = Color(0xFFEBE2D4);
 
-  /// Darker green for filled controls with light text (WCAG AA contrast).
-  static const primaryStrong = Color(0xFF15803D);
+  /// Line-2 — slightly stronger divider
+  static const line2 = Color(0xFFDDD2C2);
 
-  /// Deep green for text and icons on pale green surfaces.
-  static const primaryInk = Color(0xFF166534);
-  static const primaryLight = Color(0xFF4ADE80);
-  static const primaryShadow = Color(0x4022C55E);
+  // ─── Semantic aliases (used in day ThemeData & existing screens) ──────────
+  /// Primary day background (= cream)
+  static const background = cream;
 
-  /// Red — destructive actions only (delete, error borders, playing card glow)
+  /// Parent / admin screen background (= paper)
+  static const backgroundParent = paper;
+
+  /// Muted background for disabled / subtle fills
+  static const backgroundMuted = Color(0xFFF3EEE7);
+
+  /// Card and input surface (= paper)
+  static const surface = paper;
+
+  /// Primary text on light surface (= ink)
+  static const textPrimary = ink;
+
+  /// Deep brand ink — wordmark and brand elements (= night2)
+  static const textDark = night2;
+
+  /// Secondary text (= ink2)
+  static const textSecondary = ink2;
+
+  /// Muted text — slightly darker than secondary (= ink2)
+  static const textMuted = ink2;
+
+  /// Hint / placeholder text (= ink3)
+  static const textHint = ink3;
+
+  /// Disabled text / empty-dot color
+  static const textDisabled = line2;
+
+  // ─── Primary action (ember) ───────────────────────────────────────────────
+  /// Primary action — ember (= accent)
+  static const primary = accent;
+
+  /// Darker primary for pressed / dark-surface treatment (= accent2)
+  static const primaryDark = accent2;
+
+  /// Strong primary for filled controls needing WCAG AA contrast (= accent2)
+  static const primaryStrong = accent2;
+
+  /// Deep primary for text/icon on pale surfaces (= dusk)
+  static const primaryInk = dusk;
+
+  /// Light primary tint
+  static const primaryLight = Color(0xFFF0C09A);
+
+  /// Primary shadow — ember glow at 40% opacity
+  static const primaryShadow = Color(0x66E08A5B);
+
+  // ─── Destructive ──────────────────────────────────────────────────────────
+  /// Destructive action — warm red (unchanged from Shiru; no Storytime token)
   static const destructive = Color(0xFFFF6B6B);
 
-  /// Accessible destructive foreground for pale surfaces and text actions.
+  /// Accessible destructive foreground on pale surfaces
   static const destructiveDark = Color(0xFFB91C1C);
+
+  /// Destructive shadow
   static const destructiveShadow = Color(0x40FF6B6B);
 
-  /// Purple — story builder accent
-  static const accent = Color(0xFF8B5CF6);
-  static const accentDark = Color(0xFF6D28D9);
-  static const accentShadow = Color(0x408B5CF6);
+  // ─── Legacy accent aliases (Shiru purple → Storytime ember) ───────────────
+  /// Legacy story-builder accent — mapped to ember for re-skin continuity
+  static const accentDark = accent2;
 
-  // ─── Borders & Dividers ───────────────────────────────────────────────────
-  /// Standard input / container border
-  static const border = Color(0xFFE5E7EB);
+  /// Legacy accent shadow — ember shadow
+  static const accentShadow = Color(0x66E08A5B);
 
-  /// Slightly darker border — outlined secondary buttons, PIN empty dots
-  static const borderMuted = Color(0xFFD1D5DB);
+  // ─── Borders & surfaces (semantic) ────────────────────────────────────────
+  /// Standard border (= line)
+  static const border = line;
 
-  // ─── Misc ─────────────────────────────────────────────────────────────────
-  /// Progress bar track background, inactive step dots
-  static const progressTrack = Color(0xFFE5E7EB);
+  /// Slightly stronger border (= line2)
+  static const borderMuted = line2;
 
-  // ─── Brand ───────────────────────────────────────────────────────────────
-  /// Soft sky — header icon backdrop
-  static const logoSurface = Color(0xFFD8E9FF);
+  // ─── Progress ─────────────────────────────────────────────────────────────
+  /// Progress track background
+  static const progressTrack = line;
 
-  /// Mint highlight — secondary Shiru brand accent
-  static const logoMint = Color(0xFFBFF7E8);
+  // ─── Legacy brand surface aliases ─────────────────────────────────────────
+  /// Header icon backdrop — remapped to a warm cream tint
+  static const logoSurface = Color(0xFFFAEDD8);
+
+  /// Secondary brand accent — remapped to gold
+  static const logoMint = gold;
 }
