@@ -10,7 +10,7 @@
 - Design direction = attached Storytime wireframes + landing (re-skin off legacy Shiru).
 - Backend foundation = existing `functions/` dir (from codex/v2); extend, don't rewrite.
 
-**Current focus:** Branch `feature/storytime-mvp`, 5 commits (docs, M1 design, backend lift, Phase 1 baseline, Phase 2 screen rebuild). ✅ M1 design system. ✅ codex/v2 audited + backend lifted (must-fixes applied; tests 4/4 with `nvm use 22`). ✅ Phase 1 baseline (codex/v2 app lifted, design system preserved). ✅ Phase 2: ALL Storytime screens rebuilt on `St*` components, day/bedtime theme wired, legacy `storytime_theme.dart` deleted, portrait locked. `flutter analyze` 0 errors. iOS build needed `pod repo update` (new firebase pods) — done. ✅ Follow-along player DONE + verified on sim (story text persisted, gold highlight). ▶ NEXT candidates: (1) audio-path-relative fix (stale paths across reinstall — see Bugs); (2) "Hi MMMM!" placeholder child-name bug; (3) child profile → Firestore; (4) parent gate on StParentGate; (5) home TabBar; (6) content-safety levels; (7) re-narrate flow; then M4 Family voice tier. flutter at `$HOME/Downloads/flutter/bin`; iOS pods need `LANG=en_US.UTF-8`.
+**Current focus:** Branch `feature/storytime-mvp`, 5 commits (docs, M1 design, backend lift, Phase 1 baseline, Phase 2 screen rebuild). ✅ M1 design system. ✅ codex/v2 audited + backend lifted (must-fixes applied; tests 4/4 with `nvm use 22`). ✅ Phase 1 baseline (codex/v2 app lifted, design system preserved). ✅ Phase 2: ALL Storytime screens rebuilt on `St*` components, day/bedtime theme wired, legacy `storytime_theme.dart` deleted, portrait locked. `flutter analyze` 0 errors. iOS build needed `pod repo update` (new firebase pods) — done. ✅ Follow-along player DONE + verified on sim (story text persisted, gold highlight). ▶ NEXT candidates: (1) audio-path-relative fix (stale paths across reinstall — see Bugs, the one real bug found); (2) verify onboarding flow signed-out; (3) child profile → Firestore; (4) parent gate on StParentGate; (5) home TabBar; (6) content-safety levels; (7) re-narrate flow; then M4 Family voice tier. flutter at `$HOME/Downloads/flutter/bin`; iOS pods need `LANG=en_US.UTF-8`.
 
 ---
 
@@ -148,8 +148,9 @@ codex/v2 = main + 1 commit. Audit verdict + recommended path: **keep `main` as b
 
 ## Bugs / quirks found during verification (2026-06-25)
 - [ ] **Audio path breaks across reinstalls**: starter (and likely generated) story audio is stored as an ABSOLUTE path in the encrypted SQLite DB. On iOS the app container UUID changes on delete+reinstall, so old DB rows → "This story could not be played." Clean install reseeds and works. FIX: store paths RELATIVE to the documents dir and resolve at play time. Lower severity in prod (container stable across app updates), but real for testers reinstalling.
-- [ ] **Home greets "Hi MMMM!"** even with no child profile (fresh install) — placeholder/default child name leaks to the kid home. Trace `childProfileProvider` default; should gate on real profile or route to child setup.
+- ~~Home greets "Hi MMMM!"~~ NOT a bug. `KeyValueStore` = `flutter_secure_storage` (keychain) and Firebase Auth both persist in the iOS keychain, which survives `simctl uninstall`. "MMMM" is leftover test data from a prior child-setup. Launch routing IS correct (null user→/welcome, null child→/child-setup). To actually test onboarding: sign out (parent → account) or wipe keychain. (Code even has a comment re: stale keychain entries across reinstalls — `key_value_store.dart:35`.)
 - Note: yoto.db is ENCRYPTED (sqflite + cipher) — can't inspect with plain `sqlite3`.
+- ⚠️ Onboarding flow (welcome→auth→child-setup) NOT yet exercised live — blocked by persisted test account. Verify with a signed-out state next session.
 
 ## Notes / scratch (update freely across sessions)
 - _Decision B requires `story` text on job doc — see Milestone 2 backend tasks + must-fix #1 above._
