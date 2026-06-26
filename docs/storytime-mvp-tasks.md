@@ -10,7 +10,7 @@
 - Design direction = attached Storytime wireframes + landing (re-skin off legacy Shiru).
 - Backend foundation = existing `functions/` dir (from codex/v2); extend, don't rewrite.
 
-**Current focus:** Branch `feature/storytime-mvp`, 5 commits (docs, M1 design, backend lift, Phase 1 baseline, Phase 2 screen rebuild). ✅ M1 design system. ✅ codex/v2 audited + backend lifted (must-fixes applied; tests 4/4 with `nvm use 22`). ✅ Phase 1 baseline (codex/v2 app lifted, design system preserved). ✅ Phase 2: ALL Storytime screens rebuilt on `St*` components, day/bedtime theme wired, legacy `storytime_theme.dart` deleted, portrait locked. `flutter analyze` 0 errors. iOS build needed `pod repo update` (new firebase pods) — done. ✅ Follow-along player + audio-path fix + parent-gate re-skin all DONE + verified on sim. Whole app now on the design system (no legacy-grey holdouts in the live flow). ▶ NEXT candidates: (1) verify onboarding flow signed-out; (2) child profile → Firestore; (3) content & safety settings (NEEDS product def — see M3); (4) re-narrate flow (needs backend path); then M4 Family voice tier (testing-only build OK; legal review §7 before public). Home TabBar + StParentGate swap were re-checked and are NOT needed (see M2/M3 notes). flutter at `$HOME/Downloads/flutter/bin`; iOS pods need `LANG=en_US.UTF-8`.
+**Current focus:** Branch `feature/storytime-mvp`, 5 commits (docs, M1 design, backend lift, Phase 1 baseline, Phase 2 screen rebuild). ✅ M1 design system. ✅ codex/v2 audited + backend lifted (must-fixes applied; tests 4/4 with `nvm use 22`). ✅ Phase 1 baseline (codex/v2 app lifted, design system preserved). ✅ Phase 2: ALL Storytime screens rebuilt on `St*` components, day/bedtime theme wired, legacy `storytime_theme.dart` deleted, portrait locked. `flutter analyze` 0 errors. iOS build needed `pod repo update` (new firebase pods) — done. ✅ Follow-along player + audio-path fix + parent-gate re-skin all DONE + verified on sim. Whole app now on the design system (no legacy-grey holdouts in the live flow). ▶ NEXT candidates: (1) verify onboarding flow signed-out; (2) child profile → Firestore; (3) content & safety settings (NEEDS product def — see M3); (4) re-narrate flow (needs backend path); then M4 Family voice tier (testing-only build OK; legal review §7 before public). Home TabBar + StParentGate swap were re-checked and are NOT needed (see M2/M3 notes). flutter at `$HOME/Downloads/flutter/bin`; iOS pods need `LANG=en_US.UTF-8`. ✅ **M4 Family voice tier implemented** (backend 8/8 tests + lint clean; 6 screens + picker, analyze 0 errors; `firebase_storage` pod added, app boots healthy on sim). ▶ M4 e2e clone loop is UNVERIFIED — blocked only on a `firebase deploy --only functions` + App Check sim token (user-gated: cost + prod). NEXT: deploy functions to verify clone e2e, OR M5 hardening / content-safety product def. NOTE: launched standalone debug builds via `simctl install` HANG on the launch storyboard — must use `flutter run` to attach the Dart VM.
 
 ---
 
@@ -98,22 +98,28 @@
 - **ElevenLabs API (verified 2026-06-26):** add = `POST /v1/voices/add`, multipart/form-data, fields `files` (audio), `name`, optional `description`/`labels`/`remove_background_noise`; response `{ voice_id, requires_verification }`. Delete = `DELETE /v1/voices/{voice_id}`. Header `xi-api-key` (reuse `ELEVENLABS_API_KEY` secret).
 - **Testing posture:** live ElevenLabs in manual e2e; mocked in unit tests.
 
-### Backend (new)
-- [ ] `createVoiceConsent` — store consent (who, when, relationship, living?) — gate everything on it
-- [ ] `startVoiceCapture` / upload intake — guided 5-line capture or ~1min clip → Storage under user prefix
-- [ ] `processVoiceClone` (trigger) — call ElevenLabs voice-add → store `providerVoiceId` on `users/{uid}/voices/{id}`, status ready
-- [ ] `deleteVoice` — delete ElevenLabs voice + samples + doc (must be real, not a hide)
-- [ ] Extend `synthesize()` to resolve family `narratorKey` → `providerVoiceId`
-- [ ] `entitlement` flag check (free-on during testing) gating clone + family-voice narration
-- [ ] Ensure `deleteAccountData` purges ElevenLabs voices + voice samples
-### Screens
-- [ ] Voices list (s20)
-- [ ] Consent (s21)
-- [ ] Upload a clip (s21u)
-- [ ] Capture intro (s23)
-- [ ] Guided capture (s24) — 5 prompted lines, tones
-- [ ] Voice ready (s22)
-- [ ] Family voices appear in narrator picker (s10) alongside built-ins
+### Backend (new) — ✅ implemented (commit `feat(M4) backend`); lint clean, 8/8 tests
+- [x] `createVoiceConsent` — store consent (who, when, relationship, living?) — gate everything on it
+- [x] `submitVoiceClone` intake — validates consent+samples+entitlement → status `queued` (samples uploaded client-side to Storage)
+- [x] `processVoiceClone` (`onDocumentUpdated` trigger) — ElevenLabs voice-add → `providerVoiceId` (written BEFORE `ready`); idempotent; failed-path
+- [x] `deleteVoice` — DELETE ElevenLabs voice + Storage samples + doc (real)
+- [x] Extend `synthesize()` to resolve family `narratorKey` → `providerVoiceId` (lookup, uid from event)
+- [x] `entitlement` flag check (`storytimeConfig/familyVoice.enabled`, default-on) gating clone + family-voice narration
+- [x] `deleteAccountData` purges ElevenLabs voices + voice samples
+### Screens — ✅ implemented (commit `feat(M4) screens`); `flutter analyze` 0 errors
+- [x] Voices list (s20) — `FamilyVoicesScreen` (replaces waitlist teaser)
+- [x] Consent (s21) — `VoiceConsentScreen`
+- [x] Upload a clip (s21u) — `VoiceUploadScreen`
+- [x] Capture intro (s23) — `VoiceCaptureIntroScreen`
+- [x] Guided capture (s24) — `GuidedCaptureScreen`, 5 prompted tones
+- [x] Voice ready (s22) — `VoiceReadyScreen` (live status subscription)
+- [x] Family voices appear in narrator picker (s10) alongside built-ins (`StoryDraft.familyVoiceId` → `family:<id>`)
+
+**M4 verification status (2026-06-26):**
+- ✅ Static: backend lint + 8 unit tests; `flutter analyze` 0 errors. App **boots healthy on sim with new `firebase_storage` pod** (home renders; the firebase_storage native-dep integration was the main risk and it's clear).
+- ⏳ NOT yet verified e2e: the consent→capture→clone→family-narration loop. **Blocked on a Cloud Functions deploy** (the callables don't exist server-side until deployed; deploy = ElevenLabs cost + prod change → user-gated) **and** a registered App Check debug token for the sim. No code blocker — purely a deploy/credential step.
+- 🐛 Fixed during integration: (1) ElevenLabs sample upload used `buffer.buffer` (pooled-ArrayBuffer over-read) → tight `Uint8Array` copy. (2) `StoryJob.narratorKey` was non-null `byName` → would **crash the job read** for `family:<id>` jobs → made nullable + safe-parse.
+- 🧹 Follow-up: dead `FamilyVoicesTeaserScreen` class + `joinFamilyVoiceWaitlist` callable/repo method are now unrouted; remove once the live flow is confirmed.
 
 ## Milestone 5 — Hardening
 - [ ] Firestore + Storage security rules (user-scoped; server-written status fields)
