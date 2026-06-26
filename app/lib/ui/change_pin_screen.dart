@@ -7,6 +7,10 @@ import '../providers/pin_provider.dart';
 import '../services/analytics_service.dart';
 import '../services/key_value_store.dart';
 import '../theme/app_responsive.dart';
+import '../theme/app_theme.dart';
+import '../theme/app_typography.dart';
+import '../theme/app_shadows.dart';
+import '../theme/app_radius.dart';
 
 const _kFailedAttemptsKey = 'pin_failed_attempts';
 const _kLockUntilKey = 'pin_lock_until';
@@ -207,32 +211,32 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
     final pinAsync = ref.watch(pinProvider);
     final isPortrait = AppResponsive.isPortrait(context);
     final horizontalPadding = AppResponsive.basePadding(context);
     final verticalPadding = AppResponsive.spacing(context, 16);
 
     return pinAsync.when(
-      loading: () => const Scaffold(
-        backgroundColor: Color(0xFFF6F7F8),
-        body: Center(child: CircularProgressIndicator()),
+      loading: () => Scaffold(
+        backgroundColor: tokens.cream,
+        body: Center(
+          child: CircularProgressIndicator(color: tokens.ember),
+        ),
       ),
       error: (err, _) => Scaffold(
-        backgroundColor: Color(0xFFF6F7F8),
+        backgroundColor: tokens.cream,
         body: Center(
           child: Text(
             'Something went wrong loading your PIN.',
-            style: TextStyle(
-              fontSize: AppResponsive.fontSize(context, 20),
-              color: const Color(0xFF1A1A1A),
-            ),
+            style: AppTypography.bodySmall.copyWith(color: tokens.ink),
           ),
         ),
       ),
       data: (currentPin) {
         if (currentPin == null) {
           return Scaffold(
-            backgroundColor: const Color(0xFFF6F7F8),
+            backgroundColor: tokens.cream,
             body: Center(
               child: Padding(
                 padding: EdgeInsets.all(AppResponsive.basePadding(context)),
@@ -241,10 +245,8 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
                   children: [
                     Text(
                       'Set up a parent PIN first.',
-                      style: TextStyle(
-                        fontSize: AppResponsive.fontSize(context, 24),
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF1A1A1A),
+                      style: AppTypography.headlineMedium.copyWith(
+                        color: tokens.ink,
                       ),
                     ),
                     SizedBox(height: AppResponsive.spacing(context, 16)),
@@ -260,7 +262,7 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
         }
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF6F7F8),
+          backgroundColor: tokens.cream,
           body: SafeArea(
             child: isPortrait
                 ? LayoutBuilder(
@@ -283,26 +285,21 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
                                 AppResponsive.spacing(context, 24),
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(28),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Color(0x120F172A),
-                                    blurRadius: 24,
-                                    offset: Offset(0, 12),
-                                  ),
-                                ],
+                                color: tokens.paper,
+                                borderRadius: AppRadius.sheet,
+                                boxShadow: AppShadows.elevated,
                               ),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  _buildStepIntro(context),
+                                  _buildStepIntro(context, tokens),
                                   SizedBox(
                                     height: AppResponsive.spacing(context, 24),
                                   ),
                                   Center(
-                                    child: _buildKeypad(currentPin, context),
+                                    child: _buildKeypad(
+                                        currentPin, context, tokens),
                                   ),
                                 ],
                               ),
@@ -320,7 +317,7 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
                             horizontal: horizontalPadding,
                             vertical: verticalPadding,
                           ),
-                          child: _buildStepIntro(context),
+                          child: _buildStepIntro(context, tokens),
                         ),
                       ),
                       Padding(
@@ -328,7 +325,7 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
                           horizontal: horizontalPadding,
                           vertical: verticalPadding,
                         ),
-                        child: _buildKeypad(currentPin, context),
+                        child: _buildKeypad(currentPin, context, tokens),
                       ),
                     ],
                   ),
@@ -338,7 +335,7 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
     );
   }
 
-  Widget _buildStepIntro(BuildContext context) {
+  Widget _buildStepIntro(BuildContext context, StorytimeTokens tokens) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -349,29 +346,27 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
             icon: Icon(
               Icons.arrow_back_ios_new,
               size: AppResponsive.iconSize(context, 28),
+              color: tokens.ink2,
             ),
             onPressed: () => context.pop(),
-            color: const Color(0xFF1A1A1A),
           ),
         ),
-        SizedBox(height: AppResponsive.spacing(context, 24)),
+        SizedBox(height: AppResponsive.spacing(context, 12)),
+        Text(
+          'CHANGE PIN',
+          style: tokens.eyebrow.copyWith(color: tokens.accent2),
+        ),
+        SizedBox(height: AppResponsive.spacing(context, 8)),
         Text(
           _title,
           textAlign: TextAlign.left,
-          style: TextStyle(
-            fontSize: AppResponsive.fontSize(context, 28),
-            fontWeight: FontWeight.w800,
-            color: const Color(0xFF1A1A1A),
-          ),
+          style: AppTypography.displayMedium.copyWith(color: tokens.ink),
         ),
         SizedBox(height: AppResponsive.spacing(context, 8)),
         Text(
           _stepSubtitle,
           textAlign: TextAlign.left,
-          style: TextStyle(
-            fontSize: AppResponsive.fontSize(context, 18),
-            color: const Color(0xFF6B7280),
-          ),
+          style: AppTypography.bodySmall.copyWith(color: tokens.ink2),
         ),
         SizedBox(height: AppResponsive.spacing(context, 32)),
         Row(
@@ -382,15 +377,13 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
               label:
                   'PIN digit ${index + 1} of 4, ${filled ? "entered" : "empty"}',
               child: Container(
-                margin: EdgeInsets.symmetric(
-                  horizontal: AppResponsive.spacing(context, 10),
+                margin: EdgeInsets.only(
+                  right: AppResponsive.spacing(context, 12),
                 ),
                 width: AppResponsive.spacing(context, 20),
                 height: AppResponsive.spacing(context, 20),
                 decoration: BoxDecoration(
-                  color: filled
-                      ? const Color(0xFF1A1A1A)
-                      : const Color(0xFFD1D5DB),
+                  color: filled ? tokens.ember : tokens.line2,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -401,7 +394,8 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
     );
   }
 
-  Widget _buildKeypad(String currentPin, BuildContext context) {
+  Widget _buildKeypad(
+      String currentPin, BuildContext context, StorytimeTokens tokens) {
     final keySize = AppResponsive.isPortrait(context)
         ? AppResponsive.buttonSize(context) + AppResponsive.spacing(context, 16)
         : AppResponsive.buttonSize(context);
@@ -415,17 +409,13 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
             Icon(
               Icons.lock_clock,
               size: AppResponsive.iconSize(context, 48),
-              color: const Color(0xFF9CA3AF),
+              color: tokens.ink3,
             ),
             SizedBox(height: AppResponsive.spacing(context, 16)),
             Text(
               'Too many attempts.\nTry again in ${_secondsRemaining}s.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: AppResponsive.fontSize(context, 18),
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF6B7280),
-              ),
+              style: AppTypography.titleMedium.copyWith(color: tokens.ink2),
             ),
           ],
         ),
@@ -434,18 +424,19 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _buildKeyRow(['1', '2', '3'], currentPin, keySize),
+        _buildKeyRow(['1', '2', '3'], currentPin, keySize, tokens),
         SizedBox(height: AppResponsive.spacing(context, 16)),
-        _buildKeyRow(['4', '5', '6'], currentPin, keySize),
+        _buildKeyRow(['4', '5', '6'], currentPin, keySize, tokens),
         SizedBox(height: AppResponsive.spacing(context, 16)),
-        _buildKeyRow(['7', '8', '9'], currentPin, keySize),
+        _buildKeyRow(['7', '8', '9'], currentPin, keySize, tokens),
         SizedBox(height: AppResponsive.spacing(context, 16)),
-        _buildKeyRow(['', '0', 'DEL'], currentPin, keySize),
+        _buildKeyRow(['', '0', 'DEL'], currentPin, keySize, tokens),
       ],
     );
   }
 
-  Widget _buildKeyRow(List<String> keys, String currentPin, double keySize) {
+  Widget _buildKeyRow(List<String> keys, String currentPin, double keySize,
+      StorytimeTokens tokens) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: keys.map((k) {
@@ -464,42 +455,23 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
               child: Container(
                 width: keySize,
                 height: keySize,
-                decoration: k == 'DEL'
-                    ? const BoxDecoration(
-                        color: Color(0xFFF3F4F6),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 12,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      )
-                    : const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 12,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
+                decoration: BoxDecoration(
+                  color: k == 'DEL' ? tokens.cream : tokens.paper,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: tokens.line, width: 1),
+                  boxShadow: AppShadows.card,
+                ),
                 alignment: Alignment.center,
                 child: k == 'DEL'
                     ? Icon(
                         Icons.backspace_rounded,
                         size: AppResponsive.iconSize(context, 28),
-                        color: const Color(0xFF9CA3AF),
+                        color: tokens.ink2,
                       )
                     : Text(
                         k,
-                        style: TextStyle(
-                          fontSize: AppResponsive.fontSize(context, 28),
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF1A1A1A),
+                        style: AppTypography.keypadDigit.copyWith(
+                          color: tokens.ink,
                         ),
                       ),
               ),

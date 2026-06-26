@@ -10,6 +10,10 @@ import '../providers/pin_provider.dart';
 import '../services/analytics_service.dart';
 import '../services/key_value_store.dart';
 import '../theme/app_responsive.dart';
+import '../theme/app_theme.dart';
+import '../theme/app_typography.dart';
+import '../theme/app_shadows.dart';
+import '../theme/app_radius.dart';
 
 const _kFailedAttemptsKey = 'pin_failed_attempts';
 const _kLockUntilKey = 'pin_lock_until';
@@ -228,30 +232,32 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
     final pinAsync = ref.watch(pinProvider);
     final isPortrait = AppResponsive.isPortrait(context);
     final horizontalPadding = AppResponsive.basePadding(context);
     final verticalPadding = AppResponsive.spacing(context, 16);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7F8),
+      backgroundColor: tokens.cream,
       body: SafeArea(
         child: pinAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => Center(
+            child: CircularProgressIndicator(color: tokens.ember),
+          ),
           error: (err, _) => Center(
             child: Text(
               'Something went wrong loading your PIN.',
-              style: TextStyle(
-                color: Colors.red,
-                fontSize: AppResponsive.fontSize(context, 16),
+              style: AppTypography.bodySmall.copyWith(
+                color: Theme.of(context).colorScheme.error,
               ),
             ),
           ),
           data: (savedPin) {
             _syncStepWithSavedPin(savedPin);
 
-            final intro = _buildIntro(savedPin, context);
-            final keypad = _buildKeypad(savedPin, context);
+            final intro = _buildIntro(savedPin, context, tokens);
+            final keypad = _buildKeypad(savedPin, context, tokens);
 
             if (isPortrait) {
               return LayoutBuilder(
@@ -273,15 +279,9 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
                             AppResponsive.spacing(context, 24),
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(28),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x120F172A),
-                                blurRadius: 24,
-                                offset: Offset(0, 12),
-                              ),
-                            ],
+                            color: tokens.paper,
+                            borderRadius: AppRadius.sheet,
+                            boxShadow: AppShadows.elevated,
                           ),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
@@ -328,7 +328,8 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
     );
   }
 
-  Widget _buildIntro(String? savedPin, BuildContext context) {
+  Widget _buildIntro(
+      String? savedPin, BuildContext context, StorytimeTokens tokens) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -337,26 +338,26 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
           icon: Icon(
             Icons.arrow_back_ios_new,
             size: AppResponsive.iconSize(context, 28),
+            color: tokens.ink2,
           ),
           onPressed: () => context.go('/'),
           padding: EdgeInsets.zero,
           alignment: Alignment.centerLeft,
         ),
-        SizedBox(height: AppResponsive.spacing(context, 16)),
+        SizedBox(height: AppResponsive.spacing(context, 8)),
+        Text(
+          'GROWN-UPS ONLY',
+          style: tokens.eyebrow.copyWith(color: tokens.accent2),
+        ),
+        SizedBox(height: AppResponsive.spacing(context, 8)),
         Text(
           _title(savedPin),
-          style: TextStyle(
-            fontSize: AppResponsive.fontSize(context, 28),
-            fontWeight: FontWeight.w800,
-          ),
+          style: AppTypography.displayMedium.copyWith(color: tokens.ink),
         ),
         SizedBox(height: AppResponsive.spacing(context, 8)),
         Text(
           _subtitle(savedPin),
-          style: TextStyle(
-            fontSize: AppResponsive.fontSize(context, 16),
-            color: const Color(0xFF6B7280),
-          ),
+          style: AppTypography.bodySmall.copyWith(color: tokens.ink2),
         ),
         SizedBox(height: AppResponsive.spacing(context, 24)),
         Row(
@@ -367,15 +368,13 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
               label:
                   'PIN digit ${index + 1} of 4, ${filled ? "entered" : "empty"}',
               child: Container(
-                margin: EdgeInsets.symmetric(
-                  horizontal: AppResponsive.spacing(context, 10),
+                margin: EdgeInsets.only(
+                  right: AppResponsive.spacing(context, 12),
                 ),
                 width: AppResponsive.spacing(context, 20),
                 height: AppResponsive.spacing(context, 20),
                 decoration: BoxDecoration(
-                  color: filled
-                      ? const Color(0xFF1A1A1A)
-                      : const Color(0xFFD1D5DB),
+                  color: filled ? tokens.ember : tokens.line2,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -386,7 +385,8 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
     );
   }
 
-  Widget _buildKeypad(String? savedPin, BuildContext context) {
+  Widget _buildKeypad(
+      String? savedPin, BuildContext context, StorytimeTokens tokens) {
     final keySize = AppResponsive.isPortrait(context)
         ? AppResponsive.buttonSize(context) + AppResponsive.spacing(context, 16)
         : AppResponsive.buttonSize(context);
@@ -401,17 +401,13 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
             Icon(
               Icons.lock_clock,
               size: AppResponsive.iconSize(context, 48),
-              color: const Color(0xFF9CA3AF),
+              color: tokens.ink3,
             ),
             SizedBox(height: AppResponsive.spacing(context, 16)),
             Text(
               'Too many attempts.\nTry again in ${_secondsRemaining}s.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: AppResponsive.fontSize(context, 18),
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF6B7280),
-              ),
+              style: AppTypography.titleMedium.copyWith(color: tokens.ink2),
             ),
           ],
         ),
@@ -421,18 +417,19 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _buildKeyRow(['1', '2', '3'], savedPin, keySize),
+        _buildKeyRow(['1', '2', '3'], savedPin, keySize, tokens),
         SizedBox(height: AppResponsive.spacing(context, 16)),
-        _buildKeyRow(['4', '5', '6'], savedPin, keySize),
+        _buildKeyRow(['4', '5', '6'], savedPin, keySize, tokens),
         SizedBox(height: AppResponsive.spacing(context, 16)),
-        _buildKeyRow(['7', '8', '9'], savedPin, keySize),
+        _buildKeyRow(['7', '8', '9'], savedPin, keySize, tokens),
         SizedBox(height: AppResponsive.spacing(context, 16)),
-        _buildKeyRow(['', '0', 'DEL'], savedPin, keySize),
+        _buildKeyRow(['', '0', 'DEL'], savedPin, keySize, tokens),
       ],
     );
   }
 
-  Widget _buildKeyRow(List<String> keys, String? savedPin, double keySize) {
+  Widget _buildKeyRow(List<String> keys, String? savedPin, double keySize,
+      StorytimeTokens tokens) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: keys.map((key) {
@@ -452,42 +449,23 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
               child: Container(
                 width: keySize,
                 height: keySize,
-                decoration: key == 'DEL'
-                    ? const BoxDecoration(
-                        color: Color(0xFFF3F4F6),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 12,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      )
-                    : const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 12,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
+                decoration: BoxDecoration(
+                  color: key == 'DEL' ? tokens.cream : tokens.paper,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: tokens.line, width: 1),
+                  boxShadow: AppShadows.card,
+                ),
                 alignment: Alignment.center,
                 child: key == 'DEL'
                     ? Icon(
                         Icons.backspace_rounded,
                         size: AppResponsive.iconSize(context, 28),
-                        color: const Color(0xFF9CA3AF),
+                        color: tokens.ink2,
                       )
                     : Text(
                         key,
-                        style: TextStyle(
-                          fontSize: AppResponsive.fontSize(context, 28),
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF1A1A1A),
+                        style: AppTypography.keypadDigit.copyWith(
+                          color: tokens.ink,
                         ),
                       ),
               ),

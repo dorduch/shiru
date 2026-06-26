@@ -8,6 +8,11 @@ import 'package:intl/intl.dart';
 import '../logic/age_gate_logic.dart';
 import '../providers/adult_gate_provider.dart';
 import '../theme/app_responsive.dart';
+import '../theme/app_theme.dart';
+import '../theme/app_typography.dart';
+import '../theme/app_shadows.dart';
+import '../theme/app_radius.dart';
+import 'widgets/storytime/storytime.dart';
 
 class AgeGateScreen extends ConsumerStatefulWidget {
   final String nextLocation;
@@ -128,13 +133,14 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
     final selectedBirthDate = _selectedBirthDate;
     final inCooldown = _isInCooldown;
     final secondsLeft = _cooldownSecondsLeft;
     final basePadding = AppResponsive.basePadding(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7F8),
+      backgroundColor: tokens.cream,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Center(
@@ -145,15 +151,9 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
                 child: Container(
                   padding: EdgeInsets.all(AppResponsive.spacing(context, 28)),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(28),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x120F172A),
-                        blurRadius: 24,
-                        offset: Offset(0, 12),
-                      ),
-                    ],
+                    color: tokens.paper,
+                    borderRadius: AppRadius.sheet,
+                    boxShadow: AppShadows.elevated,
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -165,28 +165,31 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
                           icon: Icon(
                             Icons.arrow_back_ios_new,
                             size: AppResponsive.iconSize(context, 28),
+                            color: tokens.ink2,
                           ),
                           onPressed: _isSubmitting
                               ? null
                               : () => context.go('/'),
                         ),
                       ),
+                      SizedBox(height: AppResponsive.spacing(context, 4)),
+                      Text(
+                        'GROWN-UPS ONLY',
+                        style: tokens.eyebrow.copyWith(color: tokens.accent2),
+                      ),
                       SizedBox(height: AppResponsive.spacing(context, 8)),
                       Text(
                         'Grown-ups only for this part',
-                        style: TextStyle(
-                          fontSize: AppResponsive.fontSize(context, 30),
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF111827),
+                        style: AppTypography.displayMedium.copyWith(
+                          color: tokens.ink,
                         ),
                       ),
                       SizedBox(height: AppResponsive.spacing(context, 12)),
                       Text(
                         'This is where you set things up for your child. A quick birthday check keeps it for grown-ups only.',
-                        style: TextStyle(
-                          fontSize: AppResponsive.fontSize(context, 17),
+                        style: AppTypography.bodySmall.copyWith(
+                          color: tokens.ink2,
                           height: 1.45,
-                          color: const Color(0xFF6B7280),
                         ),
                       ),
                       SizedBox(height: AppResponsive.spacing(context, 24)),
@@ -200,17 +203,15 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
                               vertical: AppResponsive.spacing(context, 20),
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF9FAFB),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: const Color(0xFFE5E7EB),
-                              ),
+                              color: tokens.cream,
+                              borderRadius: AppRadius.medium,
+                              border: Border.all(color: tokens.line),
                             ),
                             child: Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.calendar_month_outlined,
-                                  color: Color(0xFF6B7280),
+                                  color: tokens.ink2,
                                 ),
                                 SizedBox(
                                   width: AppResponsive.spacing(context, 12),
@@ -222,22 +223,17 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
                                         : DateFormat.yMMMMd().format(
                                             selectedBirthDate,
                                           ),
-                                    style: TextStyle(
-                                      fontSize: AppResponsive.fontSize(
-                                        context,
-                                        18,
-                                      ),
-                                      fontWeight: FontWeight.w600,
+                                    style: AppTypography.titleMedium.copyWith(
                                       color: selectedBirthDate == null
-                                          ? const Color(0xFF9CA3AF)
-                                          : const Color(0xFF111827),
+                                          ? tokens.ink3
+                                          : tokens.ink,
                                     ),
                                   ),
                                 ),
                                 Icon(
                                   Icons.arrow_forward_ios,
                                   size: AppResponsive.iconSize(context, 18),
-                                  color: const Color(0xFF9CA3AF),
+                                  color: tokens.ink3,
                                 ),
                               ],
                             ),
@@ -248,55 +244,48 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
                         SizedBox(height: AppResponsive.spacing(context, 16)),
                         Text(
                           'Too many attempts. Try again in $secondsLeft second${secondsLeft == 1 ? '' : 's'}.',
-                          style: TextStyle(
-                            fontSize: AppResponsive.fontSize(context, 15),
-                            color: Color(0xFFDC2626),
-                            fontWeight: FontWeight.w600,
+                          style: AppTypography.labelLarge.copyWith(
+                            color: Theme.of(context).colorScheme.error,
                           ),
                         ),
                       ] else if (_errorMessage != null) ...[
-                        const SizedBox(height: 16),
+                        SizedBox(height: AppResponsive.spacing(context, 16)),
                         Text(
                           _errorMessage!,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            color: Color(0xFFDC2626),
-                            fontWeight: FontWeight.w600,
+                          style: AppTypography.labelLarge.copyWith(
+                            color: Theme.of(context).colorScheme.error,
                           ),
                         ),
                       ],
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: (_isSubmitting || inCooldown)
-                            ? null
-                            : _continue,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF111827),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 18),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
+                      SizedBox(height: AppResponsive.spacing(context, 24)),
+                      if (_isSubmitting)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          decoration: BoxDecoration(
+                            gradient: tokens.ctaGradient,
+                            borderRadius: AppRadius.large,
                           ),
-                        ),
-                        child: _isSubmitting
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
-                              )
-                            : const Text(
-                                'Continue',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w700,
+                          child: const Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
                                 ),
                               ),
-                      ),
+                            ),
+                          ),
+                        )
+                      else
+                        StButton(
+                          label: 'Continue',
+                          variant: StButtonVariant.ember,
+                          fullWidth: true,
+                          onTap: inCooldown ? null : _continue,
+                        ),
                     ],
                   ),
                 ),
