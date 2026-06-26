@@ -10,7 +10,7 @@
 - Design direction = attached Storytime wireframes + landing (re-skin off legacy Shiru).
 - Backend foundation = existing `functions/` dir (from codex/v2); extend, don't rewrite.
 
-**Current focus:** Branch `feature/storytime-mvp`, 5 commits (docs, M1 design, backend lift, Phase 1 baseline, Phase 2 screen rebuild). ✅ M1 design system. ✅ codex/v2 audited + backend lifted (must-fixes applied; tests 4/4 with `nvm use 22`). ✅ Phase 1 baseline (codex/v2 app lifted, design system preserved). ✅ Phase 2: ALL Storytime screens rebuilt on `St*` components, day/bedtime theme wired, legacy `storytime_theme.dart` deleted, portrait locked. `flutter analyze` 0 errors. iOS build needed `pod repo update` (new firebase pods) — done. ✅ Follow-along player DONE + verified. ✅ Audio-path-relative fix DONE + verified (survives reinstall, self-heals). ▶ NEXT candidates: (1) verify onboarding flow signed-out; (2) child profile → Firestore; (3) parent gate on StParentGate; (4) home TabBar; (5) content-safety levels; (6) re-narrate flow; then M4 Family voice tier (gated on legal review §7). flutter at `$HOME/Downloads/flutter/bin`; iOS pods need `LANG=en_US.UTF-8`.
+**Current focus:** Branch `feature/storytime-mvp`, 5 commits (docs, M1 design, backend lift, Phase 1 baseline, Phase 2 screen rebuild). ✅ M1 design system. ✅ codex/v2 audited + backend lifted (must-fixes applied; tests 4/4 with `nvm use 22`). ✅ Phase 1 baseline (codex/v2 app lifted, design system preserved). ✅ Phase 2: ALL Storytime screens rebuilt on `St*` components, day/bedtime theme wired, legacy `storytime_theme.dart` deleted, portrait locked. `flutter analyze` 0 errors. iOS build needed `pod repo update` (new firebase pods) — done. ✅ Follow-along player + audio-path fix + parent-gate re-skin all DONE + verified on sim. Whole app now on the design system (no legacy-grey holdouts in the live flow). ▶ NEXT candidates: (1) verify onboarding flow signed-out; (2) child profile → Firestore; (3) content & safety settings (NEEDS product def — see M3); (4) re-narrate flow (needs backend path); then M4 Family voice tier (testing-only build OK; legal review §7 before public). Home TabBar + StParentGate swap were re-checked and are NOT needed (see M2/M3 notes). flutter at `$HOME/Downloads/flutter/bin`; iOS pods need `LANG=en_US.UTF-8`.
 
 ---
 
@@ -61,7 +61,7 @@
 - [ ] Re-narrate flow: regenerate audio from stored `story` text when local audio missing. Needs a backend re-narrate path (or reuse createStoryJob). Separate from follow-along.
 - [ ] Follow-along: TRUE per-word sync needs ElevenLabs word timestamps (current highlight is a progress estimate).
 ### Screens
-- [~] Kid Home (s5) — rebuilt on StTile/StRow; MISSING bottom TabBar
+- [x] Kid Home (s5) — rebuilt on StTile/StRow + resume strip. (No bottom TabBar — re-checked wireframe s5, it has none; earlier "missing TabBar" was a misread.)
 - [x] Wizard: Character (s6) — StChoiceCard/StDots
 - [x] Wizard: Scene (s7)
 - [x] Wizard: Theme (s8)
@@ -78,9 +78,9 @@
 - [x] Create account / sign-in (s2) — StTextField/StButton, Firebase Auth (lifted)
 - [~] Add child (s3) — rebuilt (StSegment age band); stored in SharedPreferences, NOT Firestore yet
 - [ ] Add-a-voice invite (s4) — MISSING (only FamilyVoicesTeaser exists)
-- [~] Parent gate (s17) — uses legacy `ParentAccessScreen`; not yet on `StParentGate`
+- [x] Parent gate (s17) — KEPT the age-verify + PIN gate (stronger than wireframe's "hold the dot"). Re-skinned AgeGate + PinGate + ChangePin + ParentAccess onto the design system (logic byte-for-byte unchanged). VERIFIED on sim: PIN gate shows cream card, "GROWN-UPS ONLY" eyebrow, Fraunces title, token keypad. `StParentGate` component left available but unused (lacks lockout/attempt hooks).
 - [x] Parent dashboard (s18) — StRow entries
-- [~] Content & safety (s19) — rebuilt but diagnostics-only; no content-filter levels
+- [~] Content & safety (s19) — currently diagnostics/privacy only. Wireframe wants: Story length (Short/Med/Long seg), Safe-content filter / Bedtime mode / Daily time limit toggles, Save. NEEDS PRODUCT DEFINITION before building — each control must DO something (story length → generation word count; bedtime → ?; daily limit → playback gate). Don't ship dead toggles. Backend safety is always-on (two-pass), so a "filter off" toggle is questionable. Deferred pending product decisions.
 - [x] Account deletion wired to `deleteAccountData` (lifted)
 
 ## Milestone 4 — Family voice tier (cloning)
