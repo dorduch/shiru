@@ -139,7 +139,15 @@ export const processVoiceClone = onDocumentUpdated({
   const fresh = await voiceRef.get();
   if (!fresh.exists) return;
   const freshData = fresh.data()!;
-  if (freshData.providerVoiceId) return;
+  // Already cloned on a prior run (retry after a crash post-clone): don't re-call
+  // ElevenLabs, but make sure we still finish the transition to "ready" so the doc
+  // can't get stuck at "cloning" forever.
+  if (freshData.providerVoiceId) {
+    if (freshData.status !== "ready") {
+      await voiceRef.update({status: "ready", updatedAt: FieldValue.serverTimestamp()});
+    }
+    return;
+  }
 
   try {
     await voiceRef.update({status: "cloning", updatedAt: FieldValue.serverTimestamp()});
@@ -179,9 +187,9 @@ export const processVoiceClone = onDocumentUpdated({
     const elBody = await elResponse.json() as {voice_id: string};
     const providerVoiceId = elBody.voice_id;
 
-    // Write providerVoiceId BEFORE flipping to ready (idempotency guard for retries)
-    await voiceRef.update({providerVoiceId, updatedAt: FieldValue.serverTimestamp()});
-    await voiceRef.update({status: "ready", updatedAt: FieldValue.serverTimestamp()});
+    // Single atomic write: providerVoiceId + ready together, so a crash can never
+    // leave providerVoiceId set without the status reaching "ready".
+    await voiceRef.update({providerVoiceId, status: "ready", updatedAt: FieldValue.serverTimestamp()});
     logger.info("voice_clone_ready", {uid, voiceId, durationMs: Date.now() - started});
   } catch (error) {
     const errorCode = error instanceof Error && (error as {errorCode?: string}).errorCode === "no-samples"
