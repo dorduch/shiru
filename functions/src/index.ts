@@ -16,6 +16,10 @@ initializeApp();
 const db = getFirestore();
 const bucket = getStorage().bucket();
 
+// Base URL for the ElevenLabs API. Overridable via env only for local emulator
+// testing (point at a mock); unset in production, so prod always hits the real API.
+const ELEVENLABS_BASE = process.env.ELEVENLABS_BASE_URL ?? "https://api.elevenlabs.io";
+
 const anthropicKey = defineSecret("ANTHROPIC_API_KEY");
 const elevenLabsKey = defineSecret("ELEVENLABS_API_KEY");
 const wallyVoice = defineSecret("ELEVENLABS_VOICE_WALLY");
@@ -173,7 +177,7 @@ export const processVoiceClone = onDocumentUpdated({
       form.append("files", new Blob([new Uint8Array(sampleBuffers[i])], {type: "audio/mp4"}), `sample_${i}.m4a`);
     }
 
-    const elResponse = await fetch("https://api.elevenlabs.io/v1/voices/add", {
+    const elResponse = await fetch(`${ELEVENLABS_BASE}/v1/voices/add`, {
       method: "POST",
       headers: {"xi-api-key": elevenLabsKey.value()},
       body: form,
@@ -218,7 +222,7 @@ export const deleteVoice = onCall({enforceAppCheck: true, secrets: [elevenLabsKe
 
   // Delete from ElevenLabs if a provider voice exists
   if (providerVoiceId) {
-    const elResponse = await fetch(`https://api.elevenlabs.io/v1/voices/${providerVoiceId}`, {
+    const elResponse = await fetch(`${ELEVENLABS_BASE}/v1/voices/${providerVoiceId}`, {
       method: "DELETE",
       headers: {"xi-api-key": elevenLabsKey.value()},
     });
@@ -339,7 +343,7 @@ Return only JSON: {"safe":true|false,"concerns":["..."]}. Story: ${generated.sto
 }
 
 async function synthesize(text: string, resolvedVoiceId: string): Promise<Buffer> {
-  const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${resolvedVoiceId}`, {
+  const response = await fetch(`${ELEVENLABS_BASE}/v1/text-to-speech/${resolvedVoiceId}`, {
     method: "POST",
     headers: {"xi-api-key": elevenLabsKey.value(), "content-type": "application/json", accept: "audio/mpeg"},
     body: JSON.stringify({text, model_id: "eleven_multilingual_v2", voice_settings: {stability: 0.55, similarity_boost: 0.75}}),
@@ -443,7 +447,7 @@ export const deleteAccountData = onCall({enforceAppCheck: true, secrets: [eleven
   await Promise.all(voicesSnap.docs.map(async (voiceDoc) => {
     const providerVoiceId = voiceDoc.data().providerVoiceId as string | undefined;
     if (providerVoiceId) {
-      const elResponse = await fetch(`https://api.elevenlabs.io/v1/voices/${providerVoiceId}`, {
+      const elResponse = await fetch(`${ELEVENLABS_BASE}/v1/voices/${providerVoiceId}`, {
         method: "DELETE",
         headers: {"xi-api-key": elevenLabsKey.value()},
       });

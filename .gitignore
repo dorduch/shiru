@@ -3,3 +3,6 @@ tools/story-playground/.env
 app/firepit-log.txt
 .worktrees/
 .superpowers/
+
+# firebase emulator debug logs
+*-debug.log
