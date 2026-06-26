@@ -7,6 +7,7 @@ import 'ui/age_gate_screen.dart';
 import 'ui/pin_gate_screen.dart';
 import 'ui/parent_access_screen.dart';
 import 'ui/change_pin_screen.dart';
+import 'ui/family_voices_screens.dart';
 import 'ui/storytime_screens.dart';
 import 'ui/widgets/storytime/component_gallery_screen.dart';
 
@@ -140,7 +141,57 @@ GoRouter createRouter(WidgetRef ref) {
           ),
           GoRoute(
             path: 'family-voices',
-            builder: (context, state) => const FamilyVoicesTeaserScreen(),
+            builder: (context, state) => const FamilyVoicesScreen(),
+            routes: [
+              GoRoute(
+                path: 'consent',
+                builder: (context, state) => const VoiceConsentScreen(),
+              ),
+              GoRoute(
+                path: 'capture-intro',
+                builder: (context, state) {
+                  final extra =
+                      state.extra as Map<String, String>? ?? {};
+                  return VoiceCaptureIntroScreen(
+                    voiceId: extra['voiceId'] ?? '',
+                    name: extra['name'] ?? 'this person',
+                  );
+                },
+              ),
+              GoRoute(
+                path: 'capture',
+                builder: (context, state) {
+                  final extra =
+                      state.extra as Map<String, String>? ?? {};
+                  return GuidedCaptureScreen(
+                    voiceId: extra['voiceId'] ?? '',
+                    name: extra['name'] ?? 'this person',
+                  );
+                },
+              ),
+              GoRoute(
+                path: 'upload',
+                builder: (context, state) {
+                  final extra =
+                      state.extra as Map<String, String>? ?? {};
+                  return VoiceUploadScreen(
+                    voiceId: extra['voiceId'] ?? '',
+                    name: extra['name'] ?? 'this person',
+                  );
+                },
+              ),
+              GoRoute(
+                path: 'ready',
+                builder: (context, state) {
+                  final extra =
+                      state.extra as Map<String, String>? ?? {};
+                  return VoiceReadyScreen(
+                    voiceId: extra['voiceId'] ?? '',
+                    name: extra['name'] ?? 'this person',
+                  );
+                },
+              ),
+            ],
           ),
           GoRoute(
             path: 'change-pin',

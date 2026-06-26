@@ -192,6 +192,7 @@ class StoryDraft {
     this.theme,
     this.plot,
     this.narrator,
+    this.familyVoiceId,
   });
 
   final StoryCharacter? character;
@@ -200,26 +201,44 @@ class StoryDraft {
   final StoryPlot? plot;
   final NarratorKey? narrator;
 
+  /// When set, the narrator is a family voice rather than a built-in
+  /// [NarratorKey]. The request will send `narratorKey = "family:<id>"`.
+  final String? familyVoiceId;
+
   bool get isComplete =>
       character != null &&
       scene != null &&
       theme != null &&
       plot != null &&
-      narrator != null;
+      (narrator != null || familyVoiceId != null);
 
+  /// Copy with new values. Pass [clearFamilyVoiceId] = true to unset
+  /// [familyVoiceId] (e.g. when switching back to a built-in narrator).
   StoryDraft copyWith({
     StoryCharacter? character,
     StoryScene? scene,
     StoryTheme? theme,
     StoryPlot? plot,
     NarratorKey? narrator,
+    String? familyVoiceId,
+    bool clearFamilyVoiceId = false,
+    bool clearNarrator = false,
   }) => StoryDraft(
     character: character ?? this.character,
     scene: scene ?? this.scene,
     theme: theme ?? this.theme,
     plot: plot ?? this.plot,
-    narrator: narrator ?? this.narrator,
+    narrator: clearNarrator ? null : (narrator ?? this.narrator),
+    familyVoiceId: clearFamilyVoiceId
+        ? null
+        : (familyVoiceId ?? this.familyVoiceId),
   );
+
+  /// The serialized narrator key sent to the backend.
+  String get resolvedNarratorKey {
+    if (familyVoiceId != null) return 'family:$familyVoiceId';
+    return narrator!.name;
+  }
 
   Map<String, String> toRequestJson() {
     if (!isComplete) throw StateError('Story draft is incomplete');
@@ -228,7 +247,7 @@ class StoryDraft {
       'scene': scene!.name,
       'theme': theme!.name,
       'plot': plot!.name,
-      'narratorKey': narrator!.name,
+      'narratorKey': resolvedNarratorKey,
     };
   }
 }

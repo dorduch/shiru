@@ -21,7 +21,8 @@ class StoryJob {
   final String id;
   final StoryJobStatus status;
   final StoryTheme theme;
-  final NarratorKey narratorKey;
+  /// Null for family-voice jobs (narratorKey is `family:<voiceId>`, not a built-in).
+  final NarratorKey? narratorKey;
   final String? title;
   final String? downloadUrl;
   final String? errorCode;
@@ -36,7 +37,9 @@ class StoryJob {
       id: snapshot.id,
       status: StoryJobStatus.values.byName(data['status'] as String),
       theme: StoryTheme.values.byName(data['theme'] as String),
-      narratorKey: NarratorKey.values.byName(data['narratorKey'] as String),
+      narratorKey: NarratorKey.values
+          .where((n) => n.name == data['narratorKey'])
+          .firstOrNull,
       title: data['title'] as String?,
       downloadUrl: data['downloadUrl'] as String?,
       errorCode: data['errorCode'] as String?,

@@ -13,6 +13,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/audio_card.dart';
+import '../models/family_voice.dart';
 import '../models/sprites.dart';
 import '../models/storytime_models.dart';
 import '../providers/audio_player_provider.dart';
@@ -673,8 +674,34 @@ class StoryWizardScreen extends ConsumerWidget {
     final tokens = Theme.of(context).extension<StorytimeTokens>()!;
     final draft = ref.watch(storyDraftProvider);
     final index = _stepIndex(step);
-    final items = _itemsFor(step);
-    final selected = _selectedFor(draft, step);
+    // For the narrator step, merge built-in narrators with ready family voices.
+    List<_ChoiceItem> items;
+    if (step == 'narrator') {
+      final familyVoices = ref
+          .watch(familyVoicesProvider)
+          .valueOrNull
+          ?.where((v) => v.status == FamilyVoiceStatus.ready)
+          .toList() ??
+          [];
+      items = [
+        ...NarratorKey.values
+            .map((v) => _ChoiceItem(v, v.label, v.emoji, subtitle: v.description)),
+        ...familyVoices.map(
+          (v) => _ChoiceItem(
+            v,
+            v.name,
+            '🎙️',
+            subtitle: v.relationship,
+            isFamilyVoice: true,
+          ),
+        ),
+      ];
+    } else {
+      items = _itemsFor(step);
+    }
+    // selectedObj is used for comparison in _WizardChoice.
+    // For family voices the item.value is a FamilyVoice, so we compare by id.
+    final selectedObj = _selectedFor(draft, step);
     return Scaffold(
       backgroundColor: tokens.cream,
       body: SafeArea(
@@ -717,9 +744,14 @@ class StoryWizardScreen extends ConsumerWidget {
                   itemCount: items.length,
                   itemBuilder: (context, itemIndex) {
                     final item = items[itemIndex];
+                    // For family voice items compare by id; otherwise by value.
+                    final isSelected = item.isFamilyVoice
+                        ? (item.value is FamilyVoice &&
+                              (item.value as FamilyVoice).id == selectedObj)
+                        : item.value == selectedObj;
                     return _WizardChoice(
                       item: item,
-                      selected: item.value == selected,
+                      selected: isSelected,
                       onTap: () {
                         _setSelection(ref, step, item.value);
                         ref.read(audioLabelServiceProvider).speak(item.label);
@@ -734,7 +766,12 @@ class StoryWizardScreen extends ConsumerWidget {
                 leading: const Icon(Icons.casino_outlined),
                 fullWidth: true,
                 onTap: () {
-                  final item = items[Random().nextInt(items.length)];
+                  // For narrator: only surprise with built-in narrators.
+                  final surprisePool = step == 'narrator'
+                      ? items.where((i) => !i.isFamilyVoice).toList()
+                      : items;
+                  final pool = surprisePool.isEmpty ? items : surprisePool;
+                  final item = pool[Random().nextInt(pool.length)];
                   _setSelection(ref, step, item.value);
                   ref
                       .read(audioLabelServiceProvider)
@@ -745,7 +782,7 @@ class StoryWizardScreen extends ConsumerWidget {
               StButton(
                 label: 'Continue',
                 fullWidth: true,
-                onTap: selected == null
+                onTap: selectedObj == null
                     ? null
                     : () {
                         context.go(
@@ -796,7 +833,9 @@ class StoryWizardScreen extends ConsumerWidget {
     'scene' => draft.scene,
     'theme' => draft.theme,
     'plot' => draft.plot,
-    _ => draft.narrator,
+    // For narrator: if a family voice is set return its id string so the
+    // comparison `item.value == selected` works for FamilyVoice items.
+    _ => draft.familyVoiceId ?? draft.narrator,
   };
 
   void _setSelection(WidgetRef ref, String value, Object selection) {
@@ -811,17 +850,28 @@ class StoryWizardScreen extends ConsumerWidget {
       case 'plot':
         notifier.setPlot(selection as StoryPlot);
       default:
-        notifier.setNarrator(selection as NarratorKey);
+        if (selection is FamilyVoice) {
+          notifier.setFamilyVoice(selection.id);
+        } else {
+          notifier.setNarrator(selection as NarratorKey);
+        }
     }
   }
 }
 
 class _ChoiceItem {
-  const _ChoiceItem(this.value, this.label, this.emoji, {this.subtitle});
+  const _ChoiceItem(
+    this.value,
+    this.label,
+    this.emoji, {
+    this.subtitle,
+    this.isFamilyVoice = false,
+  });
   final Object value;
   final String label;
   final String emoji;
   final String? subtitle;
+  final bool isFamilyVoice;
 }
 
 class _WizardChoice extends StatelessWidget {
@@ -848,7 +898,10 @@ class _WizardChoice extends StatelessWidget {
       thumbnail: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          PixelSprite(sprite: autoAssignSprite(item.label), scale: 3.7),
+          if (item.isFamilyVoice)
+            const Icon(Icons.mic_rounded, size: 40, color: AppColors.ember)
+          else
+            PixelSprite(sprite: autoAssignSprite(item.label), scale: 3.7),
           if (item.value is NarratorKey)
             Consumer(
               builder: (context, ref, _) => IconButton(
@@ -879,12 +932,16 @@ class StoryReviewScreen extends ConsumerWidget {
       _goAfterBuild(context, '/make/character');
       return const _LoadingScaffold();
     }
+    final narratorLabel = draft.familyVoiceId != null
+        ? 'Family voice'
+        : draft.narrator!.label;
+    final narratorEmoji = draft.familyVoiceId != null ? '🎙️' : draft.narrator!.emoji;
     final choices = [
       ('character', draft.character!.label, draft.character!.emoji),
       ('scene', draft.scene!.label, draft.scene!.emoji),
       ('theme', draft.theme!.label, draft.theme!.emoji),
       ('plot', draft.plot!.label, draft.plot!.emoji),
-      ('narrator', draft.narrator!.label, draft.narrator!.emoji),
+      ('narrator', narratorLabel, narratorEmoji),
     ];
     return Scaffold(
       backgroundColor: tokens.cream,
