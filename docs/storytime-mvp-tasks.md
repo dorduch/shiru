@@ -84,6 +84,20 @@
 - [x] Account deletion wired to `deleteAccountData` (lifted)
 
 ## Milestone 4 — Family voice tier (cloning)
+
+### Frozen contract (2026-06-26 — team-lead decisions; build against these)
+- **Encoding:** family voice rides the existing `narratorKey` as `family:<voiceId>` (built-ins keep enum names `wizardWally|fairyFern|roboRay`). One field, smallest diff.
+- **Firestore data model — `users/{uid}/voices/{voiceId}`** (server-written; client read-only):
+  `{ name, relationship, subjectLiving: bool, consent: { agreedByUid, agreedAt, relationship, subjectLiving }, status: "consented"|"queued"|"cloning"|"ready"|"failed", samplePaths: string[], providerVoiceId?, errorCode?, createdAt, updatedAt }`
+- **Voice samples in Storage:** `voice-samples/{uid}/{voiceId}/{idx}.m4a` — client uploads directly; only server reads.
+- **State machine:** `createVoiceConsent` → doc `status:"consented"` (returns voiceId). Client uploads samples to Storage. `submitVoiceClone({voiceId, samplePaths})` callable validates (consent present + ≥1 sample exists + entitled) → sets `status:"queued"`. `processVoiceClone` = `onDocumentUpdated` on the voice doc, guard `before.status!=="queued" && after.status==="queued"`.
+- **Idempotency (clone leaks an external resource):** re-read status in the trigger; if `providerVoiceId` already set → skip. Write `providerVoiceId` BEFORE flipping to `ready`. On ElevenLabs error → `status:"failed"` + `errorCode` (mirror story-job failure handling). ElevenLabs accounts have voice-slot limits → clone can 4xx.
+- **Server-side trust (NON-NEGOTIABLE):** `createStoryJob` — if `narratorKey` matches `family:<id>`, look up `users/{uid}/voices/{id}`, require `exists && status==="ready"` AND entitlement, else `invalid-argument`. `domain.ts` relaxes the static narrator check to accept `family:<id>` shape; the existence/status/entitlement check lives in `index.ts` (Firestore, not pure domain).
+- **`synthesize()` becomes async-lookup:** if `narratorKey` is `family:<id>`, read `users/{uid}/voices/{id}.providerVoiceId` (uid = `event.params.uid` in `processStoryJob`); else the built-in secret map.
+- **Entitlement:** `storytimeConfig/familyVoice` doc, `enabled` field. Missing/true = ON (default-on for testing). Checked in `submitVoiceClone` AND `createStoryJob` family path. A real flag the launch billing gate flips.
+- **ElevenLabs API (verified 2026-06-26):** add = `POST /v1/voices/add`, multipart/form-data, fields `files` (audio), `name`, optional `description`/`labels`/`remove_background_noise`; response `{ voice_id, requires_verification }`. Delete = `DELETE /v1/voices/{voice_id}`. Header `xi-api-key` (reuse `ELEVENLABS_API_KEY` secret).
+- **Testing posture:** live ElevenLabs in manual e2e; mocked in unit tests.
+
 ### Backend (new)
 - [ ] `createVoiceConsent` — store consent (who, when, relationship, living?) — gate everything on it
 - [ ] `startVoiceCapture` / upload intake — guided 5-line capture or ~1min clip → Storage under user prefix
