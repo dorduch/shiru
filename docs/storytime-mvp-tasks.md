@@ -117,7 +117,8 @@
 
 **M4 verification status (2026-06-26):**
 - ✅ Static: backend lint + 8 unit tests; `flutter analyze` 0 errors. App **boots healthy on sim with new `firebase_storage` pod** (home renders; the firebase_storage native-dep integration was the main risk and it's clear).
-- ⏳ NOT yet verified e2e: the consent→capture→clone→family-narration loop. **Blocked on a Cloud Functions deploy** (the callables don't exist server-side until deployed; deploy = ElevenLabs cost + prod change → user-gated) **and** a registered App Check debug token for the sim. No code blocker — purely a deploy/credential step.
+- ⏳ NOT yet verified e2e: the consent→capture→clone→family-narration loop. **Runnable locally via the Firebase Emulator Suite** (already configured in `firebase.json`: auth/functions/firestore/storage) — no prod deploy or cost required. Emulator bypasses App Check; ElevenLabs call can be real (cheap voice-add via `.secret.local`) or mocked. This is the recommended verification path; a prod `firebase deploy` is a *separate* later step. (Earlier note overstated this as deploy-gated — corrected.)
+- 🔒 Idempotency hardened (commit `fix(M4)`): `processVoiceClone` success write is atomic and the retry early-return finalizes to `ready`, so a crash mid-clone can't strand a voice at `cloning`. No `narratorKey!` force-unwraps exist in `app/lib` (family-voice cards with null narrator are safe).
 - 🐛 Fixed during integration: (1) ElevenLabs sample upload used `buffer.buffer` (pooled-ArrayBuffer over-read) → tight `Uint8Array` copy. (2) `StoryJob.narratorKey` was non-null `byName` → would **crash the job read** for `family:<id>` jobs → made nullable + safe-parse.
 - 🧹 Follow-up: dead `FamilyVoicesTeaserScreen` class + `joinFamilyVoiceWaitlist` callable/repo method are now unrouted; remove once the live flow is confirmed.
 
