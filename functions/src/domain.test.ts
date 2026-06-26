@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest";
-import {safetyPassed, utcQuotaDay, validateStoryRequest, wordCountFor} from "./domain";
+import {parseFamilyVoiceId, safetyPassed, utcQuotaDay, validateStoryRequest, wordCountFor} from "./domain";
 
 const valid = {
   character: "princess", scene: "forest", theme: "kindness",
@@ -26,5 +26,34 @@ describe("story domain", () => {
     expect(safetyPassed({safe: true, concerns: []})).toBe(true);
     expect(safetyPassed({safe: true})).toBe(false);
     expect(safetyPassed({safe: false, concerns: []})).toBe(false);
+  });
+});
+
+describe("family voice narrator", () => {
+  it("accepts valid family narrator keys in validateStoryRequest", () => {
+    expect(validateStoryRequest({...valid, narratorKey: "family:abc123"})).not.toBeNull();
+    expect(validateStoryRequest({...valid, narratorKey: "family:voice-abc_XYZ"})).not.toBeNull();
+  });
+
+  it("rejects malformed family narrator keys", () => {
+    expect(validateStoryRequest({...valid, narratorKey: "family:"})).toBeNull();
+    expect(validateStoryRequest({...valid, narratorKey: "family: spaces"})).toBeNull();
+    expect(validateStoryRequest({...valid, narratorKey: "FAMILY:abc"})).toBeNull();
+    expect(validateStoryRequest({...valid, narratorKey: "family:" + "x".repeat(129)})).toBeNull();
+  });
+
+  it("still accepts built-in narrator keys", () => {
+    expect(validateStoryRequest({...valid, narratorKey: "wizardWally"})).not.toBeNull();
+    expect(validateStoryRequest({...valid, narratorKey: "roboRay"})).not.toBeNull();
+    expect(validateStoryRequest({...valid, narratorKey: "fairyFern"})).not.toBeNull();
+  });
+
+  it("parseFamilyVoiceId extracts id from valid key and returns null for others", () => {
+    expect(parseFamilyVoiceId("family:abc123")).toBe("abc123");
+    expect(parseFamilyVoiceId("family:voice-id_X")).toBe("voice-id_X");
+    expect(parseFamilyVoiceId("fairyFern")).toBeNull();
+    expect(parseFamilyVoiceId("family:")).toBeNull();
+    expect(parseFamilyVoiceId("family:has spaces")).toBeNull();
+    expect(parseFamilyVoiceId(42)).toBeNull();
   });
 });

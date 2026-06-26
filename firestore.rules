@@ -15,6 +15,11 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    match /users/{uid}/voices/{voiceId} {
+      allow read: if owns(uid);
+      allow write: if false;
+    }
+
     match /familyVoiceWaitlist/{uid} {
       allow read, write: if false;
     }

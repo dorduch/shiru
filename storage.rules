@@ -4,5 +4,10 @@ service firebase.storage {
     match /story-jobs/{uid}/{fileName} {
       allow read, write: if false;
     }
+
+    match /voice-samples/{uid}/{voiceId}/{fileName} {
+      allow read: if false;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
   }
 }

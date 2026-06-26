@@ -19,7 +19,7 @@ export type StoryRequest = {
   scene: typeof scenes[number];
   theme: typeof themes[number];
   plot: typeof plots[number];
-  narratorKey: typeof narrators[number];
+  narratorKey: typeof narrators[number] | string;
   ageBand: typeof ageBands[number];
   idempotencyKey: string;
 };
@@ -28,14 +28,23 @@ function isChoice<T extends string>(value: unknown, choices: readonly T[]): valu
   return typeof value === "string" && choices.includes(value as T);
 }
 
+/** Returns the voiceId if narratorKey is a valid family voice key, else null. */
+export function parseFamilyVoiceId(narratorKey: unknown): string | null {
+  if (typeof narratorKey !== "string") return null;
+  const match = narratorKey.match(/^family:([A-Za-z0-9_\-]{1,128})$/);
+  return match ? match[1] : null;
+}
+
 export function validateStoryRequest(data: unknown): StoryRequest | null {
   if (!data || typeof data !== "object") return null;
   const value = data as Record<string, unknown>;
+  const narratorKey = value.narratorKey;
+  const narratorValid = isChoice(narratorKey, narrators) || parseFamilyVoiceId(narratorKey) !== null;
   if (!isChoice(value.character, characters) ||
       !isChoice(value.scene, scenes) ||
       !isChoice(value.theme, themes) ||
       !isChoice(value.plot, plots) ||
-      !isChoice(value.narratorKey, narrators) ||
+      !narratorValid ||
       !isChoice(value.ageBand, ageBands) ||
       typeof value.idempotencyKey !== "string" ||
       value.idempotencyKey.length < 8 || value.idempotencyKey.length > 128) {
@@ -49,7 +58,7 @@ export function utcQuotaDay(date = new Date()): string {
 }
 
 export function wordCountFor(ageBand: StoryRequest["ageBand"]): number {
-  return {early: 350, middle: 550, older: 800}[ageBand];
+  return {early: 350, middle: 550, older: 800}[ageBand as typeof ageBands[number]] ?? 550;
 }
 
 export function safetyPassed(value: unknown): boolean {
