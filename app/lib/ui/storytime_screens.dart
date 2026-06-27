@@ -1773,6 +1773,14 @@ class StorytimeParentDashboard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           _DashboardEntry(
+            icon: Icons.add,
+            leading: SvgPicture.string(addAudioIconSvg, width: 40, height: 40),
+            title: 'Add your own audio',
+            subtitle: 'Record a voice or upload a file',
+            onTap: () => context.go('/parent/add-audio'),
+          ),
+          const SizedBox(height: 8),
+          _DashboardEntry(
             icon: Icons.manage_accounts_outlined,
             title: 'Account',
             subtitle: 'Email, password, and sign out',
@@ -1811,11 +1819,13 @@ class _DashboardEntry extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.leading,
   });
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final Widget? leading;
 
   @override
   Widget build(BuildContext context) {
@@ -1836,11 +1846,12 @@ class _DashboardEntry extends StatelessWidget {
         ),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 22,
-              backgroundColor: tokens.ember.withValues(alpha: 0.12),
-              child: Icon(icon, color: tokens.ember, size: 20),
-            ),
+            leading ??
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor: tokens.ember.withValues(alpha: 0.12),
+                  child: Icon(icon, color: tokens.ember, size: 20),
+                ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(

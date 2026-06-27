@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'services/analytics_service.dart';
 import 'logic/parent_flow_logic.dart';
 import 'providers/auth_provider.dart';
+import 'ui/add_audio_screens.dart';
 import 'ui/age_gate_screen.dart';
 import 'ui/pin_gate_screen.dart';
 import 'ui/parent_access_screen.dart';
@@ -196,6 +197,21 @@ GoRouter createRouter(WidgetRef ref) {
           GoRoute(
             path: 'change-pin',
             builder: (context, state) => const ChangePinScreen(),
+          ),
+          GoRoute(
+            path: 'add-audio',
+            builder: (context, state) => const AddAudioCaptureScreen(),
+            routes: [
+              GoRoute(
+                path: 'details',
+                builder: (context, state) => const AddAudioDetailsScreen(),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: 'edit-audio/:id',
+            builder: (context, state) =>
+                AddAudioDetailsScreen(editingCardId: state.pathParameters['id']),
           ),
         ],
       ),
