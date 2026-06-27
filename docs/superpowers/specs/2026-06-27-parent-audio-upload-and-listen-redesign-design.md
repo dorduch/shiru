@@ -24,6 +24,8 @@ All content stays local (no backend). The app runs in forced **landscape**.
 - Listen redesign applies to the **kid view only**; the parent "Manage stories" view stays
   a deletable list.
 - One combined origin `uploaded` for both recorded and file-picked audio; subtitle "Your audio".
+- **Edit** (title, color, replace audio) is supported for **uploaded cards only**, reached from the
+  parent "Manage stories" screen. Generated/curated stories are not editable.
 - **Icons must be rich custom art**, consistent with the rest of the app — real `PixelSprite`
   on grid tiles, and a new hand-drawn SVG glyph for the add-audio action (not Material icons).
 
@@ -82,10 +84,13 @@ A single helper used by both list and grid tiles:
 
 ### Target — parent view (`parentMode == true`)
 
-Unchanged in structure: keep the row list with the delete affordance and confirm dialog
-(`_StoryTile` / `_delete`). Light restyle only for visual consistency; do **not** gridify,
-so the management/delete flow is preserved. No add button here — adding audio lives on the
-dashboard.
+Keep the row list with the delete affordance and confirm dialog (`_StoryTile` / `_delete`).
+Light restyle only for visual consistency; do **not** gridify, so the management/delete flow is
+preserved. No add button here — adding audio lives on the dashboard.
+
+**Edit affordance:** for rows where `storyOrigin == uploaded`, show an edit icon
+(rich/consistent styling) next to delete → opens the edit flow (see "Edit (uploaded cards)"
+below). Rows for `generated`/`curated` cards show delete only, no edit.
 
 ---
 
@@ -108,8 +113,9 @@ Material icon. (Other dashboard rows are out of scope and keep their current ico
 
 Add under the `/parent` route in `lib/router.dart`:
 
-- `/parent/add-audio` → `AddAudioCaptureScreen`
-- `/parent/add-audio/details` → `AddAudioDetailsScreen`
+- `/parent/add-audio` → `AddAudioCaptureScreen` (create mode)
+- `/parent/add-audio/details` → `AddAudioDetailsScreen` (create mode)
+- `/parent/edit-audio/:id` → `AddAudioDetailsScreen` (edit mode, prefilled from the card)
 
 Capture passes the imported audio path + duration forward to the details step via a small
 Riverpod draft provider (`addAudioDraftProvider` holding `{audioPath, durationMs}`), matching how
@@ -130,7 +136,10 @@ draft; if it is empty (e.g. deep-link/refresh), it redirects back to `/parent/ad
   `LibraryImportService.importMediaToLibrary` / `importAudioToLibrary` (copies to app docs dir
   with a UUID, returns path + duration), then navigate to details.
 
-**Step 2 — `AddAudioDetailsScreen`** (new)
+**Step 2 — `AddAudioDetailsScreen`** (new — serves both create and edit)
+
+Takes an optional `editingCardId`. In **create** mode it reads audio from
+`addAudioDraftProvider`; in **edit** mode it loads the existing `AudioCard` and prefills.
 
 - `StTextField` for the card title (default e.g. "My recording" / picked file name).
 - Color picker: a row of swatches (reuse the tile palette in `AppColors` / `concept` colors).
@@ -150,6 +159,22 @@ draft; if it is empty (e.g. deep-link/refresh), it redirects back to `/parent/ad
   - `position`: end of current list
   - `createdAt`: now
 - On success, navigate back to the dashboard (or `/parent/stories`) with a brief confirmation.
+
+### Edit (uploaded cards)
+
+Reached from the parent "Manage stories" edit affordance → `/parent/edit-audio/:id`, opening
+`AddAudioDetailsScreen` in edit mode prefilled from the card. Available for
+`storyOrigin == uploaded` cards only.
+
+- **Title + color**: editable inline, with the same live preview tile.
+- **Replace audio**: a "Replace audio" `StButton` routes to `AddAudioCaptureScreen`, which on
+  completion writes the new path/duration into `addAudioDraftProvider` and returns to the edit
+  screen (carrying `editingCardId`); the screen then shows the new audio. If the parent doesn't
+  replace, the existing `audioPath`/`durationMs` are kept.
+- Save calls `ref.read(cardsProvider.notifier).updateCard` (not `addCard`), preserving the
+  card's `id`, `position`, `createdAt`, and `playbackPosition` (reset `playbackPosition` to 0
+  only when the audio is replaced). When audio is replaced, delete the old imported file to
+  avoid orphaned files in the app docs dir.
 
 ### New rich icon
 
@@ -176,17 +201,18 @@ the dashboard entry. Drawn to sit directly on the tile/entry background, no toke
 | File | Change |
 | ---- | ------ |
 | `lib/models/storytime_models.dart` | Add `StoryOrigin.uploaded` |
-| `lib/ui/storytime_screens.dart` | Redesign kid `StoryLibraryScreen`; add `_StoryGridTile`; share `_ResumeStrip`; origin-subtitle helper; new dashboard entry |
+| `lib/ui/storytime_screens.dart` | Redesign kid `StoryLibraryScreen`; add `_StoryGridTile`; share `_ResumeStrip`; origin-subtitle helper; new dashboard entry; edit affordance on uploaded rows in Manage stories |
 | `lib/ui/concept_icons.dart` | New `addAudioIconSvg` (mic/voice glyph) |
-| `lib/ui/add_audio_screens.dart` (new) | `AddAudioCaptureScreen` + `AddAudioDetailsScreen` |
-| `lib/router.dart` | Routes `/parent/add-audio` and `/parent/add-audio/details` |
+| `lib/ui/add_audio_screens.dart` (new) | `AddAudioCaptureScreen` + `AddAudioDetailsScreen` (create + edit) |
+| `lib/providers/...` (new or existing) | `addAudioDraftProvider` |
+| `lib/router.dart` | Routes `/parent/add-audio`, `/parent/add-audio/details`, `/parent/edit-audio/:id` |
 | (reused, no change) | `AudioRecorderWidget`, `RecordingService`, `LibraryImportService`, `cardsProvider`, `autoAssignSprite` |
 
 ## Out of scope
 
 - Photo/custom-image cover for uploaded cards (model supports `customImagePath`; not in v1).
 - Distinguishing recorded vs. file-picked origin (single `uploaded` origin).
-- Editing/replacing audio after save (delete + re-add via existing Manage stories).
+- Editing generated/curated stories (edit is uploaded-cards-only).
 - Gridifying or restyling the parent "Manage stories" beyond light visual cleanup.
 
 ## Testing
@@ -197,6 +223,8 @@ the dashboard entry. Drawn to sit directly on the tile/entry background, no toke
   `/story/:id`. Details screen builds a valid `AudioCard` and calls `addCard`.
 - Manual: record a clip → save → it appears in Listen and on the child grid and plays;
   upload a file → same; resume strip shows after partial playback.
+- Manual (edit): edit an uploaded card's title/color → reflected in Listen; replace its audio →
+  new audio plays and old file is removed; edit affordance is absent on generated/curated rows.
 
 ## Process
 
