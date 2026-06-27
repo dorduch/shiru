@@ -8,6 +8,10 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'firebase_options.dart';
 import 'logic/auth_lifecycle_logic.dart';
 import 'services/analytics_service.dart';
@@ -26,14 +30,39 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppPaths.init();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await FirebaseAppCheck.instance.activate(
-    providerAndroid: kDebugMode
-        ? const AndroidDebugProvider()
-        : const AndroidPlayIntegrityProvider(),
-    providerApple: kDebugMode
-        ? const AppleDebugProvider()
-        : const AppleAppAttestWithDeviceCheckFallbackProvider(),
-  );
+
+  // Local-emulator mode for dev verification only:
+  //   flutter run --dart-define=USE_EMULATOR=true [--dart-define=EMULATOR_HOST=127.0.0.1]
+  // Points all Firebase SDKs at the local Emulator Suite, skips App Check (the
+  // emulator doesn't enforce it), and signs in anonymously so callables get a uid.
+  // Never enabled in a normal/release build (the define defaults to false).
+  const useEmulator = bool.fromEnvironment('USE_EMULATOR');
+  if (useEmulator) {
+    const host = String.fromEnvironment('EMULATOR_HOST', defaultValue: '127.0.0.1');
+    FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
+    FirebaseFunctions.instance.useFunctionsEmulator(host, 5001);
+    await FirebaseStorage.instance.useStorageEmulator(host, 9199);
+    await FirebaseAuth.instance.useAuthEmulator(host, 9099);
+    // A keychain-cached prod user must not be reused against the emulator (its
+    // token/uid don't exist there). Force a fresh anonymous emulator user so
+    // every platform tests the same clean state.
+    final cached = FirebaseAuth.instance.currentUser;
+    if (cached != null && !cached.isAnonymous) {
+      await FirebaseAuth.instance.signOut();
+    }
+    if (FirebaseAuth.instance.currentUser == null) {
+      await FirebaseAuth.instance.signInAnonymously();
+    }
+  } else {
+    await FirebaseAppCheck.instance.activate(
+      providerAndroid: kDebugMode
+          ? const AndroidDebugProvider()
+          : const AndroidPlayIntegrityProvider(),
+      providerApple: kDebugMode
+          ? const AppleDebugProvider()
+          : const AppleAppAttestWithDeviceCheckFallbackProvider(),
+    );
+  }
   await StorytimeMigrationService().runIfNeeded();
   final diagnosticsEnabled = await DiagnosticsPreferencesService().isEnabled();
   await AnalyticsService.instance.ensureConsent(enabled: diagnosticsEnabled);

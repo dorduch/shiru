@@ -1734,7 +1734,7 @@ class StorytimeParentDashboard extends StatelessWidget {
           _DashboardEntry(
             icon: Icons.record_voice_over_outlined,
             title: 'Family voices',
-            subtitle: 'Coming soon',
+            subtitle: 'Record or clone a familiar voice',
             onTap: () => context.go('/parent/family-voices'),
           ),
         ],
