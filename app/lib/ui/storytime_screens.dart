@@ -26,6 +26,7 @@ import '../services/analytics_service.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'widgets/storytime/storytime.dart';
 import 'concept_icons.dart';
 import 'pixel_sprite.dart';
@@ -600,9 +601,10 @@ class StorytimeHomeScreen extends ConsumerWidget {
                       sublabel: 'Build your own adventure',
                       color: AppColors.tilePlay,
                       big: true,
-                      child: PixelSprite(
-                        sprite: autoAssignSprite('magic story book'),
-                        scale: 6,
+                      child: SvgPicture.string(
+                        storybookIconSvg,
+                        width: 104,
+                        height: 104,
                       ),
                       onTap: () {
                         ref.read(storyDraftProvider.notifier).reset();
@@ -614,9 +616,10 @@ class StorytimeHomeScreen extends ConsumerWidget {
                       sublabel: '${cards.length} stories',
                       color: AppColors.tileListen,
                       big: true,
-                      child: PixelSprite(
-                        sprite: autoAssignSprite('headphones story'),
-                        scale: 6,
+                      child: SvgPicture.string(
+                        headphonesIconSvg,
+                        width: 92,
+                        height: 92,
                       ),
                       onTap: () => context.go('/listen'),
                     );
@@ -973,7 +976,14 @@ class StoryReviewScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 8),
+              Row(
+                children: [
+                  BackButton(
+                    onPressed: () => context.go('/make/narrator'),
+                  ),
+                  const Spacer(),
+                ],
+              ),
               StSectionHeader(
                 eyebrow: 'Ready?',
                 title: 'Your story',

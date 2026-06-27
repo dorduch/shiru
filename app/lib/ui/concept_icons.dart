@@ -330,3 +330,24 @@ const String _robot =
     '<circle cx="29" cy="23" r="1.3" fill="#2A2230"/>'
     '<rect x="17" y="29" width="14" height="4" rx="2" fill="#2E6E86"/>'
     '</svg>';
+
+/// Large home-screen action glyphs (not part of the concept vocabulary).
+/// Drawn to sit directly on the tile color, no token background.
+const String storybookIconSvg =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<path d="M24 16 C19 13 10 13 6 15 V39 C10 37 19 37 24 40 C29 37 38 37 42 39 V15 C38 13 29 13 24 16 Z" fill="#8B7CF6" stroke="#4E2E96" stroke-width="2.2" stroke-linejoin="round"/>'
+    '<path d="M24 17 C20 14.5 13 14.5 9 16 V35 C13 33.5 20 33.5 24 36 Z" fill="#FBF6EE" stroke="#4E2E96" stroke-width="1.3" stroke-linejoin="round"/>'
+    '<path d="M24 17 C28 14.5 35 14.5 39 16 V35 C35 33.5 28 33.5 24 36 Z" fill="#FBF6EE" stroke="#4E2E96" stroke-width="1.3" stroke-linejoin="round"/>'
+    '<path d="M12 21 H20 M12 25 H20 M12 29 H18" stroke="#C9B79A" stroke-width="1.4" stroke-linecap="round"/>'
+    '<path d="M28 21 H36 M28 25 H36 M30 29 H36" stroke="#C9B79A" stroke-width="1.4" stroke-linecap="round"/>'
+    '<path d="M38 8 l1.2 3 3 1.2 -3 1.2 -1.2 3 -1.2 -3 -3 -1.2 3 -1.2 Z" fill="#F2C84B" stroke="#C9881A" stroke-width="0.8" stroke-linejoin="round"/>'
+    '</svg>';
+
+const String headphonesIconSvg =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<path d="M10 30 V24 a14 14 0 0 1 28 0 V30" fill="none" stroke="#5B4FB0" stroke-width="3.4" stroke-linecap="round"/>'
+    '<rect x="6" y="27" width="9" height="14" rx="4" fill="#8B7CF6" stroke="#5B4FB0" stroke-width="2.2"/>'
+    '<rect x="33" y="27" width="9" height="14" rx="4" fill="#8B7CF6" stroke="#5B4FB0" stroke-width="2.2"/>'
+    '<rect x="9" y="30" width="3.5" height="8" rx="1.75" fill="#C3B8F4"/>'
+    '<rect x="35.5" y="30" width="3.5" height="8" rx="1.75" fill="#C3B8F4"/>'
+    '</svg>';
