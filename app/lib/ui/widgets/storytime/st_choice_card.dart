@@ -19,6 +19,7 @@ class StChoiceCard extends StatelessWidget {
     this.selected = false,
     this.onTap,
     this.footer,
+    this.tint,
   });
 
   final String name;
@@ -31,15 +32,21 @@ class StChoiceCard extends StatelessWidget {
   /// can't be clipped by the fixed-size art container.
   final Widget? footer;
 
+  /// Optional concept tint that fills the whole card. When set, the icon's
+  /// background and the card's background read as one seamless surface;
+  /// selection is shown by the ember border + shadow rather than a bg swap.
+  final Color? tint;
+
   @override
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<StorytimeTokens>()!;
 
     final borderColor = selected ? tokens.ember : tokens.line;
     final borderWidth = selected ? 2.0 : 1.5;
-    final bgColor = selected
-        ? const Color(0xFFFFF3EA) // warm ember tint
-        : tokens.paper;
+    final bgColor = tint ??
+        (selected
+            ? const Color(0xFFFFF3EA) // warm ember tint
+            : tokens.paper);
     final shadows = selected ? AppShadows.card : <BoxShadow>[];
 
     return GestureDetector(

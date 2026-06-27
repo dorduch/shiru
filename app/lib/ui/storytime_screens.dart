@@ -27,6 +27,7 @@ import '../theme/app_theme.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import 'widgets/storytime/storytime.dart';
+import 'concept_icons.dart';
 import 'pixel_sprite.dart';
 
 class StorytimeLaunchScreen extends ConsumerWidget {
@@ -899,14 +900,23 @@ class _WizardChoice extends StatelessWidget {
       name: item.label,
       selected: selected,
       onTap: onTap,
-      // Semantic concept art: every wizard concept carries a recognizable
-      // emoji (🤴 🏰 🚀 …) — far clearer for pre-readers than abstract pixel
-      // blobs. Family voices use the mic glyph.
-      thumbnail: Center(
-        child: item.isFamilyVoice
-            ? const Icon(Icons.mic_rounded, size: 40, color: AppColors.ember)
-            : Text(item.emoji, style: const TextStyle(fontSize: 40)),
-      ),
+      // The concept tint fills the whole card so the icon's background and the
+      // card's background are one seamless surface.
+      tint: item.isFamilyVoice
+          ? AppColors.cream
+          : conceptTintFor(item.value),
+      // Rich concept art: each concept renders a colorful storybook glyph on
+      // the card's matching tint (with emoji fallback until the full set is
+      // drawn). Family voices use the mic glyph.
+      thumbnail: item.isFamilyVoice
+          ? const Center(
+              child: Icon(Icons.mic_rounded, size: 40, color: AppColors.ember),
+            )
+          : StConceptToken(
+              value: item.value,
+              emoji: item.emoji,
+              background: false,
+            ),
       // Preview lives below the card (outside the clipped 72×72 thumbnail box),
       // so it can no longer be clipped to a sliver.
       footer: item.value is NarratorKey
@@ -946,12 +956,14 @@ class StoryReviewScreen extends ConsumerWidget {
         ? 'Family voice'
         : draft.narrator!.label;
     final narratorEmoji = draft.familyVoiceId != null ? '🎙️' : draft.narrator!.emoji;
-    final choices = [
-      ('character', draft.character!.label, draft.character!.emoji),
-      ('scene', draft.scene!.label, draft.scene!.emoji),
-      ('theme', draft.theme!.label, draft.theme!.emoji),
-      ('plot', draft.plot!.label, draft.plot!.emoji),
-      ('narrator', narratorLabel, narratorEmoji),
+    final Object? narratorValue =
+        draft.familyVoiceId != null ? null : draft.narrator;
+    final choices = <(String, String, String, Object?)>[
+      ('character', draft.character!.label, draft.character!.emoji, draft.character),
+      ('scene', draft.scene!.label, draft.scene!.emoji, draft.scene),
+      ('theme', draft.theme!.label, draft.theme!.emoji, draft.theme),
+      ('plot', draft.plot!.label, draft.plot!.emoji, draft.plot),
+      ('narrator', narratorLabel, narratorEmoji, narratorValue),
     ];
     return Scaffold(
       backgroundColor: tokens.cream,
@@ -984,13 +996,19 @@ class StoryReviewScreen extends ConsumerWidget {
                       child: Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: tokens.paper,
+                          color: conceptTintFor(choice.$4),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(color: tokens.ember, width: 1.5),
                         ),
                         child: Row(
                           children: [
-                            Text(choice.$3, style: const TextStyle(fontSize: 28)),
+                            StConceptToken(
+                              value: choice.$4,
+                              emoji: choice.$3,
+                              fill: false,
+                              background: false,
+                              iconSize: 30,
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(

@@ -6,6 +6,7 @@
 export 'st_button.dart';
 export 'st_chips.dart';
 export 'st_choice_card.dart';
+export 'st_concept_token.dart';
 export 'st_dots.dart';
 export 'st_error_view.dart';
 export 'st_hint.dart';
