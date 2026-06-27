@@ -16,6 +16,7 @@ import '../models/audio_card.dart';
 import '../models/family_voice.dart';
 import '../models/sprites.dart';
 import '../models/storytime_models.dart';
+import '../models/story_origin_label.dart';
 import '../providers/audio_player_provider.dart';
 import '../providers/cards_provider.dart';
 import '../providers/storytime_providers.dart';
@@ -1281,44 +1282,128 @@ class StoryLibraryScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tokens = Theme.of(context).extension<StorytimeTokens>()!;
     final cards = ref.watch(cardsProvider);
+
+    // ── Parent mode: keep the existing AppBar + ListView ─────────────────────
+    if (parentMode) {
+      return Scaffold(
+        backgroundColor: tokens.cream,
+        appBar: AppBar(
+          backgroundColor: tokens.cream,
+          title: Text(
+            'Manage stories',
+            style: AppTypography.headlineSmall.copyWith(color: tokens.ink),
+          ),
+          leading: BackButton(
+            onPressed: () => context.go('/parent'),
+          ),
+        ),
+        body: SafeArea(
+          child: cards.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stackTrace) => Center(
+              child: StButton(
+                label: 'Try again',
+                onTap: ref.read(cardsProvider.notifier).loadCards,
+              ),
+            ),
+            data: (stories) {
+              if (stories.isEmpty) {
+                return Center(
+                  child: Text(
+                    'No stories yet. Make one from Home.',
+                    style: AppTypography.bodySmall.copyWith(color: tokens.ink2),
+                  ),
+                );
+              }
+              return ListView.separated(
+                padding: const EdgeInsets.all(18),
+                itemCount: stories.length,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 10),
+                itemBuilder: (context, index) =>
+                    _StoryTile(card: stories[index], parentMode: true),
+              );
+            },
+          ),
+        ),
+      );
+    }
+
+    // ── Kid mode: rich PixelSprite tile grid ──────────────────────────────────
+    final resumable = (cards.valueOrNull ?? const <AudioCard>[])
+        .where((c) => c.playbackPosition > 5000)
+        .toList()
+      ..sort((a, b) => (b.lastPlayedAt ?? 0).compareTo(a.lastPlayedAt ?? 0));
+
     return Scaffold(
       backgroundColor: tokens.cream,
-      appBar: AppBar(
-        backgroundColor: tokens.cream,
-        title: Text(
-          parentMode ? 'Manage stories' : 'Listen',
-          style: AppTypography.headlineSmall.copyWith(color: tokens.ink),
-        ),
-        leading: BackButton(
-          onPressed: () => context.go(parentMode ? '/parent' : '/home'),
-        ),
-      ),
       body: SafeArea(
-        child: cards.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stackTrace) => Center(
-            child: StButton(
-              label: 'Try again',
-              onTap: ref.read(cardsProvider.notifier).loadCards,
-            ),
-          ),
-          data: (stories) {
-            if (stories.isEmpty) {
-              return Center(
-                child: Text(
-                  'No stories yet. Make one from Home.',
-                  style: AppTypography.bodySmall.copyWith(color: tokens.ink2),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  BackButton(onPressed: () => context.go('/home')),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Listen',
+                          style: AppTypography.headlineMedium
+                              .copyWith(color: tokens.ink),
+                        ),
+                        Text(
+                          '${cards.valueOrNull?.length ?? 0} stories',
+                          style: AppTypography.bodySmall
+                              .copyWith(color: tokens.ink2),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (resumable.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _ResumeStrip(card: resumable.first),
+              ],
+              const SizedBox(height: 16),
+              Expanded(
+                child: cards.when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => Center(
+                    child: StButton(
+                      label: 'Try again',
+                      onTap: ref.read(cardsProvider.notifier).loadCards,
+                    ),
+                  ),
+                  data: (stories) => stories.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No stories yet. Make one from Home.',
+                            style: AppTypography.bodySmall
+                                .copyWith(color: tokens.ink2),
+                          ),
+                        )
+                      : GridView.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 200,
+                            mainAxisSpacing: 12,
+                            crossAxisSpacing: 12,
+                            childAspectRatio: 0.82,
+                          ),
+                          itemCount: stories.length,
+                          itemBuilder: (context, i) =>
+                              _StoryGridTile(card: stories[i]),
+                        ),
                 ),
-              );
-            }
-            return ListView.separated(
-              padding: const EdgeInsets.all(18),
-              itemCount: stories.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 10),
-              itemBuilder: (context, index) =>
-                  _StoryTile(card: stories[index], parentMode: parentMode),
-            );
-          },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1332,12 +1417,11 @@ class _StoryTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) => Semantics(
-    label:
-        '${card.title}, ${card.storyOrigin == StoryOrigin.curated ? 'ready-made story' : 'your story'}',
+    label: '${card.title}, ${storyOriginSemantics(card.storyOrigin)}',
     button: !parentMode,
     child: StRow(
       title: card.title,
-      subtitle: card.storyOrigin == StoryOrigin.curated ? 'Ready-made story' : 'Your story',
+      subtitle: storyOriginSubtitle(card.storyOrigin),
       avatarColor: hexOrFallback(card.color),
       // Show the story's own pixel character instead of a blank color dot, so
       // each row has a real visual cue (not color alone).
@@ -1380,6 +1464,68 @@ class _StoryTile extends ConsumerWidget {
     if (confirmed == true) {
       await ref.read(cardsProvider.notifier).deleteCard(card.id);
     }
+  }
+}
+
+class _StoryGridTile extends StatelessWidget {
+  const _StoryGridTile({required this.card});
+  final AudioCard card;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    return Semantics(
+      button: true,
+      label: '${card.title}, ${storyOriginSemantics(card.storyOrigin)}',
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: () => context.go('/story/${card.id}'),
+        child: Container(
+          decoration: BoxDecoration(
+            color: tokens.paper,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: tokens.line),
+          ),
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            children: [
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: hexOrFallback(card.color),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  alignment: Alignment.center,
+                  child: PixelSprite(
+                    sprite: card.spriteKey != null
+                        ? (predefinedSprites[card.spriteKey!] ??
+                            autoAssignSprite(card.title))
+                        : autoAssignSprite(card.title),
+                    scale: 3,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                card.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.labelLarge.copyWith(
+                  color: tokens.ink,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                storyOriginSubtitle(card.storyOrigin),
+                style:
+                    AppTypography.labelMedium.copyWith(color: tokens.ink2),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
