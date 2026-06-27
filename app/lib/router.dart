@@ -210,8 +210,10 @@ GoRouter createRouter(WidgetRef ref) {
           ),
           GoRoute(
             path: 'edit-audio/:id',
-            builder: (context, state) =>
-                AddAudioDetailsScreen(editingCardId: state.pathParameters['id']),
+            builder: (context, state) => AddAudioDetailsScreen(
+              editingCardId: state.pathParameters['id'],
+              replacingAudio: state.uri.queryParameters['replaced'] == '1',
+            ),
             routes: [
               GoRoute(
                 path: 'replace',

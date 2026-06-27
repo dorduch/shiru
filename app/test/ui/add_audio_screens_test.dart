@@ -136,4 +136,94 @@ void main() {
     expect(cards.updated.single.title, 'New name');
     expect(cards.updated.single.audioPath, '/old.m4a'); // unchanged when not replaced
   });
+
+  testWidgets('stale draft is ignored when replacingAudio is false', (tester) async {
+    final existing = AudioCard(
+      id: 'c1',
+      title: 'Old',
+      color: 'E6A487',
+      audioPath: '/old.m4a',
+      storyOrigin: StoryOrigin.uploaded,
+      durationMs: 5000,
+      position: 0,
+      createdAt: 1,
+    );
+    final cards = _FakeCards()..seed([existing]);
+    final router = _buildRouter(
+      home: const AddAudioDetailsScreen(editingCardId: 'c1'),
+      initialLocation: '/edit/c1',
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          cardsProvider.overrideWith((ref) => cards),
+          addAudioDraftProvider.overrideWith(
+            (ref) => const MediaSelection(
+              path: '/stale.m4a',
+              mediaType: CardMediaType.audio,
+              duration: Duration(seconds: 99),
+            ),
+          ),
+        ],
+        child: MaterialApp.router(
+          theme: StorytimeTheme.day,
+          routerConfig: router,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    // Stale draft must NOT repoint the audio or change the duration.
+    expect(cards.updated.single.audioPath, '/old.m4a');
+    expect(cards.updated.single.durationMs, 5000);
+  });
+
+  testWidgets('replace happy path updates audio when replacingAudio is true', (tester) async {
+    final existing = AudioCard(
+      id: 'c1',
+      title: 'Old',
+      color: 'E6A487',
+      audioPath: '/old.m4a',
+      storyOrigin: StoryOrigin.uploaded,
+      durationMs: 5000,
+      position: 0,
+      createdAt: 1,
+    );
+    final cards = _FakeCards()..seed([existing]);
+    final router = _buildRouter(
+      home: const AddAudioDetailsScreen(editingCardId: 'c1', replacingAudio: true),
+      initialLocation: '/edit/c1',
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          cardsProvider.overrideWith((ref) => cards),
+          addAudioDraftProvider.overrideWith(
+            (ref) => const MediaSelection(
+              path: '/new.m4a',
+              mediaType: CardMediaType.audio,
+              duration: Duration(seconds: 30),
+            ),
+          ),
+        ],
+        child: MaterialApp.router(
+          theme: StorytimeTheme.day,
+          routerConfig: router,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(cards.updated.single.audioPath, '/new.m4a');
+    expect(cards.updated.single.durationMs, 30000);
+    expect(cards.updated.single.playbackPosition, 0);
+  });
 }

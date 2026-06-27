@@ -73,7 +73,7 @@ class _AddAudioCaptureScreenState extends ConsumerState<AddAudioCaptureScreen> {
                         final id = widget.editingCardId;
                         context.go(id == null
                             ? '/parent/add-audio/details'
-                            : '/parent/edit-audio/$id');
+                            : '/parent/edit-audio/$id?replaced=1');
                       },
               ),
             ],
@@ -85,8 +85,9 @@ class _AddAudioCaptureScreenState extends ConsumerState<AddAudioCaptureScreen> {
 }
 
 class AddAudioDetailsScreen extends ConsumerStatefulWidget {
-  const AddAudioDetailsScreen({super.key, this.editingCardId});
+  const AddAudioDetailsScreen({super.key, this.editingCardId, this.replacingAudio = false});
   final String? editingCardId;
+  final bool replacingAudio;
 
   @override
   ConsumerState<AddAudioDetailsScreen> createState() =>
@@ -97,6 +98,7 @@ class _AddAudioDetailsScreenState extends ConsumerState<AddAudioDetailsScreen> {
   late final TextEditingController _title;
   String _color = _swatches.first;
   AudioCard? _editing;
+  MediaSelection? _replacement;
 
   @override
   void initState() {
@@ -106,6 +108,10 @@ class _AddAudioDetailsScreenState extends ConsumerState<AddAudioDetailsScreen> {
       final list = ref.read(cardsProvider).valueOrNull ?? const <AudioCard>[];
       _editing = list.cast<AudioCard?>().firstWhere(
           (c) => c?.id == id, orElse: () => null);
+      _replacement = widget.replacingAudio ? ref.read(addAudioDraftProvider) : null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) ref.read(addAudioDraftProvider.notifier).state = null;
+      });
     }
     _title = TextEditingController(text: _editing?.title ?? _defaultTitle());
     if (_editing != null) _color = _editing!.color;
@@ -127,10 +133,10 @@ class _AddAudioDetailsScreenState extends ConsumerState<AddAudioDetailsScreen> {
   Future<void> _save() async {
     final title = _title.text.trim().isEmpty ? 'My recording' : _title.text.trim();
     final cards = ref.read(cardsProvider.notifier);
-    final replacement = ref.read(addAudioDraftProvider); // non-null only if audio replaced
 
     if (_editing != null) {
       final old = _editing!;
+      final replacement = _replacement;
       final newPath = replacement?.path ?? old.audioPath;
       final updated = old.copyWith(
         title: title,
@@ -143,13 +149,12 @@ class _AddAudioDetailsScreenState extends ConsumerState<AddAudioDetailsScreen> {
       if (replacement != null && replacement.path != old.audioPath) {
         await LibraryImportService.deleteImportedMedia(old.audioPath);
       }
-      ref.read(addAudioDraftProvider.notifier).state = null;
       if (mounted) context.go('/parent/stories');
       return;
     }
 
     // Create path: draft required
-    final draft = replacement;
+    final draft = ref.read(addAudioDraftProvider);
     if (draft == null) {
       context.go('/parent/add-audio');
       return;
