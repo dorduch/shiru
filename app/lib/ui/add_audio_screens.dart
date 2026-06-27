@@ -238,7 +238,7 @@ class _AddAudioDetailsScreenState extends ConsumerState<AddAudioDetailsScreen> {
             if (_editing != null) ...[
               StButton(
                 label: 'Replace audio',
-                onTap: () => context.go('/parent/add-audio'),
+                onTap: () => context.go('/parent/edit-audio/${_editing!.id}/replace'),
               ),
               const SizedBox(height: 12),
             ],

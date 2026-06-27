@@ -212,6 +212,13 @@ GoRouter createRouter(WidgetRef ref) {
             path: 'edit-audio/:id',
             builder: (context, state) =>
                 AddAudioDetailsScreen(editingCardId: state.pathParameters['id']),
+            routes: [
+              GoRoute(
+                path: 'replace',
+                builder: (context, state) =>
+                    AddAudioCaptureScreen(editingCardId: state.pathParameters['id']),
+              ),
+            ],
           ),
         ],
       ),
