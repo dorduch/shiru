@@ -300,7 +300,7 @@ class _AddAudioCaptureScreenState extends ConsumerState<AddAudioCaptureScreen> {
               const SizedBox(height: 12),
               const StSectionHeader(
                 title: 'Record or upload',
-                subtitle: 'Record a voice now, or pick an audio file.',
+                sub: 'Record a voice now, or pick an audio file.',
               ),
               const SizedBox(height: 16),
               AudioRecorderWidget(
@@ -422,7 +422,7 @@ class _AddAudioDetailsScreenState extends ConsumerState<AddAudioDetailsScreen> {
             const SizedBox(height: 20),
             StTextField(
               controller: _title,
-              hintText: 'Card title',
+              hint: 'Card title',
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 20),
