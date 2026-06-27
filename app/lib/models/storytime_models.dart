@@ -181,7 +181,7 @@ enum NarratorKey {
   };
 }
 
-enum StoryOrigin { curated, generated }
+enum StoryOrigin { curated, generated, uploaded }
 
 enum StoryJobStatus { queued, writing, checking, narrating, ready, failed }
 
