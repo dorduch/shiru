@@ -351,3 +351,16 @@ const String headphonesIconSvg =
     '<rect x="9" y="30" width="3.5" height="8" rx="1.75" fill="#C3B8F4"/>'
     '<rect x="35.5" y="30" width="3.5" height="8" rx="1.75" fill="#C3B8F4"/>'
     '</svg>';
+
+/// Microphone glyph for the "Add your own audio" action. Same hand-drawn
+/// style as [storybookIconSvg]/[headphonesIconSvg]; sits directly on the
+/// tile/entry background (no token box behind it).
+const String addAudioIconSvg =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<rect x="19" y="8" width="10" height="20" rx="5" fill="#8B7CF6" stroke="#4E2E96" stroke-width="2.2"/>'
+    '<path d="M14 22 a10 10 0 0 0 20 0" fill="none" stroke="#5B4FB0" stroke-width="2.6" stroke-linecap="round"/>'
+    '<path d="M24 32 V38" stroke="#5B4FB0" stroke-width="2.6" stroke-linecap="round"/>'
+    '<path d="M18 38 H30" stroke="#5B4FB0" stroke-width="2.6" stroke-linecap="round"/>'
+    '<rect x="22" y="12" width="4" height="3" rx="1.5" fill="#C3B8F4"/>'
+    '<path d="M38 9 l1.1 2.7 2.7 1.1 -2.7 1.1 -1.1 2.7 -1.1 -2.7 -2.7 -1.1 2.7 -1.1 Z" fill="#F2C84B" stroke="#C9881A" stroke-width="0.8" stroke-linejoin="round"/>'
+    '</svg>';
