@@ -597,7 +597,7 @@ class StorytimeHomeScreen extends ConsumerWidget {
                     final makeAction = StTile(
                       label: 'Make a Story',
                       sublabel: 'Build your own adventure',
-                      color: const Color(0xFFFFD66B),
+                      color: AppColors.tilePlay,
                       big: true,
                       child: PixelSprite(
                         sprite: autoAssignSprite('magic story book'),
@@ -611,7 +611,7 @@ class StorytimeHomeScreen extends ConsumerWidget {
                     final listenAction = StTile(
                       label: 'Listen',
                       sublabel: '${cards.length} stories',
-                      color: const Color(0xFF7FD1C4),
+                      color: AppColors.tileListen,
                       big: true,
                       child: PixelSprite(
                         sprite: autoAssignSprite('headphones story'),
@@ -891,32 +891,42 @@ class _WizardChoice extends StatelessWidget {
         : '${item.label}, ${item.subtitle}',
     selected: selected,
     button: true,
+    // Collapse the card's inner text into this one labelled button node (avoids
+    // the doubled "Prince, Prince" read). Narrator cards keep their child
+    // semantics so the nested "Preview" button stays reachable.
+    excludeSemantics: item.value is! NarratorKey,
     child: StChoiceCard(
       name: item.label,
       selected: selected,
       onTap: onTap,
-      thumbnail: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (item.isFamilyVoice)
-            const Icon(Icons.mic_rounded, size: 40, color: AppColors.ember)
-          else
-            PixelSprite(sprite: autoAssignSprite(item.label), scale: 3.7),
-          if (item.value is NarratorKey)
-            Consumer(
-              builder: (context, ref, _) => IconButton(
-                tooltip: 'Preview ${item.label}',
+      // Semantic concept art: every wizard concept carries a recognizable
+      // emoji (🤴 🏰 🚀 …) — far clearer for pre-readers than abstract pixel
+      // blobs. Family voices use the mic glyph.
+      thumbnail: Center(
+        child: item.isFamilyVoice
+            ? const Icon(Icons.mic_rounded, size: 40, color: AppColors.ember)
+            : Text(item.emoji, style: const TextStyle(fontSize: 40)),
+      ),
+      // Preview lives below the card (outside the clipped 72×72 thumbnail box),
+      // so it can no longer be clipped to a sliver.
+      footer: item.value is NarratorKey
+          ? Consumer(
+              builder: (context, ref, _) => TextButton.icon(
                 onPressed: () => ref
                     .read(narratorPreviewServiceProvider)
                     .play(item.value as NarratorKey),
-                icon: const Icon(Icons.play_circle_outline),
-                iconSize: 20,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
+                icon: const Icon(Icons.play_circle_outline, size: 18),
+                label: const Text('Preview'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.accent2,
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  textStyle: AppTypography.labelMedium,
+                ),
               ),
-            ),
-        ],
-      ),
+            )
+          : null,
     ),
   );
 }
@@ -980,10 +990,7 @@ class StoryReviewScreen extends ConsumerWidget {
                         ),
                         child: Row(
                           children: [
-                            PixelSprite(
-                              sprite: autoAssignSprite(choice.$2),
-                              scale: 3,
-                            ),
+                            Text(choice.$3, style: const TextStyle(fontSize: 28)),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
@@ -1186,7 +1193,9 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
                           PixelSprite(sprite: autoAssignSprite('magic story'), scale: 7),
                           const SizedBox(height: 24),
                           Text(
-                            _status,
+                            // Don't keep the loading headline over a failure —
+                            // swap to an error title when something went wrong.
+                            _error == null ? _status : 'Oh no, a little hiccup',
                             textAlign: TextAlign.center,
                             style: AppTypography.headlineMedium.copyWith(color: tokens.cream),
                           ),
@@ -1302,7 +1311,14 @@ class _StoryTile extends ConsumerWidget {
       title: card.title,
       subtitle: card.storyOrigin == StoryOrigin.curated ? 'Ready-made story' : 'Your story',
       avatarColor: hexOrFallback(card.color),
-      avatarImage: null,
+      // Show the story's own pixel character instead of a blank color dot, so
+      // each row has a real visual cue (not color alone).
+      avatarChild: PixelSprite(
+        sprite: card.spriteKey != null
+            ? (predefinedSprites[card.spriteKey!] ?? autoAssignSprite(card.title))
+            : autoAssignSprite(card.title),
+        scale: 2.4,
+      ),
       trailing: parentMode
           ? GestureDetector(
               onTap: () => _delete(context, ref),
@@ -1538,8 +1554,26 @@ class _StoryPlayerScreenState extends ConsumerState<StoryPlayerScreen>
                                 progress: progress,
                                 elapsed: _clock(position),
                                 total: _clock(duration),
+                                // Tint the night background with the story's
+                                // color as a soft top-down glow (rather than
+                                // lerping to a muddy mid-tone). Harmonizes with
+                                // the bedtime gradient while keeping a hint of
+                                // the story's identity.
                                 artPanel: Container(
-                                  color: hexOrFallback(_card!.color),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Color.alphaBlend(
+                                          hexOrFallback(_card!.color)
+                                              .withValues(alpha: 0.32),
+                                          AppColors.night3,
+                                        ),
+                                        AppColors.night1,
+                                      ],
+                                    ),
+                                  ),
                                   child: Center(
                                     child: PixelSprite(
                                       sprite:
@@ -1758,7 +1792,11 @@ class _DashboardEntry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<StorytimeTokens>()!;
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: '$title, $subtitle',
+      excludeSemantics: true,
+      child: GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
@@ -1766,6 +1804,7 @@ class _DashboardEntry extends StatelessWidget {
         decoration: BoxDecoration(
           color: tokens.paper,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: tokens.line, width: 1),
         ),
         child: Row(
           children: [
@@ -1782,16 +1821,15 @@ class _DashboardEntry extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
+                    style: AppTypography.bodyLarge.copyWith(
                       fontWeight: FontWeight.w700,
-                      fontSize: 16,
                       color: tokens.ink,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: TextStyle(fontSize: 13, color: tokens.ink2),
+                    style: AppTypography.labelMedium.copyWith(color: tokens.ink2),
                   ),
                 ],
               ),
@@ -1799,6 +1837,7 @@ class _DashboardEntry extends StatelessWidget {
             Icon(Icons.chevron_right, color: tokens.ink3),
           ],
         ),
+      ),
       ),
     );
   }

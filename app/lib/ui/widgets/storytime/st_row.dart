@@ -13,6 +13,7 @@ class StRow extends StatelessWidget {
     this.avatarInitial,
     this.avatarColor,
     this.avatarImage,
+    this.avatarChild,
     this.trailing,
     this.onTap,
   });
@@ -28,6 +29,10 @@ class StRow extends StatelessWidget {
 
   /// Overrides [avatarInitial] when provided.
   final ImageProvider? avatarImage;
+
+  /// Arbitrary widget (e.g. a [PixelSprite]) shown inside the avatar circle,
+  /// clipped to the circle. Takes precedence over initial/image.
+  final Widget? avatarChild;
 
   /// Widget placed at the trailing edge (chevron, pill, tag, etc.).
   final Widget? trailing;
@@ -53,6 +58,7 @@ class StRow extends StatelessWidget {
               initial: avatarInitial,
               color: avatarColor ?? tokens.ember,
               image: avatarImage,
+              child: avatarChild,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -92,28 +98,33 @@ class StRow extends StatelessWidget {
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 
 class _Avatar extends StatelessWidget {
-  const _Avatar({this.initial, required this.color, this.image});
+  const _Avatar({this.initial, required this.color, this.image, this.child});
 
   final String? initial;
   final Color color;
   final ImageProvider? image;
+  final Widget? child;
 
   @override
   Widget build(BuildContext context) {
     return CircleAvatar(
       radius: 22,
       backgroundColor: color,
-      backgroundImage: image,
-      child: image == null && initial != null
-          ? Text(
-              initial![0].toUpperCase(),
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-              ),
+      backgroundImage: child == null ? image : null,
+      child: child != null
+          ? ClipOval(
+              child: SizedBox(width: 44, height: 44, child: child),
             )
-          : null,
+          : (image == null && initial != null
+              ? Text(
+                  initial![0].toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                )
+              : null),
     );
   }
 }

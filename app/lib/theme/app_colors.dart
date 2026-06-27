@@ -61,6 +61,13 @@ class AppColors {
   /// Gold — follow-along word highlight, voice-moments accent
   static const gold = Color(0xFFE9B873);
 
+  // ─── Home action tiles (warm, derived from the ember/gold family) ─────────
+  /// "Make a Story" tile — warm gold (invites creation).
+  static const tilePlay = gold;
+
+  /// "Listen" tile — soft clay/peach, a warmer sibling of ember.
+  static const tileListen = Color(0xFFE6A487);
+
   // ─── Borders & dividers ───────────────────────────────────────────────────
   /// Line — standard border / divider on light surfaces
   static const line = Color(0xFFEBE2D4);

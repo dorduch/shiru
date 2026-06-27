@@ -3966,25 +3966,35 @@ final Map<String, String> _assignedSprites = {};
 @visibleForTesting
 void resetAssignedSpritesForTesting() => _assignedSprites.clear();
 
+/// Friendly-face sprite pool used for ambient/mascot art (kid home grid, story
+/// player hero, loading mascots). Excludes the literal-object sprites
+/// (moon/rocket/dog) so an arbitrary title can never render as one — those read
+/// as absurd when hashed onto an unrelated title (e.g. "Prince" → a moon).
+/// Recognizable concept art (wizard choices, review) uses emoji instead.
+final List<String> _facePool = predefinedSprites.keys
+    .where((k) => k.startsWith('kid_'))
+    .toList(growable: false);
+
+/// Stable, platform-independent string hash (FNV-ish over code units). Unlike
+/// [String.hashCode] this is guaranteed identical across launches and Dart
+/// versions, so a given title always maps to the same sprite.
+int _stableHash(String s) {
+  var h = 0;
+  for (final unit in s.codeUnits) {
+    h = (h * 31 + unit) & 0x7fffffff;
+  }
+  return h;
+}
+
+/// Deterministically maps a title to a friendly pixel sprite. The same title
+/// always yields the same sprite (no [Random]), so mascots and hero art stay
+/// stable across sessions instead of changing on every launch.
 SpriteDef autoAssignSprite(String title) {
-  if (_assignedSprites.containsKey(title)) {
-    return predefinedSprites[_assignedSprites[title]]!;
-  }
-
-  final availableKeys = predefinedSprites.keys
-      .where((k) => !_assignedSprites.values.contains(k))
-      .toList();
-
-  if (availableKeys.isEmpty) {
-    final random = Random();
-    final keys = predefinedSprites.keys.toList();
-    _assignedSprites[title] = keys[random.nextInt(keys.length)];
-    return predefinedSprites[_assignedSprites[title]]!;
-  }
-
-  final random = Random();
-  final selectedKey = availableKeys[random.nextInt(availableKeys.length)];
-  _assignedSprites[title] = selectedKey;
+  final key = title.trim().toLowerCase();
+  final pool = _facePool.isEmpty
+      ? predefinedSprites.keys.toList(growable: false)
+      : _facePool;
+  final selectedKey = pool[_stableHash(key) % pool.length];
   return predefinedSprites[selectedKey]!;
 }
 

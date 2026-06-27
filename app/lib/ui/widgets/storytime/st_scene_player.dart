@@ -81,10 +81,22 @@ class StScenePlayer extends StatelessWidget {
                 ),
           ),
 
+          // Title — sits directly under the hero art so the reading order is
+          // title → story → controls (not story → title).
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            child: Text(
+              title,
+              style: AppTypography.titleLarge.copyWith(color: tokens.cream),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+
           // Read text
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
               child: _HighlightText(
                 text: bodyText,
                 highlightedIndex: highlightedWordIndex,
@@ -101,7 +113,6 @@ class StScenePlayer extends StatelessWidget {
 
           // Transport row
           _Transport(
-            title: title,
             isPlaying: isPlaying,
             progress: progress,
             elapsed: elapsed,
@@ -156,7 +167,6 @@ class _HighlightText extends StatelessWidget {
 
 class _Transport extends StatelessWidget {
   const _Transport({
-    required this.title,
     required this.isPlaying,
     required this.progress,
     required this.elapsed,
@@ -166,7 +176,6 @@ class _Transport extends StatelessWidget {
     this.onSeek,
   });
 
-  final String title;
   final bool isPlaying;
   final double progress;
   final String elapsed;
@@ -182,14 +191,6 @@ class _Transport extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title
-          Text(
-            title,
-            style: AppTypography.headlineSmall.copyWith(color: tokens.cream),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 12),
           // Progress bar
           SliderTheme(
             data: SliderThemeData(

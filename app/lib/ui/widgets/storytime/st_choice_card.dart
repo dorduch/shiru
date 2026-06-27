@@ -18,12 +18,18 @@ class StChoiceCard extends StatelessWidget {
     required this.thumbnail,
     this.selected = false,
     this.onTap,
+    this.footer,
   });
 
   final String name;
   final Widget thumbnail;
   final bool selected;
   final VoidCallback? onTap;
+
+  /// Optional control rendered below the name, OUTSIDE the clipped thumbnail
+  /// box (e.g. a narrator "Preview" button). Kept out of the thumbnail so it
+  /// can't be clipped by the fixed-size art container.
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +69,10 @@ class StChoiceCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               name,
-              style: AppTypography.titleLarge.copyWith(
+              // Inter (not Fraunces) for these small concept labels: friendlier
+              // and more legible at 14px than the high-contrast display serif,
+              // which is reserved for headings and story text.
+              style: AppTypography.bodyLarge.copyWith(
                 fontSize: 14,
                 color: selected ? AppColors.dusk : tokens.ink,
               ),
@@ -71,6 +80,7 @@ class StChoiceCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
+            if (footer != null) ...[const SizedBox(height: 6), footer!],
           ],
         ),
       ),

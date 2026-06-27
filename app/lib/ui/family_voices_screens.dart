@@ -50,23 +50,27 @@ class FamilyVoicesScreen extends ConsumerWidget {
       ),
       body: voicesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(
-          child: Text(
-            'Could not load voices. Please try again.',
-            style: AppTypography.bodyLarge.copyWith(color: tokens.ink2),
-          ),
+        error: (e, _) => StErrorView(
+          icon: Icons.mic_off_rounded,
+          title: "Couldn't load voices",
+          message: 'Check your connection and try again.',
+          onRetry: () => ref.invalidate(familyVoicesProvider),
         ),
         data: (voices) => voices.isEmpty
             ? _EmptyVoices(tokens: tokens)
             : _VoicesList(voices: voices, tokens: tokens),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/parent/family-voices/consent'),
-        backgroundColor: tokens.ember,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('Add a voice'),
-      ),
+      // The empty state has its own primary "Add a voice" button, so only show
+      // the FAB once there are voices in the list (avoids two identical CTAs).
+      floatingActionButton: voicesAsync.valueOrNull?.isEmpty ?? false
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => context.push('/parent/family-voices/consent'),
+              backgroundColor: tokens.ember,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.add),
+              label: const Text('Add a voice'),
+            ),
     );
   }
 }
@@ -387,12 +391,22 @@ class _VoiceConsentScreenState extends ConsumerState<VoiceConsentScreen> {
               icon: Icons.lock_outline_rounded,
             ),
             if (_error != null) ...[
-              const SizedBox(height: 12),
-              Text(
-                _error!,
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.destructive,
-                ),
+              const SizedBox(height: 16),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.error_outline_rounded,
+                      size: 18, color: AppColors.destructiveDark),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _error!,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.destructiveDark,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
             const SizedBox(height: 24),

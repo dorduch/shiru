@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 import 'app_typography.dart';
 
@@ -258,7 +257,11 @@ abstract final class StorytimeTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.cream,
-      textTheme: GoogleFonts.interTextTheme(_textTheme),
+      // Use the per-slot theme directly: each AppTypography slot already picks
+      // Fraunces (display/headline/title) or Inter (body/label). Wrapping it in
+      // GoogleFonts.interTextTheme() would re-apply Inter to every slot and
+      // silently strip Fraunces from theme-driven text (e.g. AppBar titles).
+      textTheme: _textTheme,
       extensions: const [_tokens],
     );
   }
@@ -282,11 +285,10 @@ abstract final class StorytimeTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.night1,
-      textTheme: GoogleFonts.interTextTheme(
-        _textTheme.apply(
-          bodyColor: AppColors.cream,
-          displayColor: AppColors.cream,
-        ),
+      // Per-slot fonts preserved (see day theme note); only recolor for dark.
+      textTheme: _textTheme.apply(
+        bodyColor: AppColors.cream,
+        displayColor: AppColors.cream,
       ),
       extensions: const [_tokens],
     );

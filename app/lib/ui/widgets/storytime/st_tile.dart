@@ -46,7 +46,13 @@ class _StTileState extends State<StTile> {
 
     final double minHeight = widget.big ? 140 : 96;
 
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: widget.sublabel == null
+          ? widget.label
+          : '${widget.label}, ${widget.sublabel}',
+      excludeSemantics: true,
+      child: GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
       onTapUp: (_) {
         setState(() => _pressed = false);
@@ -87,6 +93,7 @@ class _StTileState extends State<StTile> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
