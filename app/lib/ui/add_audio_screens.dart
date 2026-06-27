@@ -96,11 +96,19 @@ class AddAudioDetailsScreen extends ConsumerStatefulWidget {
 class _AddAudioDetailsScreenState extends ConsumerState<AddAudioDetailsScreen> {
   late final TextEditingController _title;
   String _color = _swatches.first;
+  AudioCard? _editing;
 
   @override
   void initState() {
     super.initState();
-    _title = TextEditingController(text: _defaultTitle());
+    final id = widget.editingCardId;
+    if (id != null) {
+      final list = ref.read(cardsProvider).valueOrNull ?? const <AudioCard>[];
+      _editing = list.cast<AudioCard?>().firstWhere(
+          (c) => c?.id == id, orElse: () => null);
+    }
+    _title = TextEditingController(text: _editing?.title ?? _defaultTitle());
+    if (_editing != null) _color = _editing!.color;
   }
 
   String _defaultTitle() {
@@ -117,13 +125,35 @@ class _AddAudioDetailsScreenState extends ConsumerState<AddAudioDetailsScreen> {
   }
 
   Future<void> _save() async {
-    final draft = ref.read(addAudioDraftProvider);
+    final title = _title.text.trim().isEmpty ? 'My recording' : _title.text.trim();
+    final cards = ref.read(cardsProvider.notifier);
+    final replacement = ref.read(addAudioDraftProvider); // non-null only if audio replaced
+
+    if (_editing != null) {
+      final old = _editing!;
+      final newPath = replacement?.path ?? old.audioPath;
+      final updated = old.copyWith(
+        title: title,
+        color: _color,
+        audioPath: newPath,
+        durationMs: replacement?.duration?.inMilliseconds ?? old.durationMs,
+        playbackPosition: replacement != null ? 0 : old.playbackPosition,
+      );
+      await cards.updateCard(updated);
+      if (replacement != null && replacement.path != old.audioPath) {
+        await LibraryImportService.deleteImportedMedia(old.audioPath);
+      }
+      ref.read(addAudioDraftProvider.notifier).state = null;
+      if (mounted) context.go('/parent/stories');
+      return;
+    }
+
+    // Create path: draft required
+    final draft = replacement;
     if (draft == null) {
       context.go('/parent/add-audio');
       return;
     }
-    final title = _title.text.trim().isEmpty ? 'My recording' : _title.text.trim();
-    final cards = ref.read(cardsProvider.notifier);
     final existing = ref.read(cardsProvider).valueOrNull ?? const <AudioCard>[];
     final card = AudioCard(
       id: const Uuid().v4(),
@@ -205,6 +235,13 @@ class _AddAudioDetailsScreenState extends ConsumerState<AddAudioDetailsScreen> {
               ],
             ),
             const SizedBox(height: 28),
+            if (_editing != null) ...[
+              StButton(
+                label: 'Replace audio',
+                onTap: () => context.go('/parent/add-audio'),
+              ),
+              const SizedBox(height: 12),
+            ],
             StButton(label: 'Save', onTap: _save),
           ],
         ),

@@ -1432,10 +1432,19 @@ class _StoryTile extends ConsumerWidget {
         scale: 2.4,
       ),
       trailing: parentMode
-          ? GestureDetector(
-              onTap: () => _delete(context, ref),
-              child: const Icon(Icons.delete_outline, color: AppColors.ink3, size: 20),
-            )
+          ? Row(mainAxisSize: MainAxisSize.min, children: [
+              if (card.storyOrigin == StoryOrigin.uploaded)
+                GestureDetector(
+                  onTap: () => context.go('/parent/edit-audio/${card.id}'),
+                  child: const Icon(Icons.edit_outlined, color: AppColors.ink3, size: 20),
+                ),
+              if (card.storyOrigin == StoryOrigin.uploaded)
+                const SizedBox(width: 12),
+              GestureDetector(
+                onTap: () => _delete(context, ref),
+                child: const Icon(Icons.delete_outline, color: AppColors.ink3, size: 20),
+              ),
+            ])
           : const Icon(Icons.chevron_right_rounded, color: AppColors.ink3, size: 20),
       onTap: parentMode ? null : () => context.go('/story/${card.id}'),
     ),
