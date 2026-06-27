@@ -223,13 +223,19 @@ const _tokens = StorytimeTokens(
 /// ```
 abstract final class StorytimeTheme {
   // ─── Shared text theme ──────────────────────────────────────────────────
+  // Every one of the 13 TextTheme slots is populated so Material never falls
+  // back to its default (SF/Roboto) for a slot we left unset — display/headline/
+  // title-large use Fraunces, the rest Inter.
   static TextTheme get _textTheme => TextTheme(
         displayLarge: AppTypography.displayLarge,
         displayMedium: AppTypography.displayMedium,
+        displaySmall: AppTypography.headlineMedium,
+        headlineLarge: AppTypography.displayMedium,
         headlineMedium: AppTypography.headlineMedium,
         headlineSmall: AppTypography.headlineSmall,
         titleLarge: AppTypography.titleLarge,
         titleMedium: AppTypography.titleMedium,
+        titleSmall: AppTypography.labelLarge,
         bodyLarge: AppTypography.bodyLarge,
         bodyMedium: AppTypography.bodyMedium,
         bodySmall: AppTypography.bodySmall,
