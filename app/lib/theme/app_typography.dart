@@ -4,9 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 /// Storytime typography scale.
 ///
 /// Two typefaces:
-///   • **Fraunces** (serif) — display, headlines, titles and story "read" text.
-///     Tight tracking (≈ -0.01 em), line-height 1.1 for headings, 1.85 for
-///     read text.  Weights 400 / 500 / 600.
+///   • **Nunito** (rounded sans) — display, headlines, titles, wordmark and the
+///     story "read" text.  Soft, friendly and modern; heavy weights (700/800)
+///     carry the headings, 500 for long-form reading.
 ///   • **Inter** (sans-serif) — body copy, labels, UI controls.
 ///     Weights 400 / 500 / 600.
 ///
@@ -17,45 +17,45 @@ class AppTypography {
   AppTypography._();
 
   // ─── Display ──────────────────────────────────────────────────────────────
-  /// Screen headings: "Library", "New Card", "Edit Card" (Fraunces 32 w600)
-  static final displayLarge = GoogleFonts.fraunces(
+  /// Screen headings: "Library", "New Card", "Edit Card" (Nunito 32 w800)
+  static final displayLarge = GoogleFonts.nunito(
     fontSize: 32,
-    fontWeight: FontWeight.w600,
-    letterSpacing: -0.5,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.2,
     height: 1.1,
   );
 
-  /// Sub-display: "Parents Only!" (Fraunces 28 w600)
-  static final displayMedium = GoogleFonts.fraunces(
+  /// Sub-display: "Parents Only!" (Nunito 28 w800)
+  static final displayMedium = GoogleFonts.nunito(
     fontSize: 28,
-    fontWeight: FontWeight.w600,
-    letterSpacing: -0.4,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.2,
     height: 1.1,
   );
 
   // ─── Headlines ────────────────────────────────────────────────────────────
-  /// Section titles, list card text (Fraunces 24 w500)
-  static final headlineMedium = GoogleFonts.fraunces(
+  /// Section titles, list card text (Nunito 24 w700)
+  static final headlineMedium = GoogleFonts.nunito(
     fontSize: 24,
-    fontWeight: FontWeight.w500,
-    letterSpacing: -0.3,
-    height: 1.1,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.1,
+    height: 1.15,
   );
 
-  /// Story builder header title (Fraunces 22 w600)
-  static final headlineSmall = GoogleFonts.fraunces(
+  /// Story builder header title (Nunito 22 w700)
+  static final headlineSmall = GoogleFonts.nunito(
     fontSize: 22,
-    fontWeight: FontWeight.w600,
-    letterSpacing: -0.3,
-    height: 1.1,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.1,
+    height: 1.15,
   );
 
   // ─── Titles ───────────────────────────────────────────────────────────────
-  /// Card title in grid / player pill / preview (Fraunces 20 w500)
-  static final titleLarge = GoogleFonts.fraunces(
+  /// Card title in grid / player pill / preview (Nunito 20 w700)
+  static final titleLarge = GoogleFonts.nunito(
     fontSize: 20,
-    fontWeight: FontWeight.w500,
-    letterSpacing: -0.2,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 0,
     height: 1.2,
   );
 
@@ -104,11 +104,11 @@ class AppTypography {
   );
 
   // ─── Special ─────────────────────────────────────────────────────────────
-  /// App wordmark (Fraunces 30 w400)
-  static final logoWordmark = GoogleFonts.fraunces(
+  /// App wordmark (Nunito 30 w800)
+  static final logoWordmark = GoogleFonts.nunito(
     fontSize: 30,
-    fontWeight: FontWeight.w400,
-    letterSpacing: 0,
+    fontWeight: FontWeight.w800,
+    letterSpacing: 0.5,
   );
 
   /// Keypad digit buttons (Inter 28 w700)
@@ -123,10 +123,10 @@ class AppTypography {
     fontWeight: FontWeight.w500,
   );
 
-  /// Story "read" text — Fraunces 400 at 17px with generous line-height
-  static final storyBody = GoogleFonts.fraunces(
+  /// Story "read" text — Nunito 500 at 17px with generous line-height
+  static final storyBody = GoogleFonts.nunito(
     fontSize: 17,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w500,
     height: 1.85,
   );
 

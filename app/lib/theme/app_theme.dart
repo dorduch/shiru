@@ -264,9 +264,9 @@ abstract final class StorytimeTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.cream,
       // Use the per-slot theme directly: each AppTypography slot already picks
-      // Fraunces (display/headline/title) or Inter (body/label). Wrapping it in
+      // Nunito (display/headline/title) or Inter (body/label). Wrapping it in
       // GoogleFonts.interTextTheme() would re-apply Inter to every slot and
-      // silently strip Fraunces from theme-driven text (e.g. AppBar titles).
+      // silently strip Nunito from theme-driven text (e.g. AppBar titles).
       textTheme: _textTheme,
       extensions: const [_tokens],
     );
