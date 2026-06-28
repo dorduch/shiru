@@ -13,6 +13,7 @@ export 'st_hint.dart';
 export 'st_parent_gate.dart';
 export 'st_row.dart';
 export 'st_scene_player.dart';
+export 'st_screen_header.dart';
 export 'st_section_header.dart';
 export 'st_segment.dart';
 export 'st_tab_bar.dart';

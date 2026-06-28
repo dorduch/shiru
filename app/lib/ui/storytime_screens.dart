@@ -576,9 +576,11 @@ class StorytimeHomeScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton.icon(
+              StScreenHeader(
+                title: 'Hi ${profile?.name ?? 'there'}!',
+                sub: 'What should we do today?',
+                largeTitle: true,
+                trailing: TextButton.icon(
                   onPressed: () => context.go('/parent-access?next=/parent'),
                   icon: const Icon(Icons.lock_outline, size: 16),
                   label: const Text('Grown-up'),
@@ -595,14 +597,6 @@ class StorytimeHomeScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-              ),
-              Text(
-                'Hi ${profile?.name ?? 'there'}!',
-                style: AppTypography.headlineMedium.copyWith(color: tokens.ink),
-              ),
-              Text(
-                'What should we do today?',
-                style: AppTypography.bodySmall.copyWith(color: tokens.ink2),
               ),
               if (resumable.isNotEmpty) ...[
                 const SizedBox(height: 16),
@@ -731,23 +725,15 @@ class StoryWizardScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                children: [
-                  BackButton(
-                    onPressed: () {
-                      if (index == 0) {
-                        context.go('/home');
-                      } else {
-                        context.go('/make/${_steps[index - 1]}');
-                      }
-                    },
-                  ),
-                  const Spacer(),
-                ],
-              ),
-              Center(child: StDots(totalSteps: _steps.length, activeStep: index)),
-              const SizedBox(height: 16),
-              StSectionHeader(
+              StScreenHeader(
+                onBack: () {
+                  if (index == 0) {
+                    context.go('/home');
+                  } else {
+                    context.go('/make/${_steps[index - 1]}');
+                  }
+                },
+                progress: StDots(totalSteps: _steps.length, activeStep: index),
                 eyebrow: 'Step ${index + 1} of ${_steps.length}',
                 title: _questionFor(step),
               ),
@@ -1143,15 +1129,8 @@ class StoryReviewScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                children: [
-                  BackButton(
-                    onPressed: () => context.go('/make/narrator'),
-                  ),
-                  const Spacer(),
-                ],
-              ),
-              StSectionHeader(
+              StScreenHeader(
+                onBack: () => context.go('/make/narrator'),
                 eyebrow: 'Ready?',
                 title: 'Your story',
                 sub: 'Tap any choice to change it.',
@@ -1514,27 +1493,11 @@ class StoryLibraryScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                children: [
-                  BackButton(onPressed: () => context.go('/home')),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Listen',
-                          style: AppTypography.headlineMedium
-                              .copyWith(color: tokens.ink),
-                        ),
-                        Text(
-                          '${cards.valueOrNull?.length ?? 0} stories',
-                          style: AppTypography.bodySmall
-                              .copyWith(color: tokens.ink2),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              StScreenHeader(
+                onBack: () => context.go('/home'),
+                title: 'Listen',
+                sub: '${cards.valueOrNull?.length ?? 0} stories',
+                largeTitle: true,
               ),
               if (resumable.isNotEmpty) ...[
                 const SizedBox(height: 12),

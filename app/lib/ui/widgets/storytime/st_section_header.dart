@@ -19,12 +19,18 @@ class StSectionHeader extends StatelessWidget {
     this.eyebrow,
     this.sub,
     this.centerAlign = false,
+    this.largeTitle = false,
   });
 
   final String title;
   final String? eyebrow;
   final String? sub;
   final bool centerAlign;
+
+  /// When true the title renders one step larger (headlineMedium instead of
+  /// headlineSmall) — used for landing/section titles (Home, Listen) that read
+  /// larger than mid-flow step titles.
+  final bool largeTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +57,10 @@ class StSectionHeader extends StatelessWidget {
         ],
         Text(
           title,
-          style: AppTypography.headlineSmall.copyWith(color: tokens.ink),
+          style: (largeTitle
+                  ? AppTypography.headlineMedium
+                  : AppTypography.headlineSmall)
+              .copyWith(color: tokens.ink),
           textAlign: align,
         ),
         if (sub != null) ...[
