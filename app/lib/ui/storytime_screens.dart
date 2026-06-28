@@ -27,6 +27,8 @@ import '../services/analytics_service.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
+import '../theme/app_radius.dart';
+import '../theme/app_shadows.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'widgets/storytime/storytime.dart';
 import 'concept_icons.dart';
@@ -739,36 +741,57 @@ class StoryWizardScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 14),
               Expanded(
-                child: GridView.builder(
-                  // Bottom padding so the last row scrolls clear of the pinned
-                  // "Surprise me"/Continue buttons instead of sitting flush.
-                  padding: const EdgeInsets.only(bottom: 8),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: MediaQuery.sizeOf(context).width > 760
-                        ? 3
-                        : 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 1.0,
-                  ),
-                  itemCount: items.length,
-                  itemBuilder: (context, itemIndex) {
-                    final item = items[itemIndex];
-                    // For family voice items compare by id; otherwise by value.
-                    final isSelected = item.isFamilyVoice
-                        ? (item.value is FamilyVoice &&
-                              (item.value as FamilyVoice).id == selectedObj)
-                        : item.value == selectedObj;
-                    return _WizardChoice(
-                      item: item,
-                      selected: isSelected,
-                      onTap: () {
-                        _setSelection(ref, step, item.value);
-                        ref.read(audioLabelServiceProvider).speak(item.label);
-                      },
-                    );
-                  },
-                ),
+                // The narrator step has a variable, often-odd item count (built-in
+                // narrators + ready family voices) and each item carries a Preview
+                // control, so it renders as a vertical list of wide rows — avoids
+                // the grid's orphan cell and gives Preview a real 44pt target.
+                // The four concept steps stay a 2-up grid.
+                child: step == 'narrator'
+                    ? ListView.separated(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        itemCount: items.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
+                        itemBuilder: (context, itemIndex) {
+                          final item = items[itemIndex];
+                          return _NarratorRow(
+                            item: item,
+                            selected: _isChoiceSelected(item, selectedObj),
+                            onTap: () {
+                              _setSelection(ref, step, item.value);
+                              ref
+                                  .read(audioLabelServiceProvider)
+                                  .speak(item.label);
+                            },
+                          );
+                        },
+                      )
+                    : GridView.builder(
+                        // Bottom padding so the last row scrolls clear of the
+                        // pinned buttons instead of sitting flush.
+                        padding: const EdgeInsets.only(bottom: 8),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: MediaQuery.sizeOf(context).width > 760
+                              ? 3
+                              : 2,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 1.0,
+                        ),
+                        itemCount: items.length,
+                        itemBuilder: (context, itemIndex) {
+                          final item = items[itemIndex];
+                          return _WizardChoice(
+                            item: item,
+                            selected: _isChoiceSelected(item, selectedObj),
+                            onTap: () {
+                              _setSelection(ref, step, item.value);
+                              ref
+                                  .read(audioLabelServiceProvider)
+                                  .speak(item.label);
+                            },
+                          );
+                        },
+                      ),
               ),
               StButton(
                 label: 'Surprise me',
@@ -884,6 +907,16 @@ class _ChoiceItem {
   final bool isFamilyVoice;
 }
 
+/// Selection compare shared by the wizard grid (concept steps) and the narrator
+/// list — family voices compare by id, everything else by value identity.
+bool _isChoiceSelected(_ChoiceItem item, Object? selectedObj) =>
+    item.isFamilyVoice
+        ? (item.value is FamilyVoice &&
+              (item.value as FamilyVoice).id == selectedObj)
+        : item.value == selectedObj;
+
+/// Concept-step (character/scene/theme/plot) grid card. The narrator step uses
+/// [_NarratorRow] instead.
 class _WizardChoice extends StatelessWidget {
   const _WizardChoice({
     required this.item,
@@ -896,71 +929,174 @@ class _WizardChoice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Semantics(
-    label: item.subtitle == null
-        ? item.label
-        : '${item.label}, ${item.subtitle}',
+    label: item.label,
     selected: selected,
     button: true,
     // Collapse the card's inner text into this one labelled button node (avoids
-    // the doubled "Prince, Prince" read). Narrator cards keep their child
-    // semantics so the nested "Preview" button stays reachable.
-    excludeSemantics: item.value is! NarratorKey,
+    // the doubled "Prince, Prince" read).
+    excludeSemantics: true,
     child: StChoiceCard(
       name: item.label,
       selected: selected,
       onTap: onTap,
       // The concept tint fills the whole card so the icon's background and the
-      // card's background are one seamless surface.
-      tint: item.isFamilyVoice
-          ? AppColors.cream
-          : conceptTintFor(item.value),
-      // Rich concept art: each concept renders a colorful storybook glyph on
-      // the card's matching tint (with emoji fallback until the full set is
-      // drawn). Family voices use the mic glyph.
-      thumbnail: item.isFamilyVoice
-          ? const Center(
-              child: Icon(Icons.mic_rounded, size: 40, color: AppColors.ember),
-            )
-          : StConceptToken(
-              value: item.value,
-              emoji: item.emoji,
-              background: false,
-            ),
-      // Preview lives below the card (outside the clipped 72×72 thumbnail box),
-      // so it can no longer be clipped to a sliver.
-      footer: item.value is NarratorKey
-          ? Consumer(
-              builder: (context, ref, _) {
-                final service = ref.read(narratorPreviewServiceProvider);
-                return ValueListenableBuilder<NarratorKey?>(
-                  valueListenable: service.playing,
-                  builder: (context, playing, _) {
-                    final isPlaying = playing == item.value;
-                    return TextButton.icon(
-                      onPressed: () => service.play(item.value as NarratorKey),
-                      icon: Icon(
-                        isPlaying
-                            ? Icons.stop_circle_outlined
-                            : Icons.play_circle_outline,
-                        size: 18,
-                      ),
-                      label: Text(isPlaying ? 'Playing…' : 'Preview'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppColors.accent2,
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        textStyle: AppTypography.labelMedium,
-                      ),
-                    );
-                  },
-                );
-              },
-            )
-          : null,
+      // card's background read as one seamless surface.
+      tint: conceptTintFor(item.value),
+      thumbnail: StConceptToken(
+        value: item.value,
+        emoji: item.emoji,
+        background: false,
+      ),
     ),
   );
+}
+
+/// Narrator-step row: a wide, list-friendly card with thumbnail + name/subtitle
+/// and (for built-in narrators) a 44pt Preview control. Tapping the row selects;
+/// tapping Preview only previews (the button consumes its own tap).
+class _NarratorRow extends StatelessWidget {
+  const _NarratorRow({
+    required this.item,
+    required this.selected,
+    required this.onTap,
+  });
+  final _ChoiceItem item;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    final isBuiltIn = item.value is NarratorKey;
+    return Semantics(
+      label: item.subtitle == null
+          ? item.label
+          : '${item.label}, ${item.subtitle}',
+      selected: selected,
+      button: true,
+      // Keep child semantics for built-ins so the nested Preview button stays
+      // reachable; collapse for family voices (no Preview).
+      excludeSemantics: !isBuiltIn,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: tokens.paper,
+            borderRadius: AppRadius.medium,
+            border: Border.all(
+              color: selected ? tokens.ember : tokens.line,
+              width: selected ? 2.5 : 1.5,
+            ),
+            boxShadow: selected ? AppShadows.card : const <BoxShadow>[],
+          ),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: AppRadius.small,
+                child: SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: item.isFamilyVoice
+                      ? Container(
+                          color: AppColors.cream,
+                          child: const Center(
+                            child: Icon(Icons.mic_rounded,
+                                size: 26, color: AppColors.ember),
+                          ),
+                        )
+                      : StConceptToken(
+                          value: item.value,
+                          emoji: item.emoji,
+                          iconSize: 32,
+                        ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      item.label,
+                      style: AppTypography.titleMedium.copyWith(color: tokens.ink),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (item.subtitle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        item.subtitle!,
+                        style:
+                            AppTypography.bodySmall.copyWith(color: tokens.ink2),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              if (selected) ...[
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: tokens.ember,
+                    shape: BoxShape.circle,
+                  ),
+                  child:
+                      Icon(Icons.check_rounded, size: 16, color: tokens.onAccent),
+                ),
+                const SizedBox(width: 8),
+              ],
+              if (isBuiltIn)
+                _NarratorPreviewButton(narrator: item.value as NarratorKey),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 44pt tonal Preview/Playing toggle for a built-in narrator row.
+class _NarratorPreviewButton extends ConsumerWidget {
+  const _NarratorPreviewButton({required this.narrator});
+  final NarratorKey narrator;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final service = ref.read(narratorPreviewServiceProvider);
+    return ValueListenableBuilder<NarratorKey?>(
+      valueListenable: service.playing,
+      builder: (context, playing, _) {
+        final isPlaying = playing == narrator;
+        return TextButton.icon(
+          onPressed: () => service.play(narrator),
+          icon: Icon(
+            isPlaying ? Icons.stop_circle_outlined : Icons.play_circle_outline,
+            size: 20,
+          ),
+          label: Text(isPlaying ? 'Playing' : 'Preview'),
+          style: TextButton.styleFrom(
+            // eyebrow terracotta (AA on the tint) — accent2 failed contrast.
+            foregroundColor: AppColors.eyebrow,
+            backgroundColor: AppColors.ember.withValues(alpha: 0.10),
+            minimumSize: const Size(0, 44),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            textStyle: AppTypography.labelMedium,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(22),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class StoryReviewScreen extends ConsumerWidget {
