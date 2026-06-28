@@ -1255,7 +1255,9 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
                               _error!,
                               textAlign: TextAlign.center,
                               style: AppTypography.bodySmall.copyWith(
-                                color: AppColors.destructive,
+                                // Brighter coral: destructive (~3.9:1) fails on
+                                // the lightest night stop; destructiveOnDark clears AA.
+                                color: AppColors.destructiveOnDark,
                               ),
                             ),
                             const SizedBox(height: 18),

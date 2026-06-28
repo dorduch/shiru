@@ -130,11 +130,12 @@ class AppTypography {
     height: 1.85,
   );
 
-  /// Eyebrow label — Inter 600, 11px, wide tracking, uppercase, accent-2 color
-  /// applied by callers via `.copyWith(color: AppColors.accent2)`.
+  /// Eyebrow label — Inter 700, 12.5px, wide tracking, uppercase. Color applied
+  /// by callers via `.copyWith(color: AppColors.eyebrow)`. Bumped from 11/w600
+  /// so small all-caps text stays legible (see AppColors.eyebrow for contrast).
   static final eyebrow = GoogleFonts.inter(
-    fontSize: 11,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 1.9,
+    fontSize: 12.5,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 1.6,
   );
 }

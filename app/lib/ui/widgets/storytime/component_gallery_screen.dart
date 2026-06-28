@@ -527,7 +527,7 @@ class _GallerySection extends StatelessWidget {
           Text(
             label,
             style: AppTypography.eyebrow.copyWith(
-              color: labelColor ?? AppColors.accent2,
+              color: labelColor ?? AppColors.eyebrow,
             ),
           ),
           const SizedBox(height: 12),

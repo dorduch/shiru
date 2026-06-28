@@ -76,9 +76,9 @@ class StChoiceCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               name,
-              // Inter (not Fraunces) for these small concept labels: friendlier
-              // and more legible at 14px than the high-contrast display serif,
-              // which is reserved for headings and story text.
+              // Inter (not the Nunito display face) for these small concept
+              // labels: friendlier and more legible at 14px than the display
+              // font, which is reserved for headings and story text.
               style: AppTypography.bodyLarge.copyWith(
                 fontSize: 14,
                 color: selected ? AppColors.dusk : tokens.ink,

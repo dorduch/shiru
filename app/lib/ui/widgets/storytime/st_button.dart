@@ -99,7 +99,9 @@ class _StButtonState extends State<StButton> {
           label: widget.label,
           leading: widget.leading,
           gradient: tokens.ctaGradient,
-          textColor: Colors.white,
+          // Dark ink, not white: white (~2.7:1) fails AA on the light end of the
+          // ember gradient. onAccent (night ink) clears ~7:1 across both stops.
+          textColor: tokens.onAccent,
           shadows: AppShadows.primaryGlow,
           radius: AppRadius.large,
         );

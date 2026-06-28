@@ -9,6 +9,7 @@ import '../providers/auth_provider.dart';
 import '../providers/pin_provider.dart';
 import '../services/analytics_service.dart';
 import '../services/key_value_store.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_responsive.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
@@ -347,7 +348,7 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
         SizedBox(height: AppResponsive.spacing(context, 8)),
         Text(
           'GROWN-UPS ONLY',
-          style: tokens.eyebrow.copyWith(color: tokens.accent2),
+          style: tokens.eyebrow.copyWith(color: AppColors.eyebrow),
         ),
         SizedBox(height: AppResponsive.spacing(context, 8)),
         Text(
@@ -450,7 +451,7 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
                 width: keySize,
                 height: keySize,
                 decoration: BoxDecoration(
-                  color: key == 'DEL' ? tokens.cream : tokens.paper,
+                  color: tokens.paper,
                   shape: BoxShape.circle,
                   border: Border.all(color: tokens.line, width: 1),
                   boxShadow: AppShadows.card,
@@ -460,7 +461,7 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
                     ? Icon(
                         Icons.backspace_rounded,
                         size: AppResponsive.iconSize(context, 28),
-                        color: tokens.ink2,
+                        color: tokens.ink,
                       )
                     : Text(
                         key,

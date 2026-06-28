@@ -87,7 +87,9 @@ class _StTileState extends State<StTile> {
                 const SizedBox(height: 2),
                 Text(
                   widget.sublabel!,
-                  style: AppTypography.labelMedium.copyWith(color: tokens.ink2),
+                  // ink (not ink2): subtitles sit on saturated home tiles
+                  // (gold/clay) where ink2 dips below AA.
+                  style: AppTypography.labelMedium.copyWith(color: tokens.ink),
                 ),
               ],
             ],

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/pin_provider.dart';
 import '../services/analytics_service.dart';
 import '../services/key_value_store.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_responsive.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
@@ -354,7 +355,7 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
         SizedBox(height: AppResponsive.spacing(context, 12)),
         Text(
           'CHANGE PIN',
-          style: tokens.eyebrow.copyWith(color: tokens.accent2),
+          style: tokens.eyebrow.copyWith(color: AppColors.eyebrow),
         ),
         SizedBox(height: AppResponsive.spacing(context, 8)),
         Text(

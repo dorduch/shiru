@@ -67,7 +67,8 @@ class FamilyVoicesScreen extends ConsumerWidget {
           : FloatingActionButton.extended(
               onPressed: () => context.push('/parent/family-voices/consent'),
               backgroundColor: tokens.ember,
-              foregroundColor: Colors.white,
+              // Dark ink for AA contrast on ember (white ~2.7:1 fails).
+              foregroundColor: tokens.onAccent,
               icon: const Icon(Icons.add),
               label: const Text('Add a voice'),
             ),

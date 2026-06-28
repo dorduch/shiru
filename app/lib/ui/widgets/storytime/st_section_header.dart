@@ -43,7 +43,7 @@ class StSectionHeader extends StatelessWidget {
           Text(
             eyebrow!.toUpperCase(),
             style: AppTypography.eyebrow.copyWith(
-              color: AppColors.accent2,
+              color: AppColors.eyebrow,
             ),
             textAlign: align,
           ),

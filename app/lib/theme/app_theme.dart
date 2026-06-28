@@ -236,7 +236,7 @@ const _tokens = StorytimeTokens(
   // below via a non-const override; _tokens is used as the const base only for
   // the colors/lines fields. The ThemeData extensions list uses the full
   // instances defined in StorytimeTheme.
-  eyebrow: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.9),
+  eyebrow: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, letterSpacing: 1.6),
   ctaGradient: LinearGradient(
     colors: [AppColors.accent, AppColors.accent2],
   ),
@@ -258,7 +258,7 @@ const _tokens = StorytimeTokens(
 /// tokens flip to read correctly on the night gradient. (Not const because the
 /// cream-alpha values are computed.)
 final _bedtimeTokens = _tokens.copyWith(
-  trackInactive: AppColors.cream.withValues(alpha: 0.35),
+  trackInactive: AppColors.cream.withValues(alpha: 0.5),
   textPrimary: AppColors.cream,
   textSecondary: AppColors.cream.withValues(alpha: 0.7),
   textTertiary: AppColors.cream.withValues(alpha: 0.5),
@@ -286,7 +286,7 @@ abstract final class StorytimeTheme {
   // ─── Shared text theme ──────────────────────────────────────────────────
   // Every one of the 13 TextTheme slots is populated so Material never falls
   // back to its default (SF/Roboto) for a slot we left unset — display/headline/
-  // title-large use Fraunces, the rest Inter.
+  // title-large use Nunito, the rest Inter.
   static TextTheme get _textTheme => TextTheme(
         displayLarge: AppTypography.displayLarge,
         displayMedium: AppTypography.displayMedium,

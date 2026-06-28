@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 
 import '../logic/age_gate_logic.dart';
 import '../providers/adult_gate_provider.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_responsive.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
@@ -175,7 +176,7 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
                       SizedBox(height: AppResponsive.spacing(context, 4)),
                       Text(
                         'GROWN-UPS ONLY',
-                        style: tokens.eyebrow.copyWith(color: tokens.accent2),
+                        style: tokens.eyebrow.copyWith(color: AppColors.eyebrow),
                       ),
                       SizedBox(height: AppResponsive.spacing(context, 8)),
                       Text(

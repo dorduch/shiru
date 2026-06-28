@@ -125,12 +125,23 @@ class AppColors {
   /// Primary shadow — ember glow at 40% opacity
   static const primaryShadow = Color(0x66E08A5B);
 
+  // ─── Eyebrow / small-caps labels ──────────────────────────────────────────
+  /// Burnt terracotta for small-caps eyebrow labels ("STEP 1 OF 5", "READY?").
+  /// Deeper than [accent2] so small all-caps text clears WCAG AA (~5.4:1) on
+  /// cream/paper — accent2 (~2.5:1) failed. Kept brand-warm, not brown.
+  static const eyebrow = Color(0xFFA8472F);
+
   // ─── Destructive ──────────────────────────────────────────────────────────
   /// Destructive action — warm red (unchanged from Shiru; no Storytime token)
   static const destructive = Color(0xFFFF6B6B);
 
   /// Accessible destructive foreground on pale surfaces
   static const destructiveDark = Color(0xFFB91C1C);
+
+  /// Accessible destructive text on the night gradient — a brighter coral that
+  /// clears AA (~5.3:1) on the lightest night stop, where [destructive] (~3.9:1)
+  /// failed.
+  static const destructiveOnDark = Color(0xFFFF9A8D);
 
   /// Destructive shadow
   static const destructiveShadow = Color(0x40FF6B6B);
