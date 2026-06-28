@@ -580,8 +580,20 @@ class StorytimeHomeScreen extends ConsumerWidget {
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(
                   onPressed: () => context.go('/parent-access?next=/parent'),
-                  icon: const Icon(Icons.lock_outline, size: 17),
+                  icon: const Icon(Icons.lock_outline, size: 16),
                   label: const Text('Grown-up'),
+                  // Reads as a deliberate control (outlined pill) rather than a
+                  // bare text link — adult-discoverable, but de-emphasized
+                  // (ink2/paper) so it isn't a target for kids.
+                  style: TextButton.styleFrom(
+                    foregroundColor: tokens.ink2,
+                    backgroundColor: tokens.paper,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                      side: BorderSide(color: tokens.line),
+                    ),
+                  ),
                 ),
               ),
               Text(
@@ -638,7 +650,7 @@ class StorytimeHomeScreen extends ConsumerWidget {
                           )
                         : Column(
                             children: [
-                              Expanded(flex: 2, child: makeAction),
+                              Expanded(child: makeAction),
                               const SizedBox(height: 14),
                               Expanded(child: listenAction),
                             ],
@@ -1369,7 +1381,10 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 520),
                     child: Padding(
-                      padding: const EdgeInsets.all(28),
+                      // Bottom-heavy padding nudges the vertically-centered
+                      // block up a touch: geometric-center content reads
+                      // slightly low and the heavy sprite biases mass downward.
+                      padding: const EdgeInsets.fromLTRB(28, 28, 28, 52),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
