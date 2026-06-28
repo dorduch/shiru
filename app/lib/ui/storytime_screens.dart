@@ -126,18 +126,20 @@ class _LaunchError extends StatelessWidget {
   final VoidCallback onRetry;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    body: Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('Storytime could not start.'),
-          const SizedBox(height: 16),
-          FilledButton(onPressed: onRetry, child: const Text('Try again')),
-        ],
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    return Scaffold(
+      backgroundColor: tokens.night1,
+      body: SafeArea(
+        child: StErrorView(
+          icon: Icons.nightlight_round,
+          title: 'Storytime could not start',
+          message: 'Something went wrong getting things ready. Let\'s try again.',
+          onRetry: onRetry,
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class StorytimeWelcomeScreen extends StatelessWidget {
@@ -1661,9 +1663,28 @@ class _StoryPlayerScreenState extends ConsumerState<StoryPlayerScreen>
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const _LoadingScaffold();
+    if (_loading) return const _NightLoadingScaffold();
     if (_error != null || _card == null) {
-      return Scaffold(body: Center(child: Text(_error ?? 'Story not found.')));
+      return Theme(
+        data: StorytimeTheme.bedtime,
+        child: Builder(
+          builder: (context) {
+            final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+            return Scaffold(
+              backgroundColor: tokens.night1,
+              body: SafeArea(
+                child: StErrorView(
+                  icon: Icons.menu_book_rounded,
+                  title: 'Story not found',
+                  message: _error ?? 'We couldn\'t open this story.',
+                  retryLabel: 'Back to stories',
+                  onRetry: () => context.go('/listen'),
+                ),
+              ),
+            );
+          },
+        ),
+      );
     }
     final player = _player!;
     return Theme(
@@ -1801,14 +1822,25 @@ class StoryEndScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cards = ref.watch(cardsProvider).valueOrNull ?? const <AudioCard>[];
     final card = cards.where((candidate) => candidate.id == cardId).firstOrNull;
-    if (card == null) {
-      return const Scaffold(body: Center(child: Text('Story not found.')));
-    }
     return Theme(
       data: StorytimeTheme.bedtime,
       child: Builder(
         builder: (context) {
           final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+          if (card == null) {
+            return Scaffold(
+              backgroundColor: tokens.night1,
+              body: SafeArea(
+                child: StErrorView(
+                  icon: Icons.menu_book_rounded,
+                  title: 'Story not found',
+                  message: 'We couldn\'t find this story anymore.',
+                  retryLabel: 'Back home',
+                  onRetry: () => context.go('/home'),
+                ),
+              ),
+            );
+          }
           return Scaffold(
             body: Container(
               decoration: BoxDecoration(gradient: tokens.nightGradient),
@@ -1928,8 +1960,7 @@ class StorytimeParentDashboard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           _DashboardEntry(
-            icon: Icons.add,
-            leading: SvgPicture.string(addAudioIconSvg, width: 40, height: 40),
+            icon: Icons.mic_none_outlined,
             title: 'Add your own audio',
             subtitle: 'Record a voice or upload a file',
             onTap: () => context.go('/parent/add-audio'),
@@ -1974,13 +2005,11 @@ class _DashboardEntry extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
-    this.leading,
   });
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
-  final Widget? leading;
 
   @override
   Widget build(BuildContext context) {
@@ -2001,12 +2030,11 @@ class _DashboardEntry extends StatelessWidget {
         ),
         child: Row(
           children: [
-            leading ??
-                CircleAvatar(
-                  radius: 22,
-                  backgroundColor: tokens.ember.withValues(alpha: 0.12),
-                  child: Icon(icon, color: tokens.ember, size: 20),
-                ),
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: tokens.ember.withValues(alpha: 0.12),
+              child: Icon(icon, color: tokens.ember, size: 20),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(

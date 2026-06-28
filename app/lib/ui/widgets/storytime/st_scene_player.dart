@@ -200,7 +200,7 @@ class _Transport extends StatelessWidget {
               overlayShape:
                   const RoundSliderOverlayShape(overlayRadius: 14),
               activeTrackColor: tokens.gold,
-              inactiveTrackColor: tokens.cream.withValues(alpha: 0.18),
+              inactiveTrackColor: tokens.trackInactive,
               thumbColor: tokens.gold,
               overlayColor: tokens.gold.withValues(alpha: 0.18),
             ),
@@ -234,7 +234,7 @@ class _Transport extends StatelessWidget {
                     isPlaying
                         ? Icons.pause_rounded
                         : Icons.play_arrow_rounded,
-                    color: Colors.white,
+                    color: tokens.onAccent,
                     size: 26,
                   ),
                 ),

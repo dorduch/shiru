@@ -96,25 +96,30 @@ ConceptIcon? conceptIconFor(Object value) => switch (value) {
 
 const String _crown =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(2.12,1.21) scale(0.91)">'
     '<path d="M7 33 L7 16 L16 24 L24 11 L32 24 L41 16 L41 33 Z" fill="#F2B23E" stroke="#7A4A14" stroke-width="2.2" stroke-linejoin="round"/>'
     '<rect x="7" y="32" width="34" height="7" rx="2.5" fill="#E0911F" stroke="#7A4A14" stroke-width="2.2"/>'
     '<circle cx="24" cy="19" r="2.6" fill="#E2575B"/>'
     '<circle cx="14.5" cy="26" r="2" fill="#3FB59A"/>'
     '<circle cx="33.5" cy="26" r="2" fill="#8B7CF6"/>'
+    '</g>'
     '</svg>';
 
 const String _stethoscope =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(2.36,-0.07) scale(0.9)">'
     '<circle cx="15" cy="11" r="2.6" fill="#2A2230"/>'
     '<circle cx="33" cy="11" r="2.6" fill="#2A2230"/>'
     '<path d="M15 13 V21 a9 9 0 0 0 18 0 V13" fill="none" stroke="#E2575B" stroke-width="3.4" stroke-linecap="round"/>'
     '<path d="M24 30 V35" fill="none" stroke="#E2575B" stroke-width="3.4" stroke-linecap="round"/>'
     '<circle cx="24" cy="39" r="5" fill="#C9CDD6" stroke="#7A4A14" stroke-width="2"/>'
     '<circle cx="24" cy="39" r="1.8" fill="#7E8593"/>'
+    '</g>'
     '</svg>';
 
 const String _fox =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(2,0.12) scale(0.92)">'
     '<path d="M11 11 L19 23 L7 25 Z" fill="#F18A3E" stroke="#7A4A14" stroke-width="2" stroke-linejoin="round"/>'
     '<path d="M37 11 L29 23 L41 25 Z" fill="#F18A3E" stroke="#7A4A14" stroke-width="2" stroke-linejoin="round"/>'
     '<path d="M9 22 Q24 16 39 22 L24 41 Z" fill="#F7A24E" stroke="#7A4A14" stroke-width="2.2" stroke-linejoin="round"/>'
@@ -122,10 +127,12 @@ const String _fox =
     '<circle cx="18.5" cy="27" r="1.9" fill="#2A2230"/>'
     '<circle cx="29.5" cy="27" r="1.9" fill="#2A2230"/>'
     '<path d="M24 33 l3 0 -3 3 -3 -3 Z" fill="#2A2230"/>'
+    '</g>'
     '</svg>';
 
 const String _castle =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(2.12,1.16) scale(0.91)">'
     '<rect x="9" y="20" width="30" height="20" fill="#9B8CF6" stroke="#5B4FB0" stroke-width="2.2"/>'
     '<rect x="7" y="16" width="9" height="24" fill="#8B7CF6" stroke="#5B4FB0" stroke-width="2.2"/>'
     '<rect x="32" y="16" width="9" height="24" fill="#8B7CF6" stroke="#5B4FB0" stroke-width="2.2"/>'
@@ -133,10 +140,12 @@ const String _castle =
     '<path d="M24 9 l6 2 -6 2 Z" fill="#E2575B"/>'
     '<path d="M11 12 l5 1.6 -5 1.6 Z" fill="#3FB59A"/>'
     '<path d="M37 12 l-5 1.6 5 1.6 Z" fill="#3FB59A"/>'
+    '</g>'
     '</svg>';
 
 const String _treasure =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(-0.6,-4.18) scale(1.02)">'
     '<rect x="9" y="22" width="30" height="17" rx="3" fill="#B5722E" stroke="#6E3F14" stroke-width="2.2"/>'
     '<path d="M9 24 a15 8 0 0 1 30 0 Z" fill="#C8843B" stroke="#6E3F14" stroke-width="2.2"/>'
     '<rect x="9" y="26" width="30" height="4" fill="#E0A24A"/>'
@@ -145,63 +154,79 @@ const String _treasure =
     '<circle cx="24" cy="20" r="2.4" fill="#3FB59A"/>'
     '<circle cx="30" cy="21" r="2.2" fill="#8B7CF6"/>'
     '<rect x="22" y="31" width="4" height="5" rx="1" fill="#F2C84B" stroke="#6E3F14" stroke-width="1.4"/>'
+    '</g>'
     '</svg>';
 
 const String _magic =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(0.14,2.63) scale(0.99)">'
     '<path d="M24 6 C18 16 13 18 13 26 a11 11 0 0 0 22 0 c0-8 -5-10 -11-20 Z" fill="#4FA3E8" stroke="#1E5C96" stroke-width="2.2" stroke-linejoin="round"/>'
     '<path d="M24 16 C21 22 18 22 18 27 a6 6 0 0 0 4 5" fill="none" stroke="#BFE0FA" stroke-width="2.4" stroke-linecap="round"/>'
+    '</g>'
     '</svg>';
 
 const String _trophy =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(2.36,7) scale(0.9)">'
     '<path d="M16 28 a8 8 0 1 1 16 0 Z" fill="#F2C84B" stroke="#7A4A14" stroke-width="2.2"/>'
     '<rect x="14" y="27" width="20" height="5" rx="2" fill="#E0911F" stroke="#7A4A14" stroke-width="2"/>'
     '<path d="M24 6 V12 M11 11 L15 15 M37 11 L33 15 M7 24 H13 M41 24 H35" stroke="#F2A93E" stroke-width="2.6" stroke-linecap="round"/>'
     '<circle cx="24" cy="24" r="4" fill="#FBE08A"/>'
+    '</g>'
     '</svg>';
 
 const String _friendship =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(0.21,-4.41) scale(0.99)">'
     '<path d="M18 38 C7 30 6 21 12 18 c4-2 6 1 6 3 c0-2 2-5 6-3 c6 3 5 12 -6 20 Z" fill="#E2575B" stroke="#9C2F3C" stroke-width="2"/>'
     '<path d="M30 40 C19 32 18 23 24 20 c4-2 6 1 6 3 c0-2 2-5 6-3 c6 3 5 12 -6 20 Z" fill="#8B7CF6" stroke="#5B4FB0" stroke-width="2"/>'
+    '</g>'
     '</svg>';
 
 const String _tiara =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(0.84,-2.05) scale(0.96)">'
     '<path d="M8 32 L13 21 L18 28 L24 17 L30 28 L35 21 L40 32 Z" fill="#F4A6C8" stroke="#C03E76" stroke-width="2.2" stroke-linejoin="round"/>'
     '<rect x="8" y="31" width="32" height="6" rx="2.5" fill="#E97FB0" stroke="#C03E76" stroke-width="2.2"/>'
     '<circle cx="24" cy="24" r="2.6" fill="#E2575B"/>'
     '<circle cx="14" cy="26" r="1.7" fill="#8B7CF6"/>'
     '<circle cx="34" cy="26" r="1.7" fill="#3FB59A"/>'
+    '</g>'
     '</svg>';
 
 const String _hardHat =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(3.27,2.36) scale(0.86)">'
     '<rect x="21" y="14" width="6" height="12" rx="2" fill="#E0A21F"/>'
     '<path d="M9 31 a15 13 0 0 1 30 0 Z" fill="#F2C03E" stroke="#9A6A12" stroke-width="2.2" stroke-linejoin="round"/>'
     '<rect x="6" y="30" width="36" height="5" rx="2.5" fill="#E0A21F" stroke="#9A6A12" stroke-width="2.2"/>'
+    '</g>'
     '</svg>';
 
 const String _fireHelmet =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(3.27,1.84) scale(0.86)">'
     '<path d="M8 33 Q9 21 24 20 Q39 21 40 33 Z" fill="#E2483C" stroke="#9A2018" stroke-width="2.2" stroke-linejoin="round"/>'
     '<path d="M6 33 q18 6 36 0" fill="none" stroke="#9A2018" stroke-width="2.2"/>'
     '<path d="M20 33 L24 15 L28 33 Z" fill="#F2C84B" stroke="#9A2018" stroke-width="1.6" stroke-linejoin="round"/>'
     '<circle cx="24" cy="27" r="2.4" fill="#E2483C" stroke="#9A2018" stroke-width="1.2"/>'
+    '</g>'
     '</svg>';
 
 const String _rocket =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(-1.88,2.22) scale(1.08)">'
     '<path d="M24 6 C30 13 30 24 27 31 H21 C18 24 18 13 24 6 Z" fill="#EDEEF3" stroke="#5B4FB0" stroke-width="2.2" stroke-linejoin="round"/>'
     '<circle cx="24" cy="18" r="3.4" fill="#4FA3E8" stroke="#1E5C96" stroke-width="1.6"/>'
     '<path d="M21 28 L15 34 L21 32 Z" fill="#E2575B" stroke="#9C2F3C" stroke-width="1.4" stroke-linejoin="round"/>'
     '<path d="M27 28 L33 34 L27 32 Z" fill="#E2575B" stroke="#9C2F3C" stroke-width="1.4" stroke-linejoin="round"/>'
     '<path d="M21 31 Q24 40 27 31 Z" fill="#F2A93E"/>'
+    '</g>'
     '</svg>';
 
 const String _fish =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(0.66,4.13) scale(0.92)">'
     '<ellipse cx="22" cy="26" rx="13" ry="9" fill="#2BB7C4" stroke="#15727C" stroke-width="2.2"/>'
     '<path d="M33 26 L42 19 L40 26 L42 33 Z" fill="#2BB7C4" stroke="#15727C" stroke-width="2.2" stroke-linejoin="round"/>'
     '<circle cx="16" cy="23" r="2.4" fill="#FBF6EE" stroke="#15727C" stroke-width="1"/>'
@@ -209,17 +234,21 @@ const String _fish =
     '<path d="M22 21 q3 5 0 10" fill="none" stroke="#15727C" stroke-width="1.2"/>'
     '<circle cx="9" cy="13" r="1.6" fill="#9FE0E6"/>'
     '<circle cx="13" cy="8" r="1.1" fill="#9FE0E6"/>'
+    '</g>'
     '</svg>';
 
 const String _pine =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(1.24,1.81) scale(0.95)">'
     '<rect x="21" y="31" width="6" height="9" fill="#9A6A3A" stroke="#5E3F1E" stroke-width="1.6"/>'
     '<path d="M24 7 L33 21 H15 Z" fill="#4FA64E" stroke="#2E6E2C" stroke-width="2" stroke-linejoin="round"/>'
     '<path d="M24 16 L36 32 H12 Z" fill="#3F9A44" stroke="#2E6E2C" stroke-width="2" stroke-linejoin="round"/>'
+    '</g>'
     '</svg>';
 
 const String _city =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(0.57,-1.38) scale(0.98)">'
     '<rect x="8" y="20" width="9" height="19" fill="#8B7CF6" stroke="#5B4FB0" stroke-width="1.8"/>'
     '<rect x="19" y="13" width="10" height="26" fill="#E2575B" stroke="#9C2F3C" stroke-width="1.8"/>'
     '<rect x="31" y="24" width="9" height="15" fill="#3FB59A" stroke="#15727C" stroke-width="1.8"/>'
@@ -229,96 +258,120 @@ const String _city =
     '<rect x="11" y="24" width="2.2" height="2.2"/><rect x="11" y="29" width="2.2" height="2.2"/>'
     '<rect x="34" y="28" width="2.2" height="2.2"/><rect x="34" y="33" width="2.2" height="2.2"/>'
     '</g>'
+    '</g>'
     '</svg>';
 
 const String _barn =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(0.84,-0.61) scale(0.96)">'
     '<rect x="10" y="22" width="28" height="17" fill="#E2483C" stroke="#9A2018" stroke-width="2.2"/>'
     '<path d="M8 23 L24 12 L40 23 Z" fill="#C0392E" stroke="#9A2018" stroke-width="2.2" stroke-linejoin="round"/>'
     '<rect x="20" y="29" width="8" height="10" fill="#F4E9D6" stroke="#9A2018" stroke-width="1.6"/>'
     '<path d="M24 29 V39 M20 34 H28" stroke="#C0392E" stroke-width="1.3"/>'
+    '</g>'
     '</svg>';
 
 const String _lion =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(-2.4,-3.5) scale(1.1)">'
     '<circle cx="24" cy="25" r="14" fill="#E0911F" stroke="#9A6A12" stroke-width="2"/>'
     '<circle cx="24" cy="25" r="10" fill="#F2C24E" stroke="#9A6A12" stroke-width="1.6"/>'
     '<circle cx="20" cy="23" r="1.7" fill="#2A2230"/>'
     '<circle cx="28" cy="23" r="1.7" fill="#2A2230"/>'
     '<path d="M24 27 l2.6 0 -2.6 2.8 -2.6 -2.8 Z" fill="#7A4A14"/>'
     '<path d="M24 29.8 V32 M24 32 q-3 1.5 -4.5 -0.8 M24 32 q3 1.5 4.5 -0.8" fill="none" stroke="#7A4A14" stroke-width="1.3" stroke-linecap="round"/>'
+    '</g>'
     '</svg>';
 
 const String _moon =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(-1.1,1.05) scale(1.09)">'
     '<path d="M28 7 a14 14 0 1 0 6 27 A11 11 0 0 1 28 7 Z" fill="#F2D24B" stroke="#C9A23A" stroke-width="2.2" stroke-linejoin="round"/>'
     '<path d="M15 13 l1.2 3 3 1.2 -3 1.2 -1.2 3 -1.2 -3 -3 -1.2 3 -1.2 Z" fill="#FBE08A"/>'
     '<circle cx="16" cy="31" r="1.4" fill="#FBE08A"/>'
+    '</g>'
     '</svg>';
 
 const String _compass =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(-0.44,-0.44) scale(1.02)">'
     '<circle cx="24" cy="24" r="15" fill="#EDF2F8" stroke="#1E5C96" stroke-width="2.4"/>'
     '<path d="M24 11 L27 24 L21 24 Z" fill="#E2575B" stroke="#9C2F3C" stroke-width="1" stroke-linejoin="round"/>'
     '<path d="M24 37 L21 24 L27 24 Z" fill="#C9CDD6" stroke="#7E8593" stroke-width="1" stroke-linejoin="round"/>'
     '<circle cx="24" cy="24" r="1.9" fill="#2A2230"/>'
+    '</g>'
     '</svg>';
 
 const String _magnifier =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(-1.08,-1.08) scale(1.01)">'
     '<line x1="29" y1="29" x2="39" y2="39" stroke="#5B4FB0" stroke-width="4.4" stroke-linecap="round"/>'
     '<circle cx="21" cy="21" r="11" fill="#DCE7FB" stroke="#5B4FB0" stroke-width="3"/>'
     '<path d="M18 17 a3.6 3.6 0 0 1 6 2.6 c0 2.8 -3 2.2 -3 4.6" fill="none" stroke="#7A6FC0" stroke-width="2" stroke-linecap="round"/>'
     '<circle cx="21" cy="27" r="1.3" fill="#7A6FC0"/>'
+    '</g>'
     '</svg>';
 
 const String _kindHeart =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(-4.49,-4.5) scale(1.19)">'
     '<path d="M24 14 C22 10 16 10 16 15 c0 4 8 10 8 10 c0 0 8-6 8-10 c0-5 -6-5 -8-1 Z" fill="#F2C84B" stroke="#C9881A" stroke-width="2" stroke-linejoin="round"/>'
     '<path d="M11 27 C11 36 37 36 37 27 L37 31 C37 39 11 39 11 31 Z" fill="#F2B98C" stroke="#C77E4A" stroke-width="1.8" stroke-linejoin="round"/>'
+    '</g>'
     '</svg>';
 
 const String _bolt =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(5.35,4.25) scale(0.86)">'
     '<path d="M13 23 a7 7 0 0 1 1 -13 a9 9 0 0 1 17 2 a6 6 0 0 1 -1 11 Z" fill="#C9CDD6" stroke="#8A90A0" stroke-width="2" stroke-linejoin="round"/>'
     '<path d="M25 17 L18 30 H23 L20 41 L31 26 H25 L29 17 Z" fill="#F2C03E" stroke="#B9851A" stroke-width="2" stroke-linejoin="round"/>'
+    '</g>'
     '</svg>';
 
 const String _gift =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(2.12,1.14) scale(0.91)">'
     '<rect x="9" y="22" width="30" height="17" rx="2" fill="#8B7CF6" stroke="#5B4FB0" stroke-width="2.2"/>'
     '<rect x="7" y="16" width="34" height="7" rx="2" fill="#7A6BE8" stroke="#5B4FB0" stroke-width="2.2"/>'
     '<rect x="21" y="16" width="6" height="23" fill="#F2C84B" stroke="#C9881A" stroke-width="1.6"/>'
     '<path d="M24 16 C20 8 12 11 18 16 M24 16 C28 8 36 11 30 16" fill="#F2C84B" stroke="#C9881A" stroke-width="2" stroke-linejoin="round"/>'
     '<circle cx="24" cy="15" r="2.2" fill="#F2C84B" stroke="#C9881A" stroke-width="1.2"/>'
+    '</g>'
     '</svg>';
 
 const String _puzzle =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(-4.82,-3.69) scale(1.13)">'
     '<path d="M12 14 H21 a3 3 0 0 1 6 0 H36 V23 a3 3 0 0 1 0 6 V38 H27 a3 3 0 0 0 -6 0 H12 V29 a3 3 0 0 0 0 -6 Z" fill="#3FB59A" stroke="#15727C" stroke-width="2.2" stroke-linejoin="round"/>'
+    '</g>'
     '</svg>';
 
 const String _wizardHat =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(0.84,2.05) scale(0.96)">'
     '<path d="M24 7 L36 33 H12 Z" fill="#7A4DD8" stroke="#4E2E96" stroke-width="2.2" stroke-linejoin="round"/>'
     '<ellipse cx="24" cy="34" rx="16" ry="4.5" fill="#8B5EE8" stroke="#4E2E96" stroke-width="2.2"/>'
     '<path d="M24 16 l1.4 3.4 3.6 .4 -2.7 2.5 .8 3.6 -3.1 -1.9 -3.1 1.9 .8 -3.6 -2.7 -2.5 3.6 -.4 Z" fill="#F2C84B"/>'
     '<circle cx="18" cy="26" r="1.2" fill="#FBE08A"/>'
     '<circle cx="29" cy="28" r="1.1" fill="#FBE08A"/>'
+    '</g>'
     '</svg>';
 
 const String _fairy =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(-5.55,-2.35) scale(1.23)">'
     '<path d="M23 30 C12 30 9 18 14 14 C20 18 23 24 23 30 Z" fill="#7FD0A0" stroke="#2E8B57" stroke-width="2" stroke-linejoin="round"/>'
     '<path d="M25 30 C36 30 39 18 34 14 C28 18 25 24 25 30 Z" fill="#A6E0BC" stroke="#2E8B57" stroke-width="2" stroke-linejoin="round"/>'
     '<path d="M14 14 L23 28" fill="none" stroke="#2E8B57" stroke-width="1.2"/>'
     '<path d="M34 14 L25 28" fill="none" stroke="#2E8B57" stroke-width="1.2"/>'
     '<circle cx="24" cy="31" r="3" fill="#F4A6C8" stroke="#C03E76" stroke-width="1.6"/>'
     '<path d="M24 8 l1 2.6 2.6 1 -2.6 1 -1 2.6 -1 -2.6 -2.6 -1 2.6 -1 Z" fill="#F2C84B"/>'
+    '</g>'
     '</svg>';
 
 const String _robot =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
+    '<g transform="translate(0.29,3.65) scale(0.99)">'
     '<line x1="24" y1="14" x2="24" y2="8" stroke="#2E6E86" stroke-width="2"/>'
     '<circle cx="24" cy="7" r="2.2" fill="#F2C84B" stroke="#2E6E86" stroke-width="1.4"/>'
     '<rect x="8" y="21" width="3.5" height="8" rx="1.5" fill="#4F95B5" stroke="#2E6E86" stroke-width="1.4"/>'
@@ -329,6 +382,7 @@ const String _robot =
     '<circle cx="29" cy="23" r="3" fill="#FBF6EE" stroke="#2E6E86" stroke-width="1.4"/>'
     '<circle cx="29" cy="23" r="1.3" fill="#2A2230"/>'
     '<rect x="17" y="29" width="14" height="4" rx="2" fill="#2E6E86"/>'
+    '</g>'
     '</svg>';
 
 /// Large home-screen action glyphs (not part of the concept vocabulary).

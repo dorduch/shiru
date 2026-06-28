@@ -15,7 +15,9 @@ enum StButtonVariant {
   /// Ghost — white background, line border, ink text.
   ghost,
 
-  /// Line — transparent background, subtle light border (for dark surfaces).
+  /// Line — transparent background with a subtle outline. Mode-aware: text and
+  /// border follow `textPrimary`, so it reads on both day (ink) and bedtime
+  /// (cream) surfaces.
   line,
 
   /// Soft — white background with a subtle card shadow.
@@ -126,8 +128,9 @@ class _StButtonState extends State<StButton> {
           label: widget.label,
           leading: widget.leading,
           bgColor: Colors.transparent,
-          textColor: tokens.cream,
-          border: Border.all(color: tokens.cream.withValues(alpha: 0.4), width: 1.5),
+          textColor: tokens.textPrimary,
+          border: Border.all(
+              color: tokens.textPrimary.withValues(alpha: 0.4), width: 1.5),
           radius: AppRadius.large,
         );
 

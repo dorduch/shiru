@@ -23,7 +23,7 @@ Success means children can confidently operate playback on their own, while pare
 
 Calm, playful, trustworthy.
 
-The experience should feel warm and engaging without competing for attention. Its pixel-art identity provides personality and clear state feedback, while the interaction model remains dependable and predictable for both children and parents.
+The experience should feel warm and engaging without competing for attention. Its identity is a warm "storybook" world: an ember/cream palette, rounded Nunito headings with Inter body text, and rich multi-color illustrative icons for the story-creation vocabulary. Animated pixel-art mascots remain as the ambient personality layer (home, library, player). Colour and energy peak on the playful "choosing" screens; the reading and bedtime moments stay quiet. The interaction model remains dependable and predictable for both children and parents.
 
 ## Anti-references
 
@@ -37,7 +37,7 @@ The experience should feel warm and engaging without competing for attention. It
 2. **Parent control:** Make library management, media selection, and protected actions clear and reliable without leaking complexity into the child experience.
 3. **Local and privacy-first:** Store and play media on-device. Avoid accounts, remote feeds, tracking, or network-dependent core behavior.
 4. **Familiar native media flows:** Use platform-standard picking, recording, permissions, and playback conventions where they reduce uncertainty for parents.
-5. **Preserve the pixel-art identity:** Extend the existing visual language and animation system consistently as audio and video capabilities grow.
+5. **Two-layer visual identity:** Use rich, multi-color illustrative icons (custom SVG, jewel tones, one warm ink outline) for the story-creation vocabulary, seated on warm cream-based tints so each icon's background equals its tile's background. Keep animated pixel-art mascots for the ambient layer only (home, library rows, player hero). Never reintroduce raw stock emoji on concept screens.
 
 ## Accessibility & Inclusion
 

@@ -31,6 +31,11 @@ class StorytimeTokens extends ThemeExtension<StorytimeTokens> {
     required this.eyebrow,
     required this.ctaGradient,
     required this.nightGradient,
+    required this.onAccent,
+    required this.trackInactive,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.textTertiary,
   });
 
   // ─── Bedtime gradient stops ───────────────────────────────────────────────
@@ -96,6 +101,30 @@ class StorytimeTokens extends ThemeExtension<StorytimeTokens> {
   /// Night gradient for bedtime surfaces (night1 → night2 → night3, top-to-bottom)
   final LinearGradient nightGradient;
 
+  // ─── Mode-aware semantic tokens ───────────────────────────────────────────
+  // These differ between day and bedtime, so widgets must read them instead of
+  // hardcoding Colors.white / ink / alpha literals. They are the seam that lets
+  // a single widget render correctly on either surface (and makes a future
+  // app-wide dark toggle a config change rather than a rewrite).
+
+  /// Foreground (icon/label) on a filled accent control — e.g. the play button
+  /// on its ember circle. A dark glyph (night1) clears 3:1 on ember/gold where
+  /// white (2.66:1) fails.
+  final Color onAccent;
+
+  /// Inactive slider / progress track. Must stay visible against the surface so
+  /// "remaining" progress is legible (visibility of system status).
+  final Color trackInactive;
+
+  /// Primary text/icon color for the current surface (ink on day, cream on night).
+  final Color textPrimary;
+
+  /// Secondary text for the current surface.
+  final Color textSecondary;
+
+  /// Tertiary / muted text for the current surface.
+  final Color textTertiary;
+
   // ─── ThemeExtension boilerplate ───────────────────────────────────────────
   @override
   StorytimeTokens copyWith({
@@ -117,6 +146,11 @@ class StorytimeTokens extends ThemeExtension<StorytimeTokens> {
     TextStyle? eyebrow,
     LinearGradient? ctaGradient,
     LinearGradient? nightGradient,
+    Color? onAccent,
+    Color? trackInactive,
+    Color? textPrimary,
+    Color? textSecondary,
+    Color? textTertiary,
   }) {
     return StorytimeTokens(
       night1: night1 ?? this.night1,
@@ -137,6 +171,11 @@ class StorytimeTokens extends ThemeExtension<StorytimeTokens> {
       eyebrow: eyebrow ?? this.eyebrow,
       ctaGradient: ctaGradient ?? this.ctaGradient,
       nightGradient: nightGradient ?? this.nightGradient,
+      onAccent: onAccent ?? this.onAccent,
+      trackInactive: trackInactive ?? this.trackInactive,
+      textPrimary: textPrimary ?? this.textPrimary,
+      textSecondary: textSecondary ?? this.textSecondary,
+      textTertiary: textTertiary ?? this.textTertiary,
     );
   }
 
@@ -163,6 +202,11 @@ class StorytimeTokens extends ThemeExtension<StorytimeTokens> {
       ctaGradient: LinearGradient.lerp(ctaGradient, other.ctaGradient, t)!,
       nightGradient:
           LinearGradient.lerp(nightGradient, other.nightGradient, t)!,
+      onAccent: Color.lerp(onAccent, other.onAccent, t)!,
+      trackInactive: Color.lerp(trackInactive, other.trackInactive, t)!,
+      textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
+      textSecondary: Color.lerp(textSecondary, other.textSecondary, t)!,
+      textTertiary: Color.lerp(textTertiary, other.textTertiary, t)!,
     );
   }
 }
@@ -201,6 +245,23 @@ const _tokens = StorytimeTokens(
     end: Alignment.bottomCenter,
     colors: [AppColors.night3, AppColors.night2, AppColors.night1],
   ),
+  // Day defaults for the mode-aware semantic tokens. Bedtime overrides the
+  // surface-dependent ones in [_bedtimeTokens] below.
+  onAccent: AppColors.night1,
+  trackInactive: AppColors.line,
+  textPrimary: AppColors.ink,
+  textSecondary: AppColors.ink2,
+  textTertiary: AppColors.ink3,
+);
+
+/// Bedtime variant: same brand colors, but the surface-dependent semantic
+/// tokens flip to read correctly on the night gradient. (Not const because the
+/// cream-alpha values are computed.)
+final _bedtimeTokens = _tokens.copyWith(
+  trackInactive: AppColors.cream.withValues(alpha: 0.35),
+  textPrimary: AppColors.cream,
+  textSecondary: AppColors.cream.withValues(alpha: 0.7),
+  textTertiary: AppColors.cream.withValues(alpha: 0.5),
 );
 
 // ─── StorytimeTheme ───────────────────────────────────────────────────────────
@@ -296,7 +357,7 @@ abstract final class StorytimeTheme {
         bodyColor: AppColors.cream,
         displayColor: AppColors.cream,
       ),
-      extensions: const [_tokens],
+      extensions: [_bedtimeTokens],
     );
   }
 }

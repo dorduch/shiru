@@ -32,19 +32,21 @@ class StErrorView extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 56, color: tokens.ink3),
+            Icon(icon, size: 56, color: tokens.textTertiary),
             const SizedBox(height: 18),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: AppTypography.headlineSmall.copyWith(color: tokens.ink),
+              style:
+                  AppTypography.headlineSmall.copyWith(color: tokens.textPrimary),
             ),
             if (message != null) ...[
               const SizedBox(height: 8),
               Text(
                 message!,
                 textAlign: TextAlign.center,
-                style: AppTypography.bodySmall.copyWith(color: tokens.ink2),
+                style: AppTypography.bodySmall
+                    .copyWith(color: tokens.textSecondary),
               ),
             ],
             if (onRetry != null) ...[

@@ -172,6 +172,12 @@ class _ShiruAppState extends ConsumerState<ShiruApp>
         supportedLocales: const [Locale('en', '')],
         theme: StorytimeTheme.day,
         darkTheme: StorytimeTheme.bedtime,
+        // Pin to the day theme. Bedtime is NOT an OS-following dark mode: it is
+        // applied per-screen (story reader, player, recording, launch flow) via
+        // Theme(data: StorytimeTheme.bedtime). Following the system would skin
+        // every day-designed screen (child setup, parent, home) dark, where
+        // their light `paper` tiles and default text become unreadable.
+        themeMode: ThemeMode.light,
         routerConfig: _router,
       ),
     );
