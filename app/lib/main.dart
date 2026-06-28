@@ -44,15 +44,14 @@ void main() async {
     await FirebaseStorage.instance.useStorageEmulator(host, 9199);
     await FirebaseAuth.instance.useAuthEmulator(host, 9099);
     // A keychain-cached prod user must not be reused against the emulator (its
-    // token/uid don't exist there). Force a fresh anonymous emulator user so
-    // every platform tests the same clean state.
-    final cached = FirebaseAuth.instance.currentUser;
-    if (cached != null && !cached.isAnonymous) {
+    // token/uid don't exist there) — including a cached *anonymous* user, whose
+    // token the emulator also can't validate, which makes callables fail
+    // client-side before they ever reach the emulator. Always reset to a fresh
+    // anonymous emulator user so every platform tests the same clean state.
+    if (FirebaseAuth.instance.currentUser != null) {
       await FirebaseAuth.instance.signOut();
     }
-    if (FirebaseAuth.instance.currentUser == null) {
-      await FirebaseAuth.instance.signInAnonymously();
-    }
+    await FirebaseAuth.instance.signInAnonymously();
   } else {
     await FirebaseAppCheck.instance.activate(
       providerAndroid: kDebugMode

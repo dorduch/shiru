@@ -927,20 +927,33 @@ class _WizardChoice extends StatelessWidget {
       // so it can no longer be clipped to a sliver.
       footer: item.value is NarratorKey
           ? Consumer(
-              builder: (context, ref, _) => TextButton.icon(
-                onPressed: () => ref
-                    .read(narratorPreviewServiceProvider)
-                    .play(item.value as NarratorKey),
-                icon: const Icon(Icons.play_circle_outline, size: 18),
-                label: const Text('Preview'),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.accent2,
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  textStyle: AppTypography.labelMedium,
-                ),
-              ),
+              builder: (context, ref, _) {
+                final service = ref.read(narratorPreviewServiceProvider);
+                return ValueListenableBuilder<NarratorKey?>(
+                  valueListenable: service.playing,
+                  builder: (context, playing, _) {
+                    final isPlaying = playing == item.value;
+                    return TextButton.icon(
+                      onPressed: () => service.play(item.value as NarratorKey),
+                      icon: Icon(
+                        isPlaying
+                            ? Icons.stop_circle_outlined
+                            : Icons.play_circle_outline,
+                        size: 18,
+                      ),
+                      label: Text(isPlaying ? 'Playing…' : 'Preview'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.accent2,
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        textStyle: AppTypography.labelMedium,
+                      ),
+                    );
+                  },
+                );
+              },
             )
           : null,
     ),

@@ -390,8 +390,17 @@ class _VoiceConsentScreenState extends ConsumerState<VoiceConsentScreen> {
               text: 'Voice samples are only used to personalise stories for your family and are never shared with others.',
               icon: Icons.lock_outline_rounded,
             ),
+          ],
+        ),
+      ),
+      // Pin the error + primary action in a safe-area bottom bar so they can
+      // never scroll below the fold (and the CTA clears the home indicator).
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
             if (_error != null) ...[
-              const SizedBox(height: 16),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -408,8 +417,8 @@ class _VoiceConsentScreenState extends ConsumerState<VoiceConsentScreen> {
                   ),
                 ],
               ),
+              const SizedBox(height: 12),
             ],
-            const SizedBox(height: 24),
             StButton(
               label: _busy ? 'Setting up…' : 'Continue',
               fullWidth: true,
