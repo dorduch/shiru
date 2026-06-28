@@ -3,7 +3,6 @@ import '../../../theme/app_theme.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_typography.dart';
 import '../../../theme/app_shadows.dart';
-import '../../../theme/app_colors.dart';
 
 /// Selectable choice card used in the story wizard
 /// (character / scene / theme / twist).
@@ -42,7 +41,7 @@ class StChoiceCard extends StatelessWidget {
     final tokens = Theme.of(context).extension<StorytimeTokens>()!;
 
     final borderColor = selected ? tokens.ember : tokens.line;
-    final borderWidth = selected ? 2.0 : 1.5;
+    final borderWidth = selected ? 2.5 : 1.5;
     final bgColor = tint ??
         (selected
             ? const Color(0xFFFFF3EA) // warm ember tint
@@ -51,45 +50,69 @@ class StChoiceCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        curve: Curves.easeOut,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: AppRadius.medium,
-          border: Border.all(color: borderColor, width: borderWidth),
-          boxShadow: shadows,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Thumbnail area — fixed square container
-            ClipRRect(
-              borderRadius: AppRadius.small,
-              child: SizedBox(
-                width: 72,
-                height: 72,
-                child: thumbnail,
+      child: Stack(
+        // passthrough so the card keeps the grid cell's tight constraints
+        // (fills the cell) and the badge positions within the cell bounds.
+        fit: StackFit.passthrough,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            curve: Curves.easeOut,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: AppRadius.medium,
+              border: Border.all(color: borderColor, width: borderWidth),
+              boxShadow: shadows,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Thumbnail area — fixed square container
+                ClipRRect(
+                  borderRadius: AppRadius.small,
+                  child: SizedBox(
+                    width: 72,
+                    height: 72,
+                    child: thumbnail,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  name,
+                  // Inter (not the Nunito display face) for these small concept
+                  // labels: friendlier and more legible at 14px than the display
+                  // font, which is reserved for headings and story text.
+                  style: AppTypography.bodyLarge.copyWith(
+                    fontSize: 14,
+                    color: tokens.ink,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (footer != null) ...[const SizedBox(height: 6), footer!],
+              ],
+            ),
+          ),
+          // Selection check badge — a non-color-dependent affordance so
+          // selection reads for color-blind users (the ember ring alone relied
+          // on hue). Dark check on ember clears ~6.6:1.
+          if (selected)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: tokens.ember,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.check_rounded, size: 15, color: tokens.onAccent),
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              name,
-              // Inter (not the Nunito display face) for these small concept
-              // labels: friendlier and more legible at 14px than the display
-              // font, which is reserved for headings and story text.
-              style: AppTypography.bodyLarge.copyWith(
-                fontSize: 14,
-                color: selected ? AppColors.dusk : tokens.ink,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (footer != null) ...[const SizedBox(height: 6), footer!],
-          ],
-        ),
+        ],
       ),
     );
   }

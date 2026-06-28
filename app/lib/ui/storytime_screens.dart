@@ -740,6 +740,9 @@ class StoryWizardScreen extends ConsumerWidget {
               const SizedBox(height: 14),
               Expanded(
                 child: GridView.builder(
+                  // Bottom padding so the last row scrolls clear of the pinned
+                  // "Surprise me"/Continue buttons instead of sitting flush.
+                  padding: const EdgeInsets.only(bottom: 8),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: MediaQuery.sizeOf(context).width > 760
                         ? 3
