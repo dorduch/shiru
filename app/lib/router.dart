@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'services/analytics_service.dart';
@@ -33,6 +34,31 @@ String? _protectAdultRoute(WidgetRef ref, GoRouterState state) {
   return protectAdultRoute(
     isAuthenticated: ref.read(parentAuthProvider),
     nextLocation: state.uri.toString(),
+  );
+}
+
+/// Cross-fade page for the day→dark seam (C5).
+///
+/// The kid flow runs on cream "day" surfaces (home, wizard, review) and then
+/// crosses into the night-gradient "bedtime" surfaces (generating, player,
+/// story-end). The default iOS push slides one over the other, producing a hard
+/// cream↔night cut. A fade instead reads like dusk falling: the warm screen
+/// dims into night. Applied only to the dark destinations, so day-to-day
+/// navigation keeps the platform slide.
+///
+/// Trade-off: a custom transition drops the interactive edge-swipe-back, which
+/// is fine here — every dark screen has an explicit back/home control.
+CustomTransitionPage<void> _fadePage(GoRouterState state, Widget child) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    transitionDuration: const Duration(milliseconds: 420),
+    reverseTransitionDuration: const Duration(milliseconds: 300),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+        FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeInOut),
+          child: child,
+        ),
+    child: child,
   );
 }
 
@@ -76,8 +102,11 @@ GoRouter createRouter(WidgetRef ref) {
       ),
       GoRoute(
         path: '/generate',
-        builder: (context, state) => StoryGeneratingScreen(
-          existingJobId: state.uri.queryParameters['jobId'],
+        pageBuilder: (context, state) => _fadePage(
+          state,
+          StoryGeneratingScreen(
+            existingJobId: state.uri.queryParameters['jobId'],
+          ),
         ),
       ),
       GoRoute(
@@ -86,13 +115,17 @@ GoRouter createRouter(WidgetRef ref) {
       ),
       GoRoute(
         path: '/story/:cardId/end',
-        builder: (context, state) =>
-            StoryEndScreen(cardId: state.pathParameters['cardId']!),
+        pageBuilder: (context, state) => _fadePage(
+          state,
+          StoryEndScreen(cardId: state.pathParameters['cardId']!),
+        ),
       ),
       GoRoute(
         path: '/story/:cardId',
-        builder: (context, state) =>
-            StoryPlayerScreen(cardId: state.pathParameters['cardId']!),
+        pageBuilder: (context, state) => _fadePage(
+          state,
+          StoryPlayerScreen(cardId: state.pathParameters['cardId']!),
+        ),
       ),
       // dev only — remove before prod
       GoRoute(

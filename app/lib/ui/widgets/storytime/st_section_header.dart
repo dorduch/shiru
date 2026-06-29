@@ -67,7 +67,11 @@ class StSectionHeader extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             sub!,
-            style: AppTypography.bodySmall.copyWith(color: tokens.ink2),
+            // Deck/subtitle role (T4): bodyMedium (w500) + secondary ink2 reads
+            // as a distinct third level — heading (Nunito w700 ink) > subtitle
+            // (Inter w500 ink2) > running body copy (bodySmall w400). Previously
+            // bodySmall+ink2 was identical to body copy, so the two collided.
+            style: AppTypography.bodyMedium.copyWith(color: tokens.ink2),
             textAlign: align,
           ),
         ],

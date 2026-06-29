@@ -1380,7 +1380,12 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
                           if (_error == null)
                             LinearProgressIndicator(
                               minHeight: 8,
-                              color: tokens.gold,
+                              // Ember (not gold): carry the review CTA's accent
+                              // onto the first night screen so the warm color
+                              // the child just tapped reads as continuous across
+                              // the day→dark seam (C5). The player then settles
+                              // to gold for its bedtime word-highlight.
+                              color: tokens.ember,
                               backgroundColor: tokens.cream.withValues(alpha: 0.18),
                             )
                           else ...[
