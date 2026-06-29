@@ -1562,14 +1562,10 @@ class _StoryTile extends ConsumerWidget {
       title: card.title,
       subtitle: storyOriginSubtitle(card.storyOrigin),
       avatarColor: hexOrFallback(card.color),
-      // Show the story's own pixel character instead of a blank color dot, so
-      // each row has a real visual cue (not color alone).
-      avatarChild: PixelSprite(
-        sprite: card.spriteKey != null
-            ? (predefinedSprites[card.spriteKey!] ?? autoAssignSprite(card.title))
-            : autoAssignSprite(card.title),
-        scale: 2.4,
-      ),
+      // Show the story's own character (rich SVG for curated stories, pixel
+      // sprite otherwise) instead of a blank color dot, so each row has a real
+      // visual cue (not color alone).
+      avatarChild: StoryAvatar(card: card, conceptSize: 32, pixelScale: 2.4),
       trailing: parentMode
           ? Row(mainAxisSize: MainAxisSize.min, children: [
               if (card.storyOrigin == StoryOrigin.uploaded)
@@ -1645,13 +1641,7 @@ class _StoryGridTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   alignment: Alignment.center,
-                  child: PixelSprite(
-                    sprite: card.spriteKey != null
-                        ? (predefinedSprites[card.spriteKey!] ??
-                            autoAssignSprite(card.title))
-                        : autoAssignSprite(card.title),
-                    scale: 3,
-                  ),
+                  child: StoryAvatar(card: card, conceptSize: 72, pixelScale: 3),
                 ),
               ),
               const SizedBox(height: 8),
@@ -1694,10 +1684,17 @@ class _StoryPlayerScreenState extends ConsumerState<StoryPlayerScreen>
   bool _completed = false;
   bool _loading = true;
   String? _error;
+  // Captured in initState so the disposal path (dispose / _savePosition) never
+  // calls `ref` after the element is torn down — using ref in dispose throws
+  // "Cannot use ref after the widget was disposed".
+  late final StateController<String?> _playingCardId;
+  late final CardsNotifier _cards;
 
   @override
   void initState() {
     super.initState();
+    _playingCardId = ref.read(currentPlayingCardIdProvider.notifier);
+    _cards = ref.read(cardsProvider.notifier);
     WidgetsBinding.instance.addObserver(this);
     Future.microtask(_load);
   }
@@ -1731,7 +1728,7 @@ class _StoryPlayerScreenState extends ConsumerState<StoryPlayerScreen>
         durationMs: duration?.inMilliseconds ?? card.durationMs,
       );
       _player = player;
-      ref.read(currentPlayingCardIdProvider.notifier).state = card.id;
+      _playingCardId.state = card.id;
       _stateSubscription = player.playerStateStream.listen((state) {
         if (state.processingState == ProcessingState.completed && mounted) {
           _complete();
@@ -1763,7 +1760,7 @@ class _StoryPlayerScreenState extends ConsumerState<StoryPlayerScreen>
       durationMs: player.duration?.inMilliseconds ?? card.durationMs,
       lastPlayedAt: DateTime.now().millisecondsSinceEpoch,
     );
-    await ref.read(cardsProvider.notifier).updateCard(_card!);
+    await _cards.updateCard(_card!);
   }
 
   Future<void> _complete() async {
@@ -1787,7 +1784,18 @@ class _StoryPlayerScreenState extends ConsumerState<StoryPlayerScreen>
     _saveTimer?.cancel();
     _stateSubscription?.cancel();
     if (!_completed) _savePosition();
-    ref.read(currentPlayingCardIdProvider.notifier).state = null;
+    // Stop playback when leaving the player — save position first (reads the
+    // player's position), then stop, so audio never keeps playing with no
+    // visible control to stop it.
+    _player?.stop();
+    // Clear the "now playing" indicator, but defer it: leaving via context.go
+    // disposes this screen during the next route's build, and mutating a
+    // watched provider mid-build throws. A post-frame callback runs it once the
+    // tree is settled.
+    final playingCardId = _playingCardId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      playingCardId.state = null;
+    });
     super.dispose();
   }
 
@@ -1916,11 +1924,10 @@ class _StoryPlayerScreenState extends ConsumerState<StoryPlayerScreen>
                                     ),
                                   ),
                                   child: Center(
-                                    child: PixelSprite(
-                                      sprite:
-                                          predefinedSprites[_card!.spriteKey] ??
-                                          autoAssignSprite(_card!.title),
-                                      scale: 10,
+                                    child: StoryAvatar(
+                                      card: _card!,
+                                      conceptSize: 150,
+                                      pixelScale: 10,
                                     ),
                                   ),
                                 ),

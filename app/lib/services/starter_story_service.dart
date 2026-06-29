@@ -7,7 +7,6 @@ import 'package:uuid/uuid.dart';
 
 import '../db/database_service.dart';
 import '../models/audio_card.dart';
-import '../models/sprites.dart';
 import '../models/storytime_models.dart';
 import 'library_import_service.dart';
 
@@ -25,7 +24,7 @@ class StarterStoryService {
 
   Future<void> _seed() async {
     final existing = await DatabaseService.instance.readAllCards();
-    final existingIds = existing.map((card) => card.id).toSet();
+    final existingById = {for (final card in existing) card.id: card};
     final manifest =
         jsonDecode(await rootBundle.loadString(manifestAsset)) as List<dynamic>;
     final additions = <AudioCard>[];
@@ -35,7 +34,18 @@ class StarterStoryService {
       for (var index = 0; index < manifest.length; index++) {
         final item = Map<String, dynamic>.from(manifest[index] as Map);
         final id = item['id'] as String;
-        if (existingIds.contains(id)) continue;
+        final spriteKey = item['spriteKey'] as String;
+        final alreadySeeded = existingById[id];
+        if (alreadySeeded != null) {
+          // Self-heal installs seeded before the icon fix: repoint the sprite
+          // key to the manifest value (older builds hashed the title instead).
+          if (alreadySeeded.spriteKey != spriteKey) {
+            await DatabaseService.instance.updateCard(
+              alreadySeeded.copyWith(spriteKey: spriteKey),
+            );
+          }
+          continue;
+        }
 
         final data = await rootBundle.load(item['audioAsset'] as String);
         final tempDirectory = await getTemporaryDirectory();
@@ -53,7 +63,7 @@ class StarterStoryService {
             collectionId: 'default-stories',
             title: title,
             color: item['color'] as String,
-            spriteKey: autoAssignSprite(title).id,
+            spriteKey: spriteKey,
             audioPath: managedPath,
             storyOrigin: StoryOrigin.curated,
             narratorKey: NarratorKey.values.byName(

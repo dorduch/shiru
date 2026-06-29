@@ -94,6 +94,25 @@ ConceptIcon? conceptIconFor(Object value) => switch (value) {
   _ => null,
 };
 
+/// Resolves a stored icon key (e.g. a curated story's [AudioCard.spriteKey]) to
+/// the story-vocabulary enum value backing a [ConceptIcon], or `null` if the
+/// key is not a concept name — in which case the caller falls back to a pixel
+/// sprite. Enums are searched in a fixed order; the curated icon names are
+/// unique across the vocabulary so the order never matters in practice.
+Object? storyIconConceptByName(String? name) {
+  if (name == null || name.isEmpty) return null;
+  for (final value in <Object>[
+    ...StoryCharacter.values,
+    ...StoryScene.values,
+    ...StoryTheme.values,
+    ...StoryPlot.values,
+    ...NarratorKey.values,
+  ]) {
+    if ((value as Enum).name == name) return value;
+  }
+  return null;
+}
+
 const String _crown =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
     '<g transform="translate(2.12,1.21) scale(0.91)">'
