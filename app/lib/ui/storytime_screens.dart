@@ -20,6 +20,8 @@ import '../models/story_origin_label.dart';
 import '../providers/audio_player_provider.dart';
 import '../providers/cards_provider.dart';
 import '../providers/storytime_providers.dart';
+import '../logic/story_tokenizer.dart';
+import '../services/curated_timing_service.dart';
 import '../services/library_import_service.dart';
 import '../services/starter_story_service.dart';
 import '../services/story_generation_repository.dart';
@@ -1689,6 +1691,10 @@ class _StoryPlayerScreenState extends ConsumerState<StoryPlayerScreen>
   // "Cannot use ref after the widget was disposed".
   late final StateController<String?> _playingCardId;
   late final CardsNotifier _cards;
+  final CuratedTimingService _timings = CuratedTimingService();
+  // Per-word audio start times (seconds) for curated stories; null for stories
+  // without bundled timing, which fall back to a linear estimate.
+  List<double>? _wordStarts;
 
   @override
   void initState() {
@@ -1728,6 +1734,7 @@ class _StoryPlayerScreenState extends ConsumerState<StoryPlayerScreen>
         durationMs: duration?.inMilliseconds ?? card.durationMs,
       );
       _player = player;
+      _wordStarts = await _timings.wordStartsFor(card.id);
       _playingCardId.state = card.id;
       _stateSubscription = player.playerStateStream.listen((state) {
         if (state.processingState == ProcessingState.completed && mounted) {
@@ -1884,17 +1891,27 @@ class _StoryPlayerScreenState extends ConsumerState<StoryPlayerScreen>
                             stream: player.playerStateStream,
                             builder: (context, stateSnap) {
                               final isPlaying = stateSnap.data?.playing ?? false;
-                              // NOTE: estimated word position — real per-word
-                              // timing needs ElevenLabs timestamps
                               final text = _card!.storyText ?? '';
-                              final words = text.split(RegExp(r'\s+'));
+                              final wordCount = tokenizeStory(text).length;
                               final durationMs = duration.inMilliseconds;
-                              final int? highlightedWordIndex = (text.isEmpty ||
-                                      durationMs == 0)
-                                  ? null
-                                  : (progress * words.length)
-                                      .floor()
-                                      .clamp(0, words.length - 1);
+                              final int? highlightedWordIndex;
+                              if (text.isEmpty || wordCount == 0) {
+                                highlightedWordIndex = null;
+                              } else if (_wordStarts != null) {
+                                // Curated stories: drive the highlight from real
+                                // ElevenLabs per-word timestamps.
+                                highlightedWordIndex = wordIndexForTime(
+                                  _wordStarts!,
+                                  position.inMilliseconds / 1000.0,
+                                );
+                              } else if (durationMs == 0) {
+                                highlightedWordIndex = null;
+                              } else {
+                                // No timing (e.g. generated stories): estimate.
+                                highlightedWordIndex = (progress * wordCount)
+                                    .floor()
+                                    .clamp(0, wordCount - 1);
+                              }
                               return StScenePlayer(
                                 title: _card!.title,
                                 bodyText: _card!.storyText ?? '',

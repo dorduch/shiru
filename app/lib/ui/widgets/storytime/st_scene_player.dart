@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../logic/story_tokenizer.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_typography.dart';
@@ -93,20 +94,18 @@ class StScenePlayer extends StatelessWidget {
             ),
           ),
 
-          // Read text
+          // Read text — auto-follows the highlighted word as it is narrated.
           Expanded(
-            child: SingleChildScrollView(
+            child: _ReadAlongText(
+              text: bodyText,
+              highlightedIndex: highlightedWordIndex,
               padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-              child: _HighlightText(
-                text: bodyText,
-                highlightedIndex: highlightedWordIndex,
-                baseStyle: AppTypography.storyBody.copyWith(
-                  color: tokens.cream.withValues(alpha: 0.85),
-                ),
-                highlightStyle: AppTypography.storyBody.copyWith(
-                  color: AppColors.gold,
-                  fontWeight: FontWeight.w600,
-                ),
+              baseStyle: AppTypography.storyBody.copyWith(
+                color: tokens.cream.withValues(alpha: 0.85),
+              ),
+              highlightStyle: AppTypography.storyBody.copyWith(
+                color: AppColors.gold,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -122,6 +121,106 @@ class StScenePlayer extends StatelessWidget {
             tokens: tokens,
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─── Read-along (auto-scrolling) text ─────────────────────────────────────────
+
+/// Scrollable story text that keeps the highlighted word in a comfortable
+/// reading band. It only scrolls when the active word drifts out of that band,
+/// so the text glides paragraph-by-paragraph rather than jittering on every
+/// word. Position is computed with a [TextPainter] laid out at the content
+/// width, so it tracks the real line of the highlighted character.
+class _ReadAlongText extends StatefulWidget {
+  const _ReadAlongText({
+    required this.text,
+    required this.highlightedIndex,
+    required this.baseStyle,
+    required this.highlightStyle,
+    required this.padding,
+  });
+
+  final String text;
+  final int? highlightedIndex;
+  final TextStyle baseStyle;
+  final TextStyle highlightStyle;
+  final EdgeInsets padding;
+
+  @override
+  State<_ReadAlongText> createState() => _ReadAlongTextState();
+}
+
+class _ReadAlongTextState extends State<_ReadAlongText> {
+  final ScrollController _controller = ScrollController();
+
+  @override
+  void didUpdateWidget(_ReadAlongText old) {
+    super.didUpdateWidget(old);
+    if (widget.highlightedIndex != old.highlightedIndex) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _follow());
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _follow() {
+    final index = widget.highlightedIndex;
+    if (index == null || !mounted || !_controller.hasClients) return;
+    final box = context.findRenderObject();
+    if (box is! RenderBox || !box.hasSize) return;
+
+    final words = tokenizeStory(widget.text);
+    if (index < 0 || index >= words.length) return;
+
+    final contentWidth = box.size.width - widget.padding.horizontal;
+    if (contentWidth <= 0) return;
+
+    final painter = TextPainter(
+      text: TextSpan(text: widget.text, style: widget.baseStyle),
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: contentWidth);
+
+    // Top of the line holding the highlighted word, in scroll-content coords.
+    final caret = painter.getOffsetForCaret(
+      TextPosition(offset: words[index].start),
+      Rect.zero,
+    );
+    final wordTop = caret.dy + widget.padding.top;
+    final lineHeight = painter.preferredLineHeight;
+
+    final position = _controller.position;
+    final viewport = position.viewportDimension;
+    final current = position.pixels;
+
+    // Comfortable band: scroll only when the word leaves the [15%, 70%] window.
+    final bandTop = current + viewport * 0.15;
+    final bandBottom = current + viewport * 0.70 - lineHeight;
+    if (wordTop >= bandTop && wordTop <= bandBottom) return;
+
+    final target = (wordTop - viewport * 0.35).clamp(0.0, position.maxScrollExtent);
+    _controller.animateTo(
+      target,
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      controller: _controller,
+      padding: widget.padding,
+      child: _HighlightText(
+        text: widget.text,
+        highlightedIndex: widget.highlightedIndex,
+        baseStyle: widget.baseStyle,
+        highlightStyle: widget.highlightStyle,
       ),
     );
   }
@@ -148,15 +247,28 @@ class _HighlightText extends StatelessWidget {
       return Text(text, style: baseStyle);
     }
 
-    final words = text.split(' ');
+    // Walk the canonical word ranges, emitting the inter-word whitespace
+    // (including `\n\n` paragraph breaks) verbatim so the layout is unchanged
+    // while word [highlightedIndex] is the only span styled gold. The rendered
+    // word-span count equals tokenizeStory(text).length, which matches the
+    // timing array — so the highlight never drifts.
+    final words = tokenizeStory(text);
     final spans = <TextSpan>[];
+    var cursor = 0;
 
     for (var i = 0; i < words.length; i++) {
-      final isHighlighted = i == highlightedIndex;
+      final (:start, :end) = words[i];
+      if (start > cursor) {
+        spans.add(TextSpan(text: text.substring(cursor, start), style: baseStyle));
+      }
       spans.add(TextSpan(
-        text: i < words.length - 1 ? '${words[i]} ' : words[i],
-        style: isHighlighted ? highlightStyle : baseStyle,
+        text: text.substring(start, end),
+        style: i == highlightedIndex ? highlightStyle : baseStyle,
       ));
+      cursor = end;
+    }
+    if (cursor < text.length) {
+      spans.add(TextSpan(text: text.substring(cursor), style: baseStyle));
     }
 
     return RichText(text: TextSpan(children: spans));
