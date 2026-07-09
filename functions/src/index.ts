@@ -412,7 +412,7 @@ export const processStoryJob = onDocumentCreated({
       transaction.set(usageRef, {reserved, updatedAt: FieldValue.serverTimestamp()}, {merge: true});
       transaction.update(ref, {status: "failed", errorCode, updatedAt: FieldValue.serverTimestamp()});
     });
-    logger.error("story_job_failed", {errorCode, durationMs: Date.now() - started});
+    logger.error("story_job_failed", {errorCode, durationMs: Date.now() - started, error: String(error)});
   }
 });
 

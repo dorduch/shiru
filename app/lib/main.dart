@@ -53,11 +53,18 @@ void main() async {
     }
     await FirebaseAuth.instance.signInAnonymously();
   } else {
+    // Force the App Check *debug* provider even in a release/profile build via
+    //   flutter run --release --dart-define=FORCE_APPCHECK_DEBUG=true
+    // Used to test release builds on a device without iOS App Attest (which only
+    // works for TestFlight/App Store-signed builds). Defaults to false, so normal
+    // release builds keep using App Attest / Play Integrity.
+    const forceAppCheckDebug = bool.fromEnvironment('FORCE_APPCHECK_DEBUG');
+    final useDebugAppCheck = kDebugMode || forceAppCheckDebug;
     await FirebaseAppCheck.instance.activate(
-      providerAndroid: kDebugMode
+      providerAndroid: useDebugAppCheck
           ? const AndroidDebugProvider()
           : const AndroidPlayIntegrityProvider(),
-      providerApple: kDebugMode
+      providerApple: useDebugAppCheck
           ? const AppleDebugProvider()
           : const AppleAppAttestWithDeviceCheckFallbackProvider(),
     );
