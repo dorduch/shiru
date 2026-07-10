@@ -10,11 +10,12 @@ import '../models/storytime_models.dart';
 import '../providers/add_audio_provider.dart';
 import '../providers/cards_provider.dart';
 import '../services/library_import_service.dart';
-import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
+import '../theme/lantern_tokens.dart';
 import 'concept_icons.dart';
 import 'pixel_sprite.dart';
 import 'widgets/audio_recorder_widget.dart';
+import 'widgets/lantern/lantern.dart';
 import 'widgets/storytime/storytime.dart';
 
 /// Swatches offered for the card color (warm storytime palette).
@@ -36,47 +37,52 @@ class _AddAudioCaptureScreenState extends ConsumerState<AddAudioCaptureScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
     return Scaffold(
-      backgroundColor: tokens.cream,
+      backgroundColor: tokens.nightMid,
       appBar: AppBar(
-        backgroundColor: tokens.cream,
         title: Text('Add your own audio',
-            style: AppTypography.headlineSmall.copyWith(color: tokens.ink)),
+            style: AppTypography.headlineSmall.copyWith(color: tokens.moon)),
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        foregroundColor: tokens.moon,
         leading: BackButton(onPressed: () => context.go('/parent')),
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SvgPicture.string(addAudioIconSvg, width: 96, height: 96),
-              const SizedBox(height: 12),
-              const StSectionHeader(
-                title: 'Record or upload',
-                sub: 'Record a voice now, or pick an audio file.',
-              ),
-              const SizedBox(height: 16),
-              AudioRecorderWidget(
-                currentSelection: _selection,
-                onMediaSelected: (sel) => setState(() => _selection = sel),
-              ),
-              const Spacer(),
-              StButton(
-                label: 'Next',
-                onTap: _selection == null
-                    ? null
-                    : () {
-                        ref.read(addAudioDraftProvider.notifier).state =
-                            _selection;
-                        final id = widget.editingCardId;
-                        context.go(id == null
-                            ? '/parent/add-audio/details'
-                            : '/parent/edit-audio/$id?replaced=1');
-                      },
-              ),
-            ],
+      body: Container(
+        decoration: BoxDecoration(gradient: tokens.nightGradient),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SvgPicture.string(addAudioIconSvg, width: 96, height: 96),
+                const SizedBox(height: 12),
+                const LanternSectionHeader(
+                  title: 'Record or upload',
+                  sub: 'Record a voice now, or pick an audio file.',
+                ),
+                const SizedBox(height: 16),
+                AudioRecorderWidget(
+                  currentSelection: _selection,
+                  onMediaSelected: (sel) => setState(() => _selection = sel),
+                ),
+                const Spacer(),
+                StButton(
+                  label: 'Next',
+                  onTap: _selection == null
+                      ? null
+                      : () {
+                          ref.read(addAudioDraftProvider.notifier).state =
+                              _selection;
+                          final id = widget.editingCardId;
+                          context.go(id == null
+                              ? '/parent/add-audio/details'
+                              : '/parent/edit-audio/$id?replaced=1');
+                        },
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -178,77 +184,82 @@ class _AddAudioDetailsScreenState extends ConsumerState<AddAudioDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
     return Scaffold(
-      backgroundColor: tokens.cream,
+      backgroundColor: tokens.nightMid,
       appBar: AppBar(
-        backgroundColor: tokens.cream,
         title: Text('Card details',
-            style: AppTypography.headlineSmall.copyWith(color: tokens.ink)),
+            style: AppTypography.headlineSmall.copyWith(color: tokens.moon)),
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        foregroundColor: tokens.moon,
         leading: BackButton(onPressed: () => context.go('/parent/add-audio')),
       ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            Center(
-              child: Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: hexOrFallback(_color),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                alignment: Alignment.center,
-                child: PixelSprite(
-                  sprite: autoAssignSprite(_title.text.trim().isEmpty
-                      ? 'My recording'
-                      : _title.text.trim()),
-                  scale: 4,
+      body: Container(
+        decoration: BoxDecoration(gradient: tokens.nightGradient),
+        child: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              Center(
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: hexOrFallback(_color),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  alignment: Alignment.center,
+                  child: PixelSprite(
+                    sprite: autoAssignSprite(_title.text.trim().isEmpty
+                        ? 'My recording'
+                        : _title.text.trim()),
+                    scale: 4,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-            StTextField(
-              controller: _title,
-              hint: 'Card title',
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 20),
-            Text('Color', style: AppTypography.labelLarge.copyWith(color: tokens.ink2)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                for (final hex in _swatches)
-                  GestureDetector(
-                    onTap: () => setState(() => _color = hex),
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: hexOrFallback(hex),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: _color == hex ? tokens.ink : tokens.line,
-                          width: _color == hex ? 3 : 1,
+              const SizedBox(height: 20),
+              LanternTextField(
+                controller: _title,
+                hint: 'Card title',
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 20),
+              Text('Color', style: AppTypography.labelLarge.copyWith(color: tokens.moonDim)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (final hex in _swatches)
+                    GestureDetector(
+                      onTap: () => setState(() => _color = hex),
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: hexOrFallback(hex),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: _color == hex ? tokens.lantern : tokens.hush,
+                            width: _color == hex ? 3 : 1,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 28),
-            if (_editing != null) ...[
-              StButton(
-                label: 'Replace audio',
-                onTap: () => context.go('/parent/edit-audio/${_editing!.id}/replace'),
+                ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 28),
+              if (_editing != null) ...[
+                StButton(
+                  label: 'Replace audio',
+                  onTap: () => context.go('/parent/edit-audio/${_editing!.id}/replace'),
+                ),
+                const SizedBox(height: 12),
+              ],
+              StButton(label: 'Save', onTap: _save),
             ],
-            StButton(label: 'Save', onTap: _save),
-          ],
+          ),
         ),
       ),
     );

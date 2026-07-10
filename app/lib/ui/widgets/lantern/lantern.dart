@@ -13,3 +13,6 @@ export 'lantern_row.dart';
 export 'lantern_action_tile.dart';
 export 'lantern_section_header.dart';
 export 'lantern_outline_button.dart';
+export 'lantern_text_field.dart';
+export 'lantern_segment.dart';
+export 'lantern_choice_card.dart';

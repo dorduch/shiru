@@ -20,7 +20,12 @@ class LanternOutlineButton extends StatefulWidget {
   });
 
   final String label;
-  final VoidCallback onTap;
+
+  /// Null disables the button — dims it and reports `Semantics(enabled:
+  /// false)`, matching `StButton`'s `onTap != null` contract (unlike
+  /// `GlowButton`, which is deliberately always-enabled by design).
+  final VoidCallback? onTap;
+
   final Widget? leading;
 
   @override
@@ -37,55 +42,60 @@ class _LanternOutlineButtonState extends State<LanternOutlineButton> {
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<LanternTokens>()!;
     final height = AppResponsive.buttonSize(context);
+    final enabled = widget.onTap != null;
 
     return Semantics(
       button: true,
+      enabled: enabled,
       label: widget.label,
       excludeSemantics: true,
       child: GestureDetector(
         onTap: widget.onTap,
-        onTapDown: _onTapDown,
-        onTapUp: _onTapUp,
-        onTapCancel: () => setState(() => _pressed = false),
+        onTapDown: enabled ? _onTapDown : null,
+        onTapUp: enabled ? _onTapUp : null,
+        onTapCancel: enabled ? () => setState(() => _pressed = false) : null,
         child: AnimatedScale(
           scale: _pressed ? 0.97 : 1.0,
           duration: const Duration(milliseconds: 120),
           curve: Curves.easeOut,
-          child: SizedBox(
-            width: double.infinity,
-            height: height,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: AppRadius.full,
-                border: Border.all(color: tokens.hush, width: 1.5),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (widget.leading != null) ...[
-                      IconTheme(
-                        data: IconThemeData(color: tokens.moonDim, size: 18),
-                        child: widget.leading!,
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                    Flexible(
-                      child: Text(
-                        widget.label,
-                        style: AppTypography.titleMedium.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: tokens.moonDim,
+          child: Opacity(
+            opacity: enabled ? 1.0 : 0.5,
+            child: SizedBox(
+              width: double.infinity,
+              height: height,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: AppRadius.full,
+                  border: Border.all(color: tokens.hush, width: 1.5),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (widget.leading != null) ...[
+                        IconTheme(
+                          data: IconThemeData(color: tokens.moonDim, size: 18),
+                          child: widget.leading!,
                         ),
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        const SizedBox(width: 8),
+                      ],
+                      Flexible(
+                        child: Text(
+                          widget.label,
+                          style: AppTypography.titleMedium.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: tokens.moonDim,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

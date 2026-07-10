@@ -286,7 +286,7 @@ class _StorytimeAuthScreenState extends ConsumerState<StorytimeAuthScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.createMode ? 'Create account' : 'Sign in'),
@@ -304,13 +304,13 @@ class _StorytimeAuthScreenState extends ConsumerState<StorytimeAuthScreen> {
                     'Grown-ups set up the account. This takes a minute.',
                   ),
                   const SizedBox(height: 24),
-                  StTextField(
+                  LanternTextField(
                     controller: _email,
                     label: 'Email',
                     keyboardType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 14),
-                  StTextField(
+                  LanternTextField(
                     controller: _password,
                     label: 'Password',
                     obscureText: true,
@@ -319,7 +319,7 @@ class _StorytimeAuthScreenState extends ConsumerState<StorytimeAuthScreen> {
                     const SizedBox(height: 12),
                     Text(
                       _error!,
-                      style: const TextStyle(color: AppColors.destructive),
+                      style: TextStyle(color: tokens.hueCoral),
                     ),
                   ],
                   const SizedBox(height: 18),
@@ -354,33 +354,27 @@ class _StorytimeAuthScreenState extends ConsumerState<StorytimeAuthScreen> {
                       ],
                     ),
                   ),
-                  StButton(
+                  LanternOutlineButton(
                     label: 'Continue with Apple',
-                    variant: StButtonVariant.ghost,
-                    fullWidth: true,
                     leading: const Icon(Icons.apple),
                     onTap: _busy
                         ? null
                         : () => _run(
-                            ref.read(authRepositoryProvider).signInWithApple,
-                          ),
+                            ref.read(authRepositoryProvider).signInWithApple),
                   ),
                   const SizedBox(height: 10),
-                  StButton(
+                  LanternOutlineButton(
                     label: 'Continue with Google',
-                    variant: StButtonVariant.ghost,
-                    fullWidth: true,
                     leading: const Icon(Icons.account_circle_outlined),
                     onTap: _busy
                         ? null
                         : () => _run(
-                            ref.read(authRepositoryProvider).signInWithGoogle,
-                          ),
+                            ref.read(authRepositoryProvider).signInWithGoogle),
                   ),
                   const SizedBox(height: 24),
                   Text(
                     "By continuing, the grown-up agrees that Storytime may send story choices and an age band to our generation providers. We never send the child's name.",
-                    style: TextStyle(color: tokens.ink2, height: 1.45),
+                    style: TextStyle(color: tokens.moonDim, height: 1.45),
                   ),
                 ],
               ),
@@ -451,108 +445,68 @@ class _ChildSetupScreenState extends ConsumerState<ChildSetupScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Add your child')),
-    body: SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 640),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Age sets the story length. The profile stays encrypted on this device.',
-                ),
-                const SizedBox(height: 22),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 12,
-                  children: avatars
-                      .map(
-                        (avatar) => _AvatarChoice(
-                          label: avatar,
-                          selected: _avatar == avatar,
-                          onTap: () => setState(() => _avatar = avatar),
-                        ),
-                      )
-                      .toList(),
-                ),
-                const SizedBox(height: 24),
-                StTextField(
-                  controller: _name,
-                  label: 'First name',
-                ),
-                const SizedBox(height: 20),
-                StSegment(
-                  options: AgeBand.values.map((b) => b.label).toList(),
-                  selectedIndex: AgeBand.values.indexOf(_ageBand),
-                  onChanged: (i) =>
-                      setState(() => _ageBand = AgeBand.values[i]),
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    _error!,
-                    style: const TextStyle(color: AppColors.destructive),
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Add your child')),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 640),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Age sets the story length. The profile stays encrypted on this device.',
+                  ),
+                  const SizedBox(height: 22),
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 12,
+                    children: avatars
+                        .map(
+                          (avatar) => LanternChoiceCard(
+                            label: avatar,
+                            selected: _avatar == avatar,
+                            onTap: () => setState(() => _avatar = avatar),
+                            glyph: PixelSprite(
+                              sprite: autoAssignSprite(avatar),
+                              scale: 4.5,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                  const SizedBox(height: 24),
+                  LanternTextField(
+                    controller: _name,
+                    label: 'First name',
+                  ),
+                  const SizedBox(height: 20),
+                  LanternSegment(
+                    options: AgeBand.values.map((b) => b.label).toList(),
+                    selectedIndex: AgeBand.values.indexOf(_ageBand),
+                    onChanged: (i) =>
+                        setState(() => _ageBand = AgeBand.values[i]),
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      _error!,
+                      style: TextStyle(color: tokens.hueCoral),
+                    ),
+                  ],
+                  const SizedBox(height: 28),
+                  StButton(
+                    label: _busy ? 'Setting up…' : 'Done',
+                    fullWidth: true,
+                    onTap: _busy ? null : _save,
                   ),
                 ],
-                const SizedBox(height: 28),
-                StButton(
-                  label: _busy ? 'Setting up…' : 'Done',
-                  fullWidth: true,
-                  onTap: _busy ? null : _save,
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
-class _AvatarChoice extends StatelessWidget {
-  const _AvatarChoice({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
-    return Semantics(
-      label: label,
-      selected: selected,
-      button: true,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          width: 116,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: selected
-                ? tokens.ember.withValues(alpha: 0.12)
-                : tokens.paper,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: selected ? tokens.ember : tokens.line,
-              width: 2,
-            ),
-          ),
-          child: Column(
-            children: [
-              PixelSprite(sprite: autoAssignSprite(label), scale: 4.5),
-              const SizedBox(height: 6),
-              Text(label, textAlign: TextAlign.center),
-            ],
           ),
         ),
       ),

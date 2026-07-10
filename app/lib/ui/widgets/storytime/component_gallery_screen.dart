@@ -44,6 +44,8 @@ class _ComponentGalleryScreenState extends State<ComponentGalleryScreen> {
   int _lanternSelectedVoice = 0;
   bool _lanternPreviewPlaying = false;
   final List<bool> _lanternSlotSuggested = [true, false, true, false];
+  int _lanternSegmentSel = 1;
+  int _lanternChoiceSel = 0;
 
   static const _storyText =
       'Once upon a time, in a forest full of glowing mushrooms, '
@@ -724,6 +726,56 @@ class _ComponentGalleryScreenState extends State<ComponentGalleryScreen> {
                           LanternOutlineButton(
                             label: 'I already have an account',
                             onTap: () {},
+                          ),
+
+                          const SizedBox(height: 24),
+                          _SubLabel(
+                              text: 'Lantern Text Field',
+                              labelColor: lantern.moonDim),
+                          const SizedBox(height: 12),
+                          const LanternTextField(
+                            label: 'Child\'s name',
+                            hint: 'e.g. Mia',
+                          ),
+
+                          const SizedBox(height: 24),
+                          _SubLabel(
+                              text: 'Lantern Segment',
+                              labelColor: lantern.moonDim),
+                          const SizedBox(height: 12),
+                          LanternSegment(
+                            options: const ['3-5', '6-8', '9-10'],
+                            selectedIndex: _lanternSegmentSel,
+                            onChanged: (i) =>
+                                setState(() => _lanternSegmentSel = i),
+                          ),
+
+                          const SizedBox(height: 24),
+                          _SubLabel(
+                              text: 'Lantern Choice Card',
+                              labelColor: lantern.moonDim),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              LanternChoiceCard(
+                                label: 'Mia',
+                                selected: _lanternChoiceSel == 0,
+                                glyph: Icon(Icons.face_rounded,
+                                    color: lantern.lantern, size: 32),
+                                onTap: () =>
+                                    setState(() => _lanternChoiceSel = 0),
+                              ),
+                              const SizedBox(width: 12),
+                              LanternChoiceCard(
+                                label: 'Leo',
+                                selected: _lanternChoiceSel == 1,
+                                glyph: Icon(Icons.face_retouching_natural,
+                                    color: lantern.moonDim, size: 32),
+                                onTap: () =>
+                                    setState(() => _lanternChoiceSel = 1),
+                              ),
+                            ],
                           ),
                         ],
                       ),

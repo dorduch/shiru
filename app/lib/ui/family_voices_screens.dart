@@ -8,6 +8,7 @@ import '../models/family_voice.dart';
 import '../providers/storytime_providers.dart';
 import '../services/recording_service.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_radius.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import '../theme/lantern_tokens.dart';
@@ -867,82 +868,106 @@ class _VoiceUploadScreenState extends ConsumerState<VoiceUploadScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
 
     return Scaffold(
-      backgroundColor: tokens.cream,
+      backgroundColor: tokens.nightMid,
       appBar: AppBar(
         title: const Text('Upload a clip'),
-        backgroundColor: tokens.cream,
+        backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
-        foregroundColor: tokens.ink,
+        foregroundColor: tokens.moon,
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              StSectionHeader(
-                title: 'Upload ${widget.name}\'s voice',
-                sub: 'Pick an audio clip of about one minute or longer. Clear speech works best.',
-              ),
-              const SizedBox(height: 24),
-              StHint(
-                text: 'A quiet room, natural speech, and at least 60 seconds gives the best result.',
-              ),
-              const SizedBox(height: 24),
-              GestureDetector(
-                onTap: _uploading ? null : _pickFile,
-                child: Container(
-                  padding: const EdgeInsets.all(24),
+      body: Container(
+        decoration: BoxDecoration(gradient: tokens.nightGradient),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                LanternSectionHeader(
+                  title: 'Upload ${widget.name}\'s voice',
+                  sub: 'Pick an audio clip of about one minute or longer. Clear speech works best.',
+                ),
+                const SizedBox(height: 24),
+                // StHint has no Lantern equivalent yet and this is its only
+                // call site in this file — inlined re-skin per the rollout
+                // spec's guidance on low-usage components (see StToggle note).
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    color: tokens.paper,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: _pickedPath != null ? tokens.ember : tokens.line,
-                      width: 1.5,
-                    ),
+                    color: tokens.nightCard,
+                    borderRadius: AppRadius.medium,
+                    border: Border.all(color: tokens.hush, width: 1),
                   ),
-                  child: Column(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        _pickedPath != null
-                            ? Icons.audio_file_rounded
-                            : Icons.upload_file_rounded,
-                        size: 48,
-                        color: _pickedPath != null ? tokens.ember : tokens.ink3,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        _pickedPath != null
-                            ? (_pickedName ?? 'File selected')
-                            : 'Tap to pick an audio file',
-                        style: AppTypography.bodyLarge.copyWith(
-                          color: _pickedPath != null ? tokens.ink : tokens.ink3,
+                      Icon(Icons.lightbulb_outline_rounded, color: tokens.lantern, size: 18),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'A quiet room, natural speech, and at least 60 seconds gives the best result.',
+                          style: AppTypography.labelMedium.copyWith(color: tokens.moonDim),
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
                 ),
-              ),
-              if (_error != null) ...[
-                const SizedBox(height: 12),
-                Text(
-                  _error!,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.destructive,
+                const SizedBox(height: 24),
+                GestureDetector(
+                  onTap: _uploading ? null : _pickFile,
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: tokens.nightCard,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: _pickedPath != null ? tokens.lantern : tokens.hush,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          _pickedPath != null
+                              ? Icons.audio_file_rounded
+                              : Icons.upload_file_rounded,
+                          size: 48,
+                          color: _pickedPath != null ? tokens.lantern : tokens.moonFaint,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          _pickedPath != null
+                              ? (_pickedName ?? 'File selected')
+                              : 'Tap to pick an audio file',
+                          style: AppTypography.bodyLarge.copyWith(
+                            color: _pickedPath != null ? tokens.moon : tokens.moonFaint,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
+                if (_error != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    _error!,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: tokens.hueCoral,
+                    ),
+                  ),
+                ],
+                const Spacer(),
+                StButton(
+                  label: _uploading ? 'Uploading…' : 'Upload & create voice',
+                  fullWidth: true,
+                  onTap: (_pickedPath != null && !_uploading) ? _upload : null,
+                ),
               ],
-              const Spacer(),
-              StButton(
-                label: _uploading ? 'Uploading…' : 'Upload & create voice',
-                fullWidth: true,
-                onTap: (_pickedPath != null && !_uploading) ? _upload : null,
-              ),
-            ],
+            ),
           ),
         ),
       ),
