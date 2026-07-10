@@ -17,21 +17,14 @@ import 'widgets/storytime/storytime.dart';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-Color _statusColor(
-  BuildContext context,
-  FamilyVoiceStatus status,
-  StorytimeTokens tokens,
-) => switch (status) {
-  // Centralized per the Lantern spec §3: this hardcoded green was never a
-  // token to begin with — now LanternTokens.hueMeadow. `_VoiceRow`
-  // (FamilyVoicesScreen) isn't re-skinned to Lantern yet (Batch 3), so this
-  // reads LanternTokens directly rather than threading a wider re-skin
-  // through that not-yet-migrated screen.
-  FamilyVoiceStatus.ready =>
-    Theme.of(context).extension<LanternTokens>()!.hueMeadow,
-  FamilyVoiceStatus.failed => AppColors.destructive,
-  _ => tokens.gold,
-};
+Color _statusColor(LanternTokens tokens, FamilyVoiceStatus status) =>
+    switch (status) {
+      // Centralized per the Lantern spec §3: this hardcoded green was never
+      // a token to begin with — now LanternTokens.hueMeadow.
+      FamilyVoiceStatus.ready => tokens.hueMeadow,
+      FamilyVoiceStatus.failed => tokens.hueCoral,
+      _ => tokens.lantern,
+    };
 
 String _statusLabel(FamilyVoiceStatus status) => switch (status) {
   FamilyVoiceStatus.ready => 'Ready',
@@ -49,28 +42,31 @@ class FamilyVoicesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
     final voicesAsync = ref.watch(familyVoicesProvider);
 
     return Scaffold(
-      backgroundColor: tokens.cream,
+      backgroundColor: tokens.nightMid,
       appBar: AppBar(
         title: const Text('Family voices'),
-        backgroundColor: tokens.cream,
+        backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
-        foregroundColor: tokens.ink,
+        foregroundColor: tokens.moon,
       ),
-      body: voicesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => StErrorView(
-          icon: Icons.mic_off_rounded,
-          title: "Couldn't load voices",
-          message: 'Check your connection and try again.',
-          onRetry: () => ref.invalidate(familyVoicesProvider),
+      body: Container(
+        decoration: BoxDecoration(gradient: tokens.nightGradient),
+        child: voicesAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => StErrorView(
+            icon: Icons.mic_off_rounded,
+            title: "Couldn't load voices",
+            message: 'Check your connection and try again.',
+            onRetry: () => ref.invalidate(familyVoicesProvider),
+          ),
+          data: (voices) => voices.isEmpty
+              ? _EmptyVoices(tokens: tokens)
+              : _VoicesList(voices: voices, tokens: tokens),
         ),
-        data: (voices) => voices.isEmpty
-            ? _EmptyVoices(tokens: tokens)
-            : _VoicesList(voices: voices, tokens: tokens),
       ),
       // The empty state has its own primary "Add a voice" button, so only show
       // the FAB once there are voices in the list (avoids two identical CTAs).
@@ -78,9 +74,10 @@ class FamilyVoicesScreen extends ConsumerWidget {
           ? null
           : FloatingActionButton.extended(
               onPressed: () => context.push('/parent/family-voices/consent'),
-              backgroundColor: tokens.ember,
-              // Dark ink for AA contrast on ember (white ~2.7:1 fails).
-              foregroundColor: tokens.onAccent,
+              backgroundColor: tokens.lantern,
+              // nightDeep for AA contrast on the light lantern fill — same
+              // convention GlowButton uses for its ctaGradient label/icon.
+              foregroundColor: tokens.nightDeep,
               icon: const Icon(Icons.add),
               label: const Text('Add a voice'),
             ),
@@ -90,7 +87,7 @@ class FamilyVoicesScreen extends ConsumerWidget {
 
 class _EmptyVoices extends StatelessWidget {
   const _EmptyVoices({required this.tokens});
-  final StorytimeTokens tokens;
+  final LanternTokens tokens;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -98,9 +95,9 @@ class _EmptyVoices extends StatelessWidget {
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.mic_external_on_rounded, size: 64, color: tokens.ember),
+        Icon(Icons.mic_external_on_rounded, size: 64, color: tokens.lantern),
         const SizedBox(height: 20),
-        StSectionHeader(
+        LanternSectionHeader(
           title: 'Add a familiar voice',
           sub: 'Record a family member or upload a clip — their voice can narrate stories for your child.',
           centerAlign: true,
@@ -119,7 +116,7 @@ class _EmptyVoices extends StatelessWidget {
 class _VoicesList extends ConsumerWidget {
   const _VoicesList({required this.voices, required this.tokens});
   final List<FamilyVoice> voices;
-  final StorytimeTokens tokens;
+  final LanternTokens tokens;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) => ListView.separated(
@@ -136,7 +133,7 @@ class _VoicesList extends ConsumerWidget {
 class _VoiceRow extends ConsumerWidget {
   const _VoiceRow({required this.voice, required this.tokens});
   final FamilyVoice voice;
-  final StorytimeTokens tokens;
+  final LanternTokens tokens;
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
     final ok = await showDialog<bool>(
@@ -175,9 +172,9 @@ class _VoiceRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => Container(
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
-      color: tokens.paper,
+      color: tokens.nightCard,
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: tokens.line, width: 1),
+      border: Border.all(color: tokens.hush, width: 1),
     ),
     child: Row(
       children: [
@@ -185,10 +182,10 @@ class _VoiceRow extends ConsumerWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: tokens.ember.withValues(alpha: 0.12),
+            color: tokens.lantern.withValues(alpha: 0.12),
             shape: BoxShape.circle,
           ),
-          child: Icon(Icons.mic_rounded, color: tokens.ember, size: 22),
+          child: Icon(Icons.mic_rounded, color: tokens.lantern, size: 22),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -199,25 +196,24 @@ class _VoiceRow extends ConsumerWidget {
                 voice.name,
                 style: AppTypography.titleLarge.copyWith(
                   fontSize: 15,
-                  color: tokens.ink,
+                  color: tokens.moon,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 voice.relationship,
-                style: AppTypography.labelMedium.copyWith(color: tokens.ink2),
+                style: AppTypography.labelMedium.copyWith(color: tokens.moonDim),
               ),
             ],
           ),
         ),
-        StChip(
+        LanternChip(
           label: _statusLabel(voice.status),
-          color: _statusColor(context, voice.status, tokens)
-              .withValues(alpha: 0.15),
+          hue: _statusColor(tokens, voice.status),
         ),
         const SizedBox(width: 8),
         IconButton(
-          icon: Icon(Icons.delete_outline_rounded, color: tokens.ink3, size: 20),
+          icon: Icon(Icons.delete_outline_rounded, color: tokens.moonFaint, size: 20),
           tooltip: 'Remove voice',
           onPressed: () => _confirmDelete(context, ref),
         ),
@@ -286,125 +282,163 @@ class _VoiceConsentScreenState extends ConsumerState<VoiceConsentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
 
     return Scaffold(
-      backgroundColor: tokens.cream,
+      backgroundColor: tokens.nightMid,
       appBar: AppBar(
         title: const Text('Add a voice'),
-        backgroundColor: tokens.cream,
+        backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
-        foregroundColor: tokens.ink,
+        foregroundColor: tokens.moon,
       ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            StSectionHeader(
-              eyebrow: 'Step 1 of 2',
-              title: 'Whose voice is this?',
-              sub: 'Tell us about the person whose voice will be cloned.',
-            ),
-            const SizedBox(height: 24),
-            StTextField(
-              controller: _nameCtrl,
-              label: 'Name',
-              hint: 'e.g. Grandma Rose',
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 16),
-            StTextField(
-              controller: _relCtrl,
-              label: 'Relationship to child',
-              hint: 'e.g. Grandmother, Dad, Uncle',
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 20),
-            // Living toggle
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: tokens.paper,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: tokens.line, width: 1),
+      body: Container(
+        decoration: BoxDecoration(gradient: tokens.nightGradient),
+        child: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              // Step eyebrow — LanternSectionHeader has no eyebrow slot (the
+              // old cream-only terracotta eyebrow color is retired per the
+              // Lantern spec), so this mirrors VoiceCaptureIntroScreen's
+              // "STEP 2 OF 2" inline treatment (bold 13sp, 1.4 tracking,
+              // moonDim) to stay visually consistent with that screen.
+              Text(
+                'STEP 1 OF 2',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.4,
+                  color: tokens.moonDim,
+                ),
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Is this person living?',
-                          style: AppTypography.bodyLarge.copyWith(
-                            color: tokens.ink,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Some voices are created to preserve memories.',
-                          style: AppTypography.bodySmall.copyWith(
-                            color: tokens.ink2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Switch(
-                    value: _personIsLiving,
-                    onChanged: (v) => setState(() => _personIsLiving = v),
-                    activeThumbColor: tokens.ember,
-                    activeTrackColor: tokens.ember.withValues(alpha: 0.5),
-                  ),
-                ],
+              const SizedBox(height: 4),
+              LanternSectionHeader(
+                title: 'Whose voice is this?',
+                sub: 'Tell us about the person whose voice will be cloned.',
               ),
-            ),
-            const SizedBox(height: 20),
-            // Agreement
-            GestureDetector(
-              onTap: () => setState(() => _agreed = !_agreed),
-              child: Container(
+              const SizedBox(height: 24),
+              LanternTextField(
+                controller: _nameCtrl,
+                label: 'Name',
+                hint: 'e.g. Grandma Rose',
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 16),
+              LanternTextField(
+                controller: _relCtrl,
+                label: 'Relationship to child',
+                hint: 'e.g. Grandmother, Dad, Uncle',
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 20),
+              // Living toggle
+              Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: _agreed
-                      ? tokens.ember.withValues(alpha: 0.08)
-                      : tokens.paper,
+                  color: tokens.nightCard,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: _agreed ? tokens.ember : tokens.line,
-                    width: 1.5,
+                  border: Border.all(color: tokens.hush, width: 1),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Is this person living?',
+                            style: AppTypography.bodyLarge.copyWith(
+                              color: tokens.moon,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Some voices are created to preserve memories.',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: tokens.moonDim,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: _personIsLiving,
+                      onChanged: (v) => setState(() => _personIsLiving = v),
+                      activeThumbColor: tokens.lantern,
+                      activeTrackColor: tokens.lantern.withValues(alpha: 0.5),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Agreement
+              GestureDetector(
+                onTap: () => setState(() => _agreed = !_agreed),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: _agreed
+                        ? tokens.lantern.withValues(alpha: 0.08)
+                        : tokens.nightCard,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: _agreed ? tokens.lantern : tokens.hush,
+                      width: 1.5,
+                    ),
                   ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Checkbox(
+                        value: _agreed,
+                        onChanged: (v) => setState(() => _agreed = v ?? false),
+                        activeColor: tokens.lantern,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: Text(
+                            'The person named above agrees to share their voice for story narration in this app.',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: tokens.moon,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // StHint has no Lantern equivalent yet and this is its only
+              // call site in this file — inlined re-skin per the rollout
+              // spec's guidance on low-usage components (see StToggle note),
+              // matching VoiceUploadScreen's own StHint inline re-skin.
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: tokens.nightCard,
+                  borderRadius: AppRadius.medium,
+                  border: Border.all(color: tokens.hush, width: 1),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Checkbox(
-                      value: _agreed,
-                      onChanged: (v) => setState(() => _agreed = v ?? false),
-                      activeColor: tokens.ember,
-                    ),
-                    const SizedBox(width: 8),
+                    Icon(Icons.lock_outline_rounded, color: tokens.lantern, size: 18),
+                    const SizedBox(width: 10),
                     Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 12),
-                        child: Text(
-                          'The person named above agrees to share their voice for story narration in this app.',
-                          style: AppTypography.bodySmall.copyWith(
-                            color: tokens.ink,
-                          ),
-                        ),
+                      child: Text(
+                        'Voice samples are only used to personalise stories for your family and are never shared with others.',
+                        style: AppTypography.labelMedium.copyWith(color: tokens.moonDim),
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            StHint(
-              text: 'Voice samples are only used to personalise stories for your family and are never shared with others.',
-              icon: Icons.lock_outline_rounded,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       // Pin the error + primary action in a safe-area bottom bar so they can
@@ -418,14 +452,14 @@ class _VoiceConsentScreenState extends ConsumerState<VoiceConsentScreen> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.error_outline_rounded,
-                      size: 18, color: AppColors.destructiveDark),
+                  Icon(Icons.error_outline_rounded,
+                      size: 18, color: tokens.hueCoral),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       _error!,
                       style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.destructiveDark,
+                        color: tokens.hueCoral,
                       ),
                     ),
                   ),

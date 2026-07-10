@@ -777,6 +777,30 @@ class _ComponentGalleryScreenState extends State<ComponentGalleryScreen> {
                               ),
                             ],
                           ),
+
+                          const SizedBox(height: 24),
+                          _SubLabel(
+                              text: 'Lantern Chip', labelColor: lantern.moonDim),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              LanternChip(
+                                label: 'Ready',
+                                hue: lantern.hueMeadow,
+                              ),
+                              const SizedBox(width: 8),
+                              LanternChip(
+                                label: 'Failed',
+                                hue: lantern.hueCoral,
+                              ),
+                              const SizedBox(width: 8),
+                              LanternChip(
+                                label: 'Processing',
+                                hue: lantern.lantern,
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     );
