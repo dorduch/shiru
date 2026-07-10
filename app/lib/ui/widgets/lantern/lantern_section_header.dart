@@ -18,13 +18,24 @@ class LanternSectionHeader extends StatelessWidget {
   const LanternSectionHeader({
     super.key,
     required this.title,
+    this.eyebrow,
     this.sub,
     this.centerAlign = false,
+    this.largeTitle = false,
   });
 
   final String title;
+
+  /// Small all-caps label rendered above [title] (e.g. "STEP 1 OF 2").
+  /// Uppercased internally, same contract as `StSectionHeader.eyebrow`.
+  final String? eyebrow;
   final String? sub;
   final bool centerAlign;
+
+  /// When true the title renders one step larger (headlineMedium instead of
+  /// headlineSmall) — used for landing/section titles that read larger than
+  /// mid-flow step titles. Mirrors `StSectionHeader.largeTitle`.
+  final bool largeTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -37,9 +48,20 @@ class LanternSectionHeader extends StatelessWidget {
       crossAxisAlignment: cross,
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (eyebrow != null) ...[
+          Text(
+            eyebrow!.toUpperCase(),
+            style: AppTypography.eyebrow.copyWith(color: tokens.moonDim),
+            textAlign: align,
+          ),
+          const SizedBox(height: 4),
+        ],
         Text(
           title,
-          style: AppTypography.headlineSmall.copyWith(color: tokens.moon),
+          style: (largeTitle
+                  ? AppTypography.headlineMedium
+                  : AppTypography.headlineSmall)
+              .copyWith(color: tokens.moon),
           textAlign: align,
         ),
         if (sub != null) ...[

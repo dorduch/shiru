@@ -298,22 +298,8 @@ class _VoiceConsentScreenState extends ConsumerState<VoiceConsentScreen> {
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              // Step eyebrow — LanternSectionHeader has no eyebrow slot (the
-              // old cream-only terracotta eyebrow color is retired per the
-              // Lantern spec), so this mirrors VoiceCaptureIntroScreen's
-              // "STEP 2 OF 2" inline treatment (bold 13sp, 1.4 tracking,
-              // moonDim) to stay visually consistent with that screen.
-              Text(
-                'STEP 1 OF 2',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.4,
-                  color: tokens.moonDim,
-                ),
-              ),
-              const SizedBox(height: 4),
               LanternSectionHeader(
+                eyebrow: 'Step 1 of 2',
                 title: 'Whose voice is this?',
                 sub: 'Tell us about the person whose voice will be cloned.',
               ),
@@ -514,23 +500,8 @@ class VoiceCaptureIntroScreen extends StatelessWidget {
                 const Spacer(),
                 Icon(Icons.mic_external_on_rounded, size: 64, color: tokens.lantern),
                 const SizedBox(height: 20),
-                // Step eyebrow — LanternSectionHeader has no eyebrow slot (the
-                // old cream-only terracotta eyebrow color is retired per the
-                // Lantern spec), so this mirrors StoryComposerScreen's own
-                // inline `_sectionLabel` treatment (bold 13sp, 1.4 tracking,
-                // moonDim) to stay visually consistent with the Composer.
-                Text(
-                  'STEP 2 OF 2',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.4,
-                    color: tokens.moonDim,
-                  ),
-                ),
-                const SizedBox(height: 4),
                 LanternSectionHeader(
+                  eyebrow: 'Step 2 of 2',
                   title: 'Capture $name\'s voice',
                   sub: 'We need a short recording to create the voice clone. Choose how you\'d like to add it.',
                   centerAlign: true,

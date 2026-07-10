@@ -720,6 +720,32 @@ class _ComponentGalleryScreenState extends State<ComponentGalleryScreen> {
 
                           const SizedBox(height: 24),
                           _SubLabel(
+                              text: 'Lantern Section Header — eyebrow + large title',
+                              labelColor: lantern.moonDim),
+                          const SizedBox(height: 12),
+                          const LanternSectionHeader(
+                            eyebrow: 'Step 1 of 2',
+                            title: 'Whose voice is this?',
+                            sub: 'Tell us about the person whose voice will be cloned.',
+                            largeTitle: true,
+                          ),
+
+                          const SizedBox(height: 24),
+                          _SubLabel(
+                              text: 'Lantern Screen Header',
+                              labelColor: lantern.moonDim),
+                          const SizedBox(height: 12),
+                          LanternScreenHeader(
+                            onBack: () {},
+                            trailing: Icon(Icons.lock_outline,
+                                color: lantern.moonDim, size: 18),
+                            title: 'Hi there!',
+                            sub: 'What should we do today?',
+                            largeTitle: true,
+                          ),
+
+                          const SizedBox(height: 24),
+                          _SubLabel(
                               text: 'Lantern Outline Button',
                               labelColor: lantern.moonDim),
                           const SizedBox(height: 12),

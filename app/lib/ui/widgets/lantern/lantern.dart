@@ -12,6 +12,7 @@ export 'story_slot.dart';
 export 'lantern_row.dart';
 export 'lantern_action_tile.dart';
 export 'lantern_section_header.dart';
+export 'lantern_screen_header.dart';
 export 'lantern_outline_button.dart';
 export 'lantern_text_field.dart';
 export 'lantern_segment.dart';
