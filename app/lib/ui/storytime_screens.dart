@@ -1316,83 +1316,77 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: StorytimeTheme.bedtime,
-      child: Builder(
-        builder: (context) {
-          final tokens = Theme.of(context).extension<StorytimeTokens>()!;
-          return Scaffold(
-            body: Container(
-              decoration: BoxDecoration(gradient: tokens.nightGradient),
-              child: SafeArea(
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 520),
-                    child: Padding(
-                      // Bottom-heavy padding nudges the vertically-centered
-                      // block up a touch: geometric-center content reads
-                      // slightly low and the heavy sprite biases mass downward.
-                      padding: const EdgeInsets.fromLTRB(28, 28, 28, 52),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          PixelSprite(sprite: autoAssignSprite('magic story'), scale: 7),
-                          const SizedBox(height: 24),
-                          Text(
-                            // Don't keep the loading headline over a failure —
-                            // swap to an error title when something went wrong.
-                            _error == null ? _status : 'Oh no, a little hiccup',
-                            textAlign: TextAlign.center,
-                            style: AppTypography.headlineMedium.copyWith(color: tokens.cream),
-                          ),
-                          const SizedBox(height: 20),
-                          if (_error == null)
-                            LinearProgressIndicator(
-                              minHeight: 8,
-                              // Ember (not gold): carry the review CTA's accent
-                              // onto the first night screen so the warm color
-                              // the child just tapped reads as continuous across
-                              // the day→dark seam (C5). The player then settles
-                              // to gold for its bedtime word-highlight.
-                              color: tokens.ember,
-                              backgroundColor: tokens.cream.withValues(alpha: 0.18),
-                            )
-                          else ...[
-                            Text(
-                              _error!,
-                              textAlign: TextAlign.center,
-                              style: AppTypography.bodySmall.copyWith(
-                                // Brighter coral: destructive (~3.9:1) fails on
-                                // the lightest night stop; destructiveOnDark clears AA.
-                                color: AppColors.destructiveOnDark,
-                              ),
-                            ),
-                            const SizedBox(height: 18),
-                            StButton(
-                              label: 'Try again',
-                              fullWidth: true,
-                              onTap: () {
-                                setState(() => _error = null);
-                                _start();
-                              },
-                            ),
-                            const SizedBox(height: 8),
-                            StButton(
-                              label: 'Back home',
-                              variant: StButtonVariant.line,
-                              fullWidth: true,
-                              onTap: () => context.go('/home'),
-                            ),
-                          ],
-                        ],
-                      ),
+    // No more per-screen `Theme(data: StorytimeTheme.bedtime, ...)` wrap here
+    // — the root theme (main.dart) already registers LanternTokens.night(),
+    // so this screen reads it directly instead of forcing a redundant
+    // sub-theme (see docs/superpowers/specs/2026-07-10-lantern-app-wide-design.md §2).
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(gradient: tokens.nightGradient),
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Padding(
+                // Bottom-heavy padding nudges the vertically-centered
+                // block up a touch: geometric-center content reads
+                // slightly low and the heavy sprite biases mass downward.
+                padding: const EdgeInsets.fromLTRB(28, 28, 28, 52),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    PixelSprite(sprite: autoAssignSprite('magic story'), scale: 7),
+                    const SizedBox(height: 24),
+                    Text(
+                      // Don't keep the loading headline over a failure —
+                      // swap to an error title when something went wrong.
+                      _error == null ? _status : 'Oh no, a little hiccup',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.headlineMedium.copyWith(color: tokens.moon),
                     ),
-                  ),
+                    const SizedBox(height: 20),
+                    if (_error == null)
+                      LinearProgressIndicator(
+                        minHeight: 8,
+                        // Lantern accent for the active fill, `hush` for the
+                        // dim track — same track/fill idiom as the other
+                        // Lantern job-status progress bar (family voice
+                        // processing, family_voices_screens.dart).
+                        color: tokens.lantern,
+                        backgroundColor: tokens.hush,
+                      )
+                    else ...[
+                      Text(
+                        _error!,
+                        textAlign: TextAlign.center,
+                        style: AppTypography.bodySmall.copyWith(
+                          // hueCoral: the established Lantern destructive/error
+                          // color, used for the same purpose elsewhere in this
+                          // file and in family_voices_screens.dart.
+                          color: tokens.hueCoral,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      GlowButton(
+                        label: 'Try again',
+                        onTap: () {
+                          setState(() => _error = null);
+                          _start();
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      LanternOutlineButton(
+                        label: 'Back home',
+                        onTap: () => context.go('/home'),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }

@@ -7,13 +7,12 @@ import 'package:intl/intl.dart';
 
 import '../logic/age_gate_logic.dart';
 import '../providers/adult_gate_provider.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_responsive.dart';
-import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_radius.dart';
-import 'widgets/storytime/storytime.dart';
+import '../theme/lantern_tokens.dart';
+import 'widgets/lantern/lantern.dart';
 
 class AgeGateScreen extends ConsumerStatefulWidget {
   final String nextLocation;
@@ -134,160 +133,185 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
     final selectedBirthDate = _selectedBirthDate;
     final inCooldown = _isInCooldown;
     final secondsLeft = _cooldownSecondsLeft;
     final basePadding = AppResponsive.basePadding(context);
 
     return Scaffold(
-      backgroundColor: tokens.cream,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 640),
-              child: Padding(
-                padding: EdgeInsets.all(basePadding),
-                child: Container(
-                  padding: EdgeInsets.all(AppResponsive.spacing(context, 28)),
-                  decoration: BoxDecoration(
-                    color: tokens.paper,
-                    borderRadius: AppRadius.sheet,
-                    boxShadow: AppShadows.elevated,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: IconButton(
-                          icon: Icon(
-                            Icons.arrow_back_ios_new,
-                            size: AppResponsive.iconSize(context, 28),
-                            color: tokens.ink2,
+      backgroundColor: tokens.nightDeep,
+      body: DecoratedBox(
+        decoration: BoxDecoration(gradient: tokens.nightGradient),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 640),
+                child: Padding(
+                  padding: EdgeInsets.all(basePadding),
+                  child: Container(
+                    padding: EdgeInsets.all(AppResponsive.spacing(context, 28)),
+                    decoration: BoxDecoration(
+                      color: tokens.nightCard,
+                      borderRadius: AppRadius.sheet,
+                      boxShadow: AppShadows.elevated,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.arrow_back_ios_new,
+                              size: AppResponsive.iconSize(context, 28),
+                              color: tokens.moonDim,
+                            ),
+                            onPressed: _isSubmitting
+                                ? null
+                                : () => context.go('/'),
                           ),
-                          onPressed: _isSubmitting
-                              ? null
-                              : () => context.go('/'),
                         ),
-                      ),
-                      SizedBox(height: AppResponsive.spacing(context, 4)),
-                      Text(
-                        'GROWN-UPS ONLY',
-                        style: tokens.eyebrow.copyWith(color: AppColors.eyebrow),
-                      ),
-                      SizedBox(height: AppResponsive.spacing(context, 8)),
-                      Text(
-                        'Grown-ups only for this part',
-                        style: AppTypography.displayMedium.copyWith(
-                          color: tokens.ink,
+                        SizedBox(height: AppResponsive.spacing(context, 4)),
+                        Text(
+                          'GROWN-UPS ONLY',
+                          // moonDim, not a cream-specific accent: `lantern`
+                          // fails contrast for body/label text on `nightDeep`
+                          // per the Composer's own rule, and the old
+                          // AppColors.eyebrow burnt-terracotta was
+                          // cream-specific — see spec §3.
+                          style: AppTypography.eyebrow.copyWith(
+                            color: tokens.moonDim,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: AppResponsive.spacing(context, 12)),
-                      Text(
-                        'This is where you set things up for your child. A quick birthday check keeps it for grown-ups only.',
-                        style: AppTypography.bodySmall.copyWith(
-                          color: tokens.ink2,
-                          height: 1.45,
+                        SizedBox(height: AppResponsive.spacing(context, 8)),
+                        Text(
+                          'Grown-ups only for this part',
+                          style: AppTypography.displayMedium.copyWith(
+                            color: tokens.moon,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: AppResponsive.spacing(context, 24)),
-                      GestureDetector(
-                        onTap: inCooldown ? null : _pickBirthDate,
-                        child: Opacity(
-                          opacity: inCooldown ? 0.4 : 1.0,
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: AppResponsive.spacing(context, 18),
-                              vertical: AppResponsive.spacing(context, 20),
-                            ),
-                            decoration: BoxDecoration(
-                              color: tokens.cream,
-                              borderRadius: AppRadius.medium,
-                              border: Border.all(color: tokens.line),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.calendar_month_outlined,
-                                  color: tokens.ink2,
-                                ),
-                                SizedBox(
-                                  width: AppResponsive.spacing(context, 12),
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    selectedBirthDate == null
-                                        ? 'Choose birth date'
-                                        : DateFormat.yMMMMd().format(
-                                            selectedBirthDate,
-                                          ),
-                                    style: AppTypography.titleMedium.copyWith(
-                                      color: selectedBirthDate == null
-                                          ? tokens.ink3
-                                          : tokens.ink,
+                        SizedBox(height: AppResponsive.spacing(context, 12)),
+                        Text(
+                          'This is where you set things up for your child. A quick birthday check keeps it for grown-ups only.',
+                          style: AppTypography.bodySmall.copyWith(
+                            color: tokens.moonDim,
+                            height: 1.45,
+                          ),
+                        ),
+                        SizedBox(height: AppResponsive.spacing(context, 24)),
+                        GestureDetector(
+                          onTap: inCooldown ? null : _pickBirthDate,
+                          child: Opacity(
+                            opacity: inCooldown ? 0.4 : 1.0,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: AppResponsive.spacing(context, 18),
+                                vertical: AppResponsive.spacing(context, 20),
+                              ),
+                              decoration: BoxDecoration(
+                                // nightDeep, not nightCard: this row is a
+                                // recessed input well nested inside the
+                                // nightCard card, matching the original's
+                                // relationship (cream row-fill = cream
+                                // Scaffold ground, both distinct from the
+                                // paper card) — the well shows the ground
+                                // color through the elevated card.
+                                color: tokens.nightDeep,
+                                borderRadius: AppRadius.medium,
+                                border: Border.all(color: tokens.hush),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.calendar_month_outlined,
+                                    color: tokens.moonDim,
+                                  ),
+                                  SizedBox(
+                                    width: AppResponsive.spacing(context, 12),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      selectedBirthDate == null
+                                          ? 'Choose birth date'
+                                          : DateFormat.yMMMMd().format(
+                                              selectedBirthDate,
+                                            ),
+                                      style: AppTypography.titleMedium.copyWith(
+                                        color: selectedBirthDate == null
+                                            ? tokens.moonFaint
+                                            : tokens.moon,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                Icon(
-                                  Icons.arrow_forward_ios,
-                                  size: AppResponsive.iconSize(context, 18),
-                                  color: tokens.ink3,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (inCooldown) ...[
-                        SizedBox(height: AppResponsive.spacing(context, 16)),
-                        Text(
-                          'Too many attempts. Try again in $secondsLeft second${secondsLeft == 1 ? '' : 's'}.',
-                          style: AppTypography.labelLarge.copyWith(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                        ),
-                      ] else if (_errorMessage != null) ...[
-                        SizedBox(height: AppResponsive.spacing(context, 16)),
-                        Text(
-                          _errorMessage!,
-                          style: AppTypography.labelLarge.copyWith(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                        ),
-                      ],
-                      SizedBox(height: AppResponsive.spacing(context, 24)),
-                      if (_isSubmitting)
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          decoration: BoxDecoration(
-                            gradient: tokens.ctaGradient,
-                            borderRadius: AppRadius.large,
-                          ),
-                          child: const Center(
-                            child: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
+                                  Icon(
+                                    Icons.arrow_forward_ios,
+                                    size: AppResponsive.iconSize(context, 18),
+                                    color: tokens.moonFaint,
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                        )
-                      else
-                        StButton(
-                          label: 'Continue',
-                          variant: StButtonVariant.ember,
-                          fullWidth: true,
-                          onTap: inCooldown ? null : _continue,
                         ),
-                    ],
+                        if (inCooldown) ...[
+                          SizedBox(height: AppResponsive.spacing(context, 16)),
+                          Text(
+                            'Too many attempts. Try again in $secondsLeft second${secondsLeft == 1 ? '' : 's'}.',
+                            style: AppTypography.labelLarge.copyWith(
+                              // hueCoral: the established Lantern
+                              // destructive/error color used for the same
+                              // purpose elsewhere (storytime_screens.dart,
+                              // family_voices_screens.dart), swapped in for
+                              // Material's generic colorScheme.error for
+                              // visual consistency with the rest of the app.
+                              color: tokens.hueCoral,
+                            ),
+                          ),
+                        ] else if (_errorMessage != null) ...[
+                          SizedBox(height: AppResponsive.spacing(context, 16)),
+                          Text(
+                            _errorMessage!,
+                            style: AppTypography.labelLarge.copyWith(
+                              color: tokens.hueCoral,
+                            ),
+                          ),
+                        ],
+                        SizedBox(height: AppResponsive.spacing(context, 24)),
+                        if (_isSubmitting)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            decoration: BoxDecoration(
+                              gradient: tokens.ctaGradient,
+                              borderRadius: AppRadius.large,
+                            ),
+                            child: Center(
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  // On-accent color, matching GlowButton's own
+                                  // convention for content on `ctaGradient`
+                                  // (see glow_button.dart: label/leading icon
+                                  // both use `tokens.nightDeep`).
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    tokens.nightDeep,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          GlowButton(
+                            label: 'Continue',
+                            onTap: inCooldown ? null : _continue,
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),
