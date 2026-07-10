@@ -176,14 +176,12 @@ class _ShiruAppState extends ConsumerState<ShiruApp>
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [Locale('en', '')],
-        theme: StorytimeTheme.day,
-        darkTheme: StorytimeTheme.bedtime,
-        // Pin to the day theme. Bedtime is NOT an OS-following dark mode: it is
-        // applied per-screen (story reader, player, recording, launch flow) via
-        // Theme(data: StorytimeTheme.bedtime). Following the system would skin
-        // every day-designed screen (child setup, parent, home) dark, where
-        // their light `paper` tiles and default text become unreadable.
-        themeMode: ThemeMode.light,
+        // Lantern Night is the app's only theme now (see
+        // docs/superpowers/specs/2026-07-10-lantern-app-wide-design.md §2) —
+        // every screen renders dark by default. `StorytimeTheme.day` is kept
+        // defined (unreferenced) for a possible future light exception, but
+        // nothing in the app should read it going forward.
+        theme: StorytimeTheme.bedtime,
         routerConfig: _router,
       ),
     );

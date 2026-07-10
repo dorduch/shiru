@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_typography.dart';
+import '../../../theme/lantern_tokens.dart';
 import '../../pixel_sprite.dart';
 import '../../../models/sprites.dart';
+import '../lantern/lantern.dart';
 import 'storytime.dart';
 
 /// Developer gallery — instantiates every Storytime component in realistic
@@ -37,6 +39,11 @@ class _ComponentGalleryScreenState extends State<ComponentGalleryScreen> {
   double _playerProgress = 0.35;
   int _tab = 0;
   int _highlightedWord = 3;
+
+  // Lantern demo state
+  int _lanternSelectedVoice = 0;
+  bool _lanternPreviewPlaying = false;
+  final List<bool> _lanternSlotSuggested = [true, false, true, false];
 
   static const _storyText =
       'Once upon a time, in a forest full of glowing mushrooms, '
@@ -494,6 +501,234 @@ class _ComponentGalleryScreenState extends State<ComponentGalleryScreen> {
                       child: const Text('Word ▶'),
                     ),
                   ],
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 24),
+
+            // ─── Lantern (Composer) ────────────────────────────────────────
+            _GallerySection(
+              label: 'LANTERN — COMPOSER',
+              labelColor: AppColors.accent2,
+              children: [
+                // Lantern widgets are designed dark-first and always render on
+                // LanternTokens.night(), regardless of the app's current
+                // theme — StorytimeTheme.bedtime carries LanternTokens.night()
+                // (see app_theme.dart), so wrapping in it here mirrors how the
+                // DARK / BEDTIME SURFACE section above pins its own tokens.
+                Theme(
+                  data: StorytimeTheme.bedtime,
+                  child: Builder(builder: (context) {
+                    final lantern =
+                        Theme.of(context).extension<LanternTokens>()!;
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: lantern.nightDeep,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _SubLabel(text: 'Glow Button', labelColor: lantern.moonDim),
+                          const SizedBox(height: 12),
+                          GlowButton(
+                            label: "Tell tonight's story",
+                            leading: const Icon(Icons.auto_awesome),
+                            onTap: () {},
+                          ),
+
+                          const SizedBox(height: 24),
+                          _SubLabel(text: 'Shuffle Chip', labelColor: lantern.moonDim),
+                          const SizedBox(height: 12),
+                          ShuffleChip(onTap: () {}),
+
+                          const SizedBox(height: 24),
+                          _SubLabel(text: 'Voice Teaser', labelColor: lantern.moonDim),
+                          const SizedBox(height: 12),
+                          const VoiceTeaser(),
+
+                          const SizedBox(height: 24),
+                          _SubLabel(text: 'Voice Cards', labelColor: lantern.moonDim),
+                          const SizedBox(height: 12),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                VoiceCard(
+                                  name: 'Wizard Wally',
+                                  subline: 'Warm & wise',
+                                  glyph: Icon(Icons.auto_stories,
+                                      color: lantern.lantern, size: 32),
+                                  variant: VoiceCardVariant.builtIn,
+                                  selected: _lanternSelectedVoice == 0,
+                                  onTap: () =>
+                                      setState(() => _lanternSelectedVoice = 0),
+                                  onPreview: () => setState(() =>
+                                      _lanternPreviewPlaying =
+                                          !_lanternPreviewPlaying),
+                                  previewPlaying: _lanternSelectedVoice == 0 &&
+                                      _lanternPreviewPlaying,
+                                ),
+                                const SizedBox(width: 12),
+                                VoiceCard(
+                                  name: 'Grandma Rose',
+                                  subline: 'Grandma',
+                                  glyph: const FamilyVoiceGlyph(),
+                                  variant: VoiceCardVariant.family,
+                                  selected: _lanternSelectedVoice == 1,
+                                  onTap: () =>
+                                      setState(() => _lanternSelectedVoice = 1),
+                                ),
+                                const SizedBox(width: 12),
+                                VoiceCard(
+                                  name: "Dad's Voice",
+                                  glyph: const FamilyVoiceGlyph(),
+                                  variant: VoiceCardVariant.processing,
+                                  selected: false,
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 24),
+                          _SubLabel(
+                              text: 'Family Voice Glyph',
+                              labelColor: lantern.moonDim),
+                          const SizedBox(height: 12),
+                          const FamilyVoiceGlyph(size: 64),
+
+                          const SizedBox(height: 24),
+                          _SubLabel(
+                              text: 'Story Slots (Hero / Where / About / '
+                                  'What Happens)',
+                              labelColor: lantern.moonDim),
+                          const SizedBox(height: 12),
+                          GridView.count(
+                            crossAxisCount: 2,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            mainAxisSpacing: 12,
+                            crossAxisSpacing: 12,
+                            childAspectRatio: 1.05,
+                            children: [
+                              StorySlot(
+                                label: 'Hero',
+                                valueName: 'A brave lion',
+                                glyph: Icon(Icons.pets,
+                                    color: lantern.hueSun, size: 32),
+                                hueFill: lantern.slotFillFor(lantern.hueSun,
+                                    night: true),
+                                suggested: _lanternSlotSuggested[0],
+                                onTap: () => setState(
+                                    () => _lanternSlotSuggested[0] = false),
+                              ),
+                              StorySlot(
+                                label: 'Where',
+                                valueName: 'A misty forest',
+                                glyph: Icon(Icons.forest,
+                                    color: lantern.hueSky, size: 32),
+                                hueFill: lantern.slotFillFor(lantern.hueSky,
+                                    night: true),
+                                suggested: _lanternSlotSuggested[1],
+                                onTap: () => setState(
+                                    () => _lanternSlotSuggested[1] = false),
+                              ),
+                              StorySlot(
+                                label: 'About',
+                                valueName: 'Finding a friend',
+                                glyph: Icon(Icons.favorite,
+                                    color: lantern.hueBlossom, size: 32),
+                                hueFill: lantern.slotFillFor(
+                                    lantern.hueBlossom,
+                                    night: true),
+                                suggested: _lanternSlotSuggested[2],
+                                onTap: () => setState(
+                                    () => _lanternSlotSuggested[2] = false),
+                              ),
+                              StorySlot(
+                                label: 'What happens',
+                                valueName: 'A magical rescue',
+                                glyph: Icon(Icons.auto_awesome,
+                                    color: lantern.hueLilac, size: 32),
+                                hueFill: lantern.slotFillFor(
+                                    lantern.hueLilac,
+                                    night: true),
+                                suggested: _lanternSlotSuggested[3],
+                                onTap: () => setState(
+                                    () => _lanternSlotSuggested[3] = false),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 24),
+                          _SubLabel(
+                              text: 'Lantern Row', labelColor: lantern.moonDim),
+                          const SizedBox(height: 12),
+                          LanternRow(
+                            leading: Icon(Icons.auto_stories_outlined,
+                                color: lantern.lantern, size: 26),
+                            title: 'Manage stories',
+                            subtitle: '12 stories in the library',
+                            trailing: Icon(Icons.chevron_right_rounded,
+                                color: lantern.moonFaint),
+                            onTap: () {},
+                          ),
+
+                          const SizedBox(height: 24),
+                          _SubLabel(
+                              text: 'Lantern Action Tile',
+                              labelColor: lantern.moonDim),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: LanternActionTile(
+                                  glyph: Icon(Icons.auto_awesome,
+                                      color: lantern.lantern, size: 36),
+                                  title: 'Make a Story',
+                                  subtitle: 'A new adventure',
+                                  emphasized: true,
+                                  onTap: () {},
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: LanternActionTile(
+                                  glyph: Icon(Icons.headphones_rounded,
+                                      color: lantern.moonDim, size: 36),
+                                  title: 'Listen',
+                                  subtitle: 'Your story shelf',
+                                  onTap: () {},
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 24),
+                          _SubLabel(
+                              text: 'Lantern Section Header',
+                              labelColor: lantern.moonDim),
+                          const SizedBox(height: 12),
+                          const LanternSectionHeader(
+                            title: 'Storytime settings',
+                            sub: 'Manage your account and preferences',
+                          ),
+
+                          const SizedBox(height: 24),
+                          _SubLabel(
+                              text: 'Lantern Outline Button',
+                              labelColor: lantern.moonDim),
+                          const SizedBox(height: 12),
+                          LanternOutlineButton(
+                            label: 'I already have an account',
+                            onTap: () {},
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
                 ),
               ],
             ),

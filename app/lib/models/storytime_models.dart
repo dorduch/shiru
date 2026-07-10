@@ -157,6 +157,11 @@ enum StoryPlot {
   };
 }
 
+/// Identifies which of the four story-concept slots on [StoryDraft] a
+/// shuffle or slot-sheet interaction targets. Never includes the narrator —
+/// narrator selection has its own vocabulary ([NarratorKey] / family voice).
+enum SlotKind { character, scene, theme, plot }
+
 enum NarratorKey {
   wizardWally,
   fairyFern,

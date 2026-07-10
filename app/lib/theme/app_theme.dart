@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 import 'app_typography.dart';
+import 'lantern_tokens.dart';
 
 // ─── ThemeExtension ───────────────────────────────────────────────────────────
 
@@ -268,12 +269,16 @@ final _bedtimeTokens = _tokens.copyWith(
 
 /// Factory for the two Storytime [ThemeData] objects.
 ///
+/// As of the Lantern app-wide rollout, [bedtime] is the single root theme —
+/// see `docs/superpowers/specs/2026-07-10-lantern-app-wide-design.md` §2.
+/// [day] is kept defined but unreferenced from the app root; it's available
+/// for a future light-mode exception (e.g. printable/exportable content) but
+/// nothing in the app should adopt new usages of it.
+///
 /// Usage in [MaterialApp]:
 /// ```dart
 /// MaterialApp.router(
-///   theme: StorytimeTheme.day,
-///   darkTheme: StorytimeTheme.bedtime,
-///   themeMode: ThemeMode.light, // pin to day unless explicitly toggled
+///   theme: StorytimeTheme.bedtime,
 ///   ...
 /// )
 /// ```
@@ -329,7 +334,7 @@ abstract final class StorytimeTheme {
       // GoogleFonts.interTextTheme() would re-apply Inter to every slot and
       // silently strip Nunito from theme-driven text (e.g. AppBar titles).
       textTheme: _textTheme,
-      extensions: const [_tokens],
+      extensions: const [_tokens, LanternTokens.day()],
     );
   }
 
@@ -357,7 +362,7 @@ abstract final class StorytimeTheme {
         bodyColor: AppColors.cream,
         displayColor: AppColors.cream,
       ),
-      extensions: [_bedtimeTokens],
+      extensions: [_bedtimeTokens, const LanternTokens.night()],
     );
   }
 }

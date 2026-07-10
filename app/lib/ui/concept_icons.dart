@@ -5,7 +5,9 @@ import '../models/storytime_models.dart';
 /// (characters, scenes, themes, plots, narrators).
 ///
 /// Design rules that make the set "talk" with the app theme:
-///   - one warm ink outline (`#7A4A14` / `#2A2230`) across every glyph,
+///   - one night-legible ink outline (`#241F3D`) across every glyph — unified
+///     from the old two-tone cream-background outline (`#7A4A14` warm /
+///     `#2A2230` dark) as part of the Lantern Night dark-theme rollout,
 ///   - a jewel-tone palette pulled from `StoryTheme.color`,
 ///   - each glyph seated on a cream-based [tint] token (see [StConceptToken]).
 ///
@@ -116,8 +118,8 @@ Object? storyIconConceptByName(String? name) {
 const String _crown =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
     '<g transform="translate(2.12,1.21) scale(0.91)">'
-    '<path d="M7 33 L7 16 L16 24 L24 11 L32 24 L41 16 L41 33 Z" fill="#F2B23E" stroke="#7A4A14" stroke-width="2.2" stroke-linejoin="round"/>'
-    '<rect x="7" y="32" width="34" height="7" rx="2.5" fill="#E0911F" stroke="#7A4A14" stroke-width="2.2"/>'
+    '<path d="M7 33 L7 16 L16 24 L24 11 L32 24 L41 16 L41 33 Z" fill="#F2B23E" stroke="#241F3D" stroke-width="2.2" stroke-linejoin="round"/>'
+    '<rect x="7" y="32" width="34" height="7" rx="2.5" fill="#E0911F" stroke="#241F3D" stroke-width="2.2"/>'
     '<circle cx="24" cy="19" r="2.6" fill="#E2575B"/>'
     '<circle cx="14.5" cy="26" r="2" fill="#3FB59A"/>'
     '<circle cx="33.5" cy="26" r="2" fill="#8B7CF6"/>'
@@ -131,7 +133,7 @@ const String _stethoscope =
     '<circle cx="33" cy="11" r="2.6" fill="#2A2230"/>'
     '<path d="M15 13 V21 a9 9 0 0 0 18 0 V13" fill="none" stroke="#E2575B" stroke-width="3.4" stroke-linecap="round"/>'
     '<path d="M24 30 V35" fill="none" stroke="#E2575B" stroke-width="3.4" stroke-linecap="round"/>'
-    '<circle cx="24" cy="39" r="5" fill="#C9CDD6" stroke="#7A4A14" stroke-width="2"/>'
+    '<circle cx="24" cy="39" r="5" fill="#C9CDD6" stroke="#241F3D" stroke-width="2"/>'
     '<circle cx="24" cy="39" r="1.8" fill="#7E8593"/>'
     '</g>'
     '</svg>';
@@ -139,9 +141,9 @@ const String _stethoscope =
 const String _fox =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
     '<g transform="translate(2,0.12) scale(0.92)">'
-    '<path d="M11 11 L19 23 L7 25 Z" fill="#F18A3E" stroke="#7A4A14" stroke-width="2" stroke-linejoin="round"/>'
-    '<path d="M37 11 L29 23 L41 25 Z" fill="#F18A3E" stroke="#7A4A14" stroke-width="2" stroke-linejoin="round"/>'
-    '<path d="M9 22 Q24 16 39 22 L24 41 Z" fill="#F7A24E" stroke="#7A4A14" stroke-width="2.2" stroke-linejoin="round"/>'
+    '<path d="M11 11 L19 23 L7 25 Z" fill="#F18A3E" stroke="#241F3D" stroke-width="2" stroke-linejoin="round"/>'
+    '<path d="M37 11 L29 23 L41 25 Z" fill="#F18A3E" stroke="#241F3D" stroke-width="2" stroke-linejoin="round"/>'
+    '<path d="M9 22 Q24 16 39 22 L24 41 Z" fill="#F7A24E" stroke="#241F3D" stroke-width="2.2" stroke-linejoin="round"/>'
     '<path d="M16 29 Q24 27 32 29 L24 41 Z" fill="#FBF6EE"/>'
     '<circle cx="18.5" cy="27" r="1.9" fill="#2A2230"/>'
     '<circle cx="29.5" cy="27" r="1.9" fill="#2A2230"/>'
@@ -187,8 +189,8 @@ const String _magic =
 const String _trophy =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
     '<g transform="translate(2.36,7) scale(0.9)">'
-    '<path d="M16 28 a8 8 0 1 1 16 0 Z" fill="#F2C84B" stroke="#7A4A14" stroke-width="2.2"/>'
-    '<rect x="14" y="27" width="20" height="5" rx="2" fill="#E0911F" stroke="#7A4A14" stroke-width="2"/>'
+    '<path d="M16 28 a8 8 0 1 1 16 0 Z" fill="#F2C84B" stroke="#241F3D" stroke-width="2.2"/>'
+    '<rect x="14" y="27" width="20" height="5" rx="2" fill="#E0911F" stroke="#241F3D" stroke-width="2"/>'
     '<path d="M24 6 V12 M11 11 L15 15 M37 11 L33 15 M7 24 H13 M41 24 H35" stroke="#F2A93E" stroke-width="2.6" stroke-linecap="round"/>'
     '<circle cx="24" cy="24" r="4" fill="#FBE08A"/>'
     '</g>'
@@ -298,7 +300,7 @@ const String _lion =
     '<circle cx="20" cy="23" r="1.7" fill="#2A2230"/>'
     '<circle cx="28" cy="23" r="1.7" fill="#2A2230"/>'
     '<path d="M24 27 l2.6 0 -2.6 2.8 -2.6 -2.8 Z" fill="#7A4A14"/>'
-    '<path d="M24 29.8 V32 M24 32 q-3 1.5 -4.5 -0.8 M24 32 q3 1.5 4.5 -0.8" fill="none" stroke="#7A4A14" stroke-width="1.3" stroke-linecap="round"/>'
+    '<path d="M24 29.8 V32 M24 32 q-3 1.5 -4.5 -0.8 M24 32 q3 1.5 4.5 -0.8" fill="none" stroke="#241F3D" stroke-width="1.3" stroke-linecap="round"/>'
     '</g>'
     '</svg>';
 

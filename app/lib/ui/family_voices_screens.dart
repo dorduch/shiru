@@ -10,16 +10,27 @@ import '../services/recording_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
+import '../theme/lantern_tokens.dart';
+import 'widgets/lantern/lantern.dart';
 import 'widgets/storytime/storytime.dart';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-Color _statusColor(FamilyVoiceStatus status, StorytimeTokens tokens) =>
-    switch (status) {
-      FamilyVoiceStatus.ready => const Color(0xFF4CAF50),
-      FamilyVoiceStatus.failed => AppColors.destructive,
-      _ => tokens.gold,
-    };
+Color _statusColor(
+  BuildContext context,
+  FamilyVoiceStatus status,
+  StorytimeTokens tokens,
+) => switch (status) {
+  // Centralized per the Lantern spec §3: this hardcoded green was never a
+  // token to begin with — now LanternTokens.hueMeadow. `_VoiceRow`
+  // (FamilyVoicesScreen) isn't re-skinned to Lantern yet (Batch 3), so this
+  // reads LanternTokens directly rather than threading a wider re-skin
+  // through that not-yet-migrated screen.
+  FamilyVoiceStatus.ready =>
+    Theme.of(context).extension<LanternTokens>()!.hueMeadow,
+  FamilyVoiceStatus.failed => AppColors.destructive,
+  _ => tokens.gold,
+};
 
 String _statusLabel(FamilyVoiceStatus status) => switch (status) {
   FamilyVoiceStatus.ready => 'Ready',
@@ -200,7 +211,8 @@ class _VoiceRow extends ConsumerWidget {
         ),
         StChip(
           label: _statusLabel(voice.status),
-          color: _statusColor(voice.status, tokens).withValues(alpha: 0.15),
+          color: _statusColor(context, voice.status, tokens)
+              .withValues(alpha: 0.15),
         ),
         const SizedBox(width: 8),
         IconButton(
@@ -446,55 +458,83 @@ class VoiceCaptureIntroScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
 
     return Scaffold(
-      backgroundColor: tokens.cream,
+      backgroundColor: tokens.nightMid,
       appBar: AppBar(
         title: const Text('Add a voice'),
-        backgroundColor: tokens.cream,
+        backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
-        foregroundColor: tokens.ink,
+        foregroundColor: tokens.moon,
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Spacer(),
-              Icon(Icons.mic_external_on_rounded, size: 64, color: tokens.ember),
-              const SizedBox(height: 20),
-              StSectionHeader(
-                eyebrow: 'Step 2 of 2',
-                title: 'Capture $name\'s voice',
-                sub: 'We need a short recording to create the voice clone. Choose how you\'d like to add it.',
-                centerAlign: true,
-              ),
-              const SizedBox(height: 32),
-              // Option A — guided capture
-              _CaptureOption(
-                icon: Icons.record_voice_over_rounded,
-                title: 'Record now',
-                subtitle: 'Read 5 short prompts aloud — takes about 2 minutes.',
-                onTap: () => context.push(
-                  '/parent/family-voices/capture',
-                  extra: {'voiceId': voiceId, 'name': name},
+      body: Container(
+        decoration: BoxDecoration(gradient: tokens.nightGradient),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Spacer(),
+                Icon(Icons.mic_external_on_rounded, size: 64, color: tokens.lantern),
+                const SizedBox(height: 20),
+                // Step eyebrow — LanternSectionHeader has no eyebrow slot (the
+                // old cream-only terracotta eyebrow color is retired per the
+                // Lantern spec), so this mirrors StoryComposerScreen's own
+                // inline `_sectionLabel` treatment (bold 13sp, 1.4 tracking,
+                // moonDim) to stay visually consistent with the Composer.
+                Text(
+                  'STEP 2 OF 2',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.4,
+                    color: tokens.moonDim,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              // Option B — upload
-              _CaptureOption(
-                icon: Icons.upload_file_rounded,
-                title: 'Upload a clip',
-                subtitle: 'Pick an audio file of ~1 minute or longer.',
-                onTap: () => context.push(
-                  '/parent/family-voices/upload',
-                  extra: {'voiceId': voiceId, 'name': name},
+                const SizedBox(height: 4),
+                LanternSectionHeader(
+                  title: 'Capture $name\'s voice',
+                  sub: 'We need a short recording to create the voice clone. Choose how you\'d like to add it.',
+                  centerAlign: true,
                 ),
-              ),
-              const Spacer(),
-            ],
+                const SizedBox(height: 32),
+                // Option A — guided capture
+                LanternRow(
+                  leading: _VoiceCaptureGlyph(
+                    icon: Icons.record_voice_over_rounded,
+                    tokens: tokens,
+                  ),
+                  title: 'Record now',
+                  subtitle: 'Read 5 short prompts aloud — takes about 2 minutes.',
+                  trailing:
+                      Icon(Icons.chevron_right_rounded, color: tokens.moonFaint),
+                  onTap: () => context.push(
+                    '/parent/family-voices/capture',
+                    extra: {'voiceId': voiceId, 'name': name},
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Option B — upload
+                LanternRow(
+                  leading: _VoiceCaptureGlyph(
+                    icon: Icons.upload_file_rounded,
+                    tokens: tokens,
+                  ),
+                  title: 'Upload a clip',
+                  subtitle: 'Pick an audio file of ~1 minute or longer.',
+                  trailing:
+                      Icon(Icons.chevron_right_rounded, color: tokens.moonFaint),
+                  onTap: () => context.push(
+                    '/parent/family-voices/upload',
+                    extra: {'voiceId': voiceId, 'name': name},
+                  ),
+                ),
+                const Spacer(),
+              ],
+            ),
           ),
         ),
       ),
@@ -502,69 +542,21 @@ class VoiceCaptureIntroScreen extends StatelessWidget {
   }
 }
 
-class _CaptureOption extends StatelessWidget {
-  const _CaptureOption({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
+/// Small circular icon glyph used as [LanternRow.leading] for this screen's
+/// two capture-method rows — same shape as `_DashboardGlyph` in
+/// `lib/ui/storytime_screens.dart` (private to that file, so mirrored here
+/// rather than shared).
+class _VoiceCaptureGlyph extends StatelessWidget {
+  const _VoiceCaptureGlyph({required this.icon, required this.tokens});
   final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
+  final LanternTokens tokens;
 
   @override
-  Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: tokens.paper,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: tokens.line, width: 1.5),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: tokens.ember.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: tokens.ember, size: 26),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: AppTypography.titleLarge.copyWith(
-                      fontSize: 15,
-                      color: tokens.ink,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: AppTypography.bodySmall.copyWith(color: tokens.ink2),
-                  ),
-                ],
-              ),
-            ),
-            Icon(Icons.chevron_right_rounded, color: tokens.ink3),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => CircleAvatar(
+    radius: 24,
+    backgroundColor: tokens.lantern.withValues(alpha: 0.12),
+    child: Icon(icon, color: tokens.lantern, size: 22),
+  );
 }
 
 // ─── s24 · Guided Capture ────────────────────────────────────────────────────
@@ -972,7 +964,7 @@ class VoiceReadyScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
     final voicesAsync = ref.watch(familyVoicesProvider);
 
     final voice = voicesAsync.valueOrNull?.firstWhere(
@@ -990,76 +982,84 @@ class VoiceReadyScreen extends ConsumerWidget {
     final status = voice?.status ?? FamilyVoiceStatus.queued;
 
     return Scaffold(
-      backgroundColor: tokens.cream,
+      backgroundColor: tokens.nightMid,
       appBar: AppBar(
         title: const Text('Voice status'),
-        backgroundColor: tokens.cream,
+        backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
-        foregroundColor: tokens.ink,
+        foregroundColor: tokens.moon,
         automaticallyImplyLeading: false,
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Spacer(),
-              Center(
-                child: _StatusIcon(status: status, tokens: tokens),
-              ),
-              const SizedBox(height: 24),
-              StSectionHeader(
-                title: _titleFor(status, name),
-                sub: _subtitleFor(status),
-                centerAlign: true,
-              ),
-              const SizedBox(height: 32),
-              if (status.isProcessing) ...[
+      body: Container(
+        decoration: BoxDecoration(gradient: tokens.nightGradient),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Spacer(),
                 Center(
-                  child: LinearProgressIndicator(
-                    backgroundColor: tokens.line,
-                    valueColor: AlwaysStoppedAnimation<Color>(tokens.ember),
-                  ),
+                  child: _StatusIcon(status: status, tokens: tokens),
                 ),
-                const SizedBox(height: 12),
-                Center(
-                  child: Text(
-                    'This can take a few minutes…',
-                    style: AppTypography.labelMedium.copyWith(
-                      color: tokens.ink3,
+                const SizedBox(height: 24),
+                LanternSectionHeader(
+                  title: _titleFor(status, name),
+                  sub: _subtitleFor(status),
+                  centerAlign: true,
+                ),
+                const SizedBox(height: 32),
+                if (status.isProcessing) ...[
+                  Center(
+                    child: LinearProgressIndicator(
+                      backgroundColor: tokens.hush,
+                      valueColor: AlwaysStoppedAnimation<Color>(tokens.lantern),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  Center(
+                    child: Text(
+                      'This can take a few minutes…',
+                      style: AppTypography.labelMedium.copyWith(
+                        color: tokens.moonFaint,
+                      ),
+                    ),
+                  ),
+                ],
+                const Spacer(),
+                if (status == FamilyVoiceStatus.ready)
+                  GlowButton(
+                    label: 'Use in a story',
+                    onTap: () {
+                      // Pre-select this family voice and start a fresh story
+                      // draft, then jump straight into the Composer — mirrors
+                      // StorytimeHomeScreen's "Make a Story" tile / the
+                      // StoryEndScreen "Make another" button's reset +
+                      // shuffleAll sequence, with setFamilyVoice layered on
+                      // top since this screen's whole purpose is picking the
+                      // narrator. `/make/character` was the old per-slot
+                      // wizard's first step; the router now redirects it
+                      // straight to `/compose`, so go there directly.
+                      ref.read(storyDraftProvider.notifier).reset();
+                      ref.read(storyDraftProvider.notifier).shuffleAll();
+                      ref
+                          .read(storyDraftProvider.notifier)
+                          .setFamilyVoice(voiceId);
+                      context.go('/compose');
+                    },
+                  )
+                else if (status == FamilyVoiceStatus.failed)
+                  LanternOutlineButton(
+                    label: 'Go back',
+                    onTap: () => context.go('/parent/family-voices'),
+                  )
+                else
+                  LanternOutlineButton(
+                    label: 'Done',
+                    onTap: () => context.go('/parent/family-voices'),
+                  ),
               ],
-              const Spacer(),
-              if (status == FamilyVoiceStatus.ready)
-                StButton(
-                  label: 'Use in a story',
-                  fullWidth: true,
-                  onTap: () {
-                    // Pre-select this family voice and navigate to the wizard.
-                    ref
-                        .read(storyDraftProvider.notifier)
-                        .setFamilyVoice(voiceId);
-                    context.go('/make/character');
-                  },
-                )
-              else if (status == FamilyVoiceStatus.failed)
-                StButton(
-                  label: 'Go back',
-                  variant: StButtonVariant.ghost,
-                  fullWidth: true,
-                  onTap: () => context.go('/parent/family-voices'),
-                )
-              else
-                StButton(
-                  label: 'Done',
-                  variant: StButtonVariant.ghost,
-                  fullWidth: true,
-                  onTap: () => context.go('/parent/family-voices'),
-                ),
-            ],
+            ),
           ),
         ),
       ),
@@ -1085,7 +1085,7 @@ class VoiceReadyScreen extends ConsumerWidget {
 class _StatusIcon extends StatelessWidget {
   const _StatusIcon({required this.status, required this.tokens});
   final FamilyVoiceStatus status;
-  final StorytimeTokens tokens;
+  final LanternTokens tokens;
 
   @override
   Widget build(BuildContext context) {
@@ -1094,12 +1094,14 @@ class _StatusIcon extends StatelessWidget {
         width: 88,
         height: 88,
         decoration: BoxDecoration(
-          color: const Color(0xFF4CAF50).withValues(alpha: 0.12),
+          // Centralized per the Lantern spec §3: this hardcoded green used to
+          // be a bespoke literal, never a token — now LanternTokens.hueMeadow.
+          color: tokens.hueMeadow.withValues(alpha: 0.12),
           shape: BoxShape.circle,
         ),
-        child: const Icon(
+        child: Icon(
           Icons.check_circle_rounded,
-          color: Color(0xFF4CAF50),
+          color: tokens.hueMeadow,
           size: 56,
         ),
       );
@@ -1109,12 +1111,12 @@ class _StatusIcon extends StatelessWidget {
         width: 88,
         height: 88,
         decoration: BoxDecoration(
-          color: AppColors.destructive.withValues(alpha: 0.12),
+          color: tokens.hueCoral.withValues(alpha: 0.12),
           shape: BoxShape.circle,
         ),
         child: Icon(
           Icons.error_outline_rounded,
-          color: AppColors.destructive,
+          color: tokens.hueCoral,
           size: 56,
         ),
       );
@@ -1123,10 +1125,10 @@ class _StatusIcon extends StatelessWidget {
       width: 88,
       height: 88,
       decoration: BoxDecoration(
-        color: tokens.ember.withValues(alpha: 0.12),
+        color: tokens.lantern.withValues(alpha: 0.12),
         shape: BoxShape.circle,
       ),
-      child: Icon(Icons.mic_rounded, color: tokens.ember, size: 56),
+      child: Icon(Icons.mic_rounded, color: tokens.lantern, size: 56),
     );
   }
 }
