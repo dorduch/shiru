@@ -1,8 +1,10 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../models/family_voice.dart';
 import '../providers/storytime_providers.dart';
@@ -534,6 +536,22 @@ class VoiceCaptureIntroScreen extends StatelessWidget {
                     extra: {'voiceId': voiceId, 'name': name},
                   ),
                 ),
+                const SizedBox(height: 12),
+                // Option C — invite someone else to record
+                LanternRow(
+                  leading: _VoiceCaptureGlyph(
+                    icon: Icons.ios_share_rounded,
+                    tokens: tokens,
+                  ),
+                  title: 'Invite someone to record',
+                  subtitle: 'Send a link — they record in any browser.',
+                  trailing:
+                      Icon(Icons.chevron_right_rounded, color: tokens.moonFaint),
+                  onTap: () => context.push(
+                    '/parent/family-voices/invite',
+                    extra: {'voiceId': voiceId, 'name': name},
+                  ),
+                ),
                 const Spacer(),
               ],
             ),
@@ -559,6 +577,165 @@ class _VoiceCaptureGlyph extends StatelessWidget {
     backgroundColor: tokens.lantern.withValues(alpha: 0.12),
     child: Icon(icon, color: tokens.lantern, size: 22),
   );
+}
+
+// ─── s23i · Invite Share ─────────────────────────────────────────────────────
+
+/// Third capture option offered from [VoiceCaptureIntroScreen]: generates a
+/// one-time link so someone else can record the voice samples themselves in
+/// any browser, then lets the parent copy/share that link.
+class VoiceInviteShareScreen extends ConsumerStatefulWidget {
+  const VoiceInviteShareScreen({
+    super.key,
+    required this.voiceId,
+    required this.name,
+  });
+
+  final String voiceId;
+  final String name;
+
+  @override
+  ConsumerState<VoiceInviteShareScreen> createState() =>
+      _VoiceInviteShareScreenState();
+}
+
+class _VoiceInviteShareScreenState extends ConsumerState<VoiceInviteShareScreen> {
+  bool _loading = true;
+  String? _url;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _createInvite();
+  }
+
+  Future<void> _createInvite() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final invite =
+          await ref.read(voiceRepositoryProvider).createInvite(widget.voiceId);
+      if (mounted) {
+        setState(() {
+          _url = invite.url;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = "Couldn't create the invite link. Please try again.";
+        });
+      }
+    }
+  }
+
+  Future<void> _copyLink() async {
+    final url = _url;
+    if (url == null) return;
+    await Clipboard.setData(ClipboardData(text: url));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Link copied.')),
+      );
+    }
+  }
+
+  void _shareLink() {
+    final url = _url;
+    if (url == null) return;
+    Share.share(url);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
+
+    return Scaffold(
+      backgroundColor: tokens.nightMid,
+      appBar: AppBar(
+        title: const Text('Invite to record'),
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        foregroundColor: tokens.moon,
+      ),
+      body: Container(
+        decoration: BoxDecoration(gradient: tokens.nightGradient),
+        child: SafeArea(
+          child: _loading
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(color: tokens.lantern),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Creating your invite link…',
+                        style: AppTypography.bodyLarge.copyWith(color: tokens.moon),
+                      ),
+                    ],
+                  ),
+                )
+              : _error != null
+                  ? StErrorView(
+                      icon: Icons.link_off_rounded,
+                      title: "Couldn't create invite",
+                      message: _error,
+                      onRetry: _createInvite,
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Spacer(),
+                          Icon(Icons.ios_share_rounded, size: 64, color: tokens.lantern),
+                          const SizedBox(height: 20),
+                          LanternSectionHeader(
+                            title: 'Invite ${widget.name}\'s voice',
+                            sub: 'Send this link to the person whose voice you want to '
+                                'record. It works in any browser — no app needed. The '
+                                'link expires in 7 days.',
+                            centerAlign: true,
+                          ),
+                          const SizedBox(height: 24),
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: tokens.nightCard,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: tokens.hush, width: 1),
+                            ),
+                            child: Text(
+                              _url ?? '',
+                              style: AppTypography.labelMedium.copyWith(color: tokens.moonDim),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          GlowButton(
+                            label: 'Copy link',
+                            leading: const Icon(Icons.copy_rounded),
+                            onTap: _copyLink,
+                          ),
+                          const SizedBox(height: 12),
+                          LanternOutlineButton(
+                            label: 'Share',
+                            leading: const Icon(Icons.ios_share_rounded),
+                            onTap: _shareLink,
+                          ),
+                          const Spacer(),
+                        ],
+                      ),
+                    ),
+        ),
+      ),
+    );
+  }
 }
 
 // ─── s24 · Guided Capture ────────────────────────────────────────────────────

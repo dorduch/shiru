@@ -27,7 +27,24 @@ FIREBASE_EMULATORS_PATH=/tmp/fbemulators \
 node dev/voice_clone_harness.mjs      # prints PASS/FAIL assertions
 ```
 
-Expected: `RESULT: ALL PASS`, and the mock logs a `POST /v1/voices/add (... bytes multipart received)`.
+Expected: `RESULT: ALL PASS`, and the mock logs a `POST /v1/voices/add (... bytes multipart received)`
+plus one `file part: filename=... contentType=...` line per sample. The harness sends a mixed
+`sample_0.m4a` (audio/mp4) + `sample_1.webm` (audio/webm) set — confirm both are labeled correctly
+(no `MISMATCH` lines) to verify the per-sample content-type fix in `processVoiceClone`.
+
+### Live webm smoke test (spends ElevenLabs credits — human/Task 9 only)
+
+Not run as part of this task. To verify ElevenLabs' `/v1/voices/add` actually accepts
+`audio/webm` (the plan's "UNVERIFIED assumption"), record or obtain a short real `.webm`
+sample, then from `functions/`:
+
+```sh
+SAMPLE_FILE=/tmp/voice_sample.webm SAMPLE_EXT=webm node dev/real_clone_demo.mjs
+```
+
+This reuses the existing `.m4a` live-demo path (`node dev/real_clone_demo.mjs` with no env
+override) but points it at a webm fixture instead, so it clones with a real webm sample against
+the real API and reports success/failure.
 
 ## Env gotchas discovered on this machine
 

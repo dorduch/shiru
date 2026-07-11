@@ -211,6 +211,17 @@ GoRouter createRouter(WidgetRef ref) {
                 },
               ),
               GoRoute(
+                path: 'invite',
+                builder: (context, state) {
+                  final extra =
+                      state.extra as Map<String, String>? ?? {};
+                  return VoiceInviteShareScreen(
+                    voiceId: extra['voiceId'] ?? '',
+                    name: extra['name'] ?? 'this person',
+                  );
+                },
+              ),
+              GoRoute(
                 path: 'ready',
                 builder: (context, state) {
                   final extra =

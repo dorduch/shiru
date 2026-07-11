@@ -14,9 +14,14 @@ const FV = admin.firestore.FieldValue;
 
 const uid = "demo-real-1";
 const voiceId = "demo-real-voice-1";
-const samplePath = `voice-samples/${uid}/${voiceId}/0.m4a`;
+// Override via env for the webm live-smoke-test (Task 5/plan §(b)'s "UNVERIFIED assumption"
+// that ElevenLabs /v1/voices/add accepts audio/webm), e.g.:
+//   SAMPLE_FILE=/tmp/voice_sample.webm SAMPLE_EXT=webm node dev/real_clone_demo.mjs
+const sampleExt = process.env.SAMPLE_EXT ?? "m4a";
+const localSample = process.env.SAMPLE_FILE ?? "/tmp/voice_sample.m4a";
+const sampleContentType = sampleExt === "webm" ? "audio/webm" : "audio/mp4";
+const samplePath = `voice-samples/${uid}/${voiceId}/0.${sampleExt}`;
 const ref = db.doc(`users/${uid}/voices/${voiceId}`);
-const localSample = "/tmp/voice_sample.m4a";
 
 // read the real key from .secret.local for the narration-proof step (not printed)
 const key = readFileSync(new URL("../.secret.local", import.meta.url), "utf8")
@@ -27,8 +32,8 @@ try {
   await ref.delete().catch(() => {});
   await bucket.file(samplePath).delete().catch(() => {});
 
-  console.log("1. upload REAL voice sample to storage emulator");
-  await bucket.upload(localSample, {destination: samplePath, metadata: {contentType: "audio/mp4"}});
+  console.log(`1. upload REAL voice sample (${sampleExt}) to storage emulator`);
+  await bucket.upload(localSample, {destination: samplePath, metadata: {contentType: sampleContentType}});
 
   console.log("2. create consent doc + flip to queued (fires processVoiceClone -> REAL ElevenLabs clone)");
   await ref.set({

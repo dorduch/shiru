@@ -1,0 +1,38 @@
+<!doctype html>
+<!-- Voice invite recording page. Logic added in Task 7. See docs/superpowers/specs/2026-07-11-voice-invite-implementation-plan.md
+     for the pinned request/response contracts this page codes against.
+
+     Note: app.js is a small client-rendered SPA — it only ever touches
+     `#app` from the static DOM (`document.getElementById("app")`); every
+     other element (header, prompt cards, consent checkbox, buttons, file
+     inputs, banners) is generated dynamically inside app.js's render()
+     via innerHTML, with click/change events handled by delegation on
+     `#app` itself. So this file only needs to provide the app mount point
+     and the noscript fallback — there is nothing else for app.js to bind
+     to at load time. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="description" content="Record your voice so it can be turned into narrator stories in Shiru." />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#fdf6ec" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#201b13" media="(prefers-color-scheme: dark)" />
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+    <title>Record your voice — Shiru</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main id="app" aria-live="polite">
+      <section class="screen screen-center" aria-busy="true">
+        <div class="spinner" aria-hidden="true"></div>
+        <p class="loading-line">Loading…</p>
+      </section>
+    </main>
+    <noscript>
+      <p class="noscript-banner">This page requires JavaScript to record your voice. Please enable JavaScript and reload.</p>
+    </noscript>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

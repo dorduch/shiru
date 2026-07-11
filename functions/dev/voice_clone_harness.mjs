@@ -14,7 +14,11 @@ const FV = admin.firestore.FieldValue;
 
 const uid = "harness-uid-1";
 const voiceId = "harness-voice-1";
-const samplePath = `voice-samples/${uid}/${voiceId}/0.m4a`;
+// Mixed sample set: one existing in-app .m4a sample plus one browser-recorded
+// .webm sample (the invite-flow case Task 5 fixes content-type derivation for).
+const m4aPath = `voice-samples/${uid}/${voiceId}/0.m4a`;
+const webmPath = `voice-samples/${uid}/${voiceId}/1.webm`;
+const samplePaths = [m4aPath, webmPath];
 const ref = db.doc(`users/${uid}/voices/${voiceId}`);
 
 const ok = (b) => (b ? "PASS" : "FAIL");
@@ -24,10 +28,11 @@ const check = (name, b) => { allPass = allPass && b; console.log(`  [${ok(b)}] $
 try {
   // clean slate
   await ref.delete().catch(() => {});
-  await bucket.file(samplePath).delete().catch(() => {});
+  await Promise.all(samplePaths.map((p) => bucket.file(p).delete().catch(() => {})));
 
-  console.log("1. upload sample to storage emulator");
-  await bucket.file(samplePath).save(Buffer.from("FAKE_AUDIO_BYTES_for_grandma_voice_sample"), {contentType: "audio/mp4"});
+  console.log("1. upload samples to storage emulator (mixed m4a + webm)");
+  await bucket.file(m4aPath).save(Buffer.from("FAKE_AUDIO_BYTES_for_grandma_voice_sample"), {contentType: "audio/mp4"});
+  await bucket.file(webmPath).save(Buffer.from("FAKE_WEBM_BYTES_from_browser_recording"), {contentType: "audio/webm"});
 
   console.log("2. create consented voice doc (mirrors createVoiceConsent)");
   await ref.set({
@@ -37,7 +42,7 @@ try {
   });
 
   console.log("3. flip to queued with samplePaths (mirrors submitVoiceClone) -> should fire processVoiceClone");
-  await ref.update({status: "queued", samplePaths: [samplePath], updatedAt: FV.serverTimestamp()});
+  await ref.update({status: "queued", samplePaths, updatedAt: FV.serverTimestamp()});
 
   console.log("4. poll for terminal status...");
   let data;
@@ -49,6 +54,8 @@ try {
   }
 
   console.log("\nfinal doc:", JSON.stringify({status: data?.status, providerVoiceId: data?.providerVoiceId, errorCode: data?.errorCode}));
+  console.log("(check elevenlabs_mock.cjs's own log output above/in its terminal for the per-file");
+  console.log(" filename=/contentType= lines — confirm sample_0.m4a -> audio/mp4 and sample_1.webm -> audio/webm)");
   console.log("\nAssertions:");
   check("status reached 'ready'", data?.status === "ready");
   check("providerVoiceId set by mock", typeof data?.providerVoiceId === "string" && data.providerVoiceId.startsWith("mock_voice_"));

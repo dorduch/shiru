@@ -83,4 +83,15 @@ class VoiceRepository {
         .httpsCallable('deleteVoice')
         .call({'voiceId': voiceId});
   }
+
+  /// Creates a shareable invite link so someone else can record this voice's
+  /// samples from any browser. Returns the invite `url` and its `expiresAt`
+  /// (ISO 8601 string), mirroring the pinned `createVoiceInvite` contract.
+  Future<({String url, String expiresAt})> createInvite(String voiceId) async {
+    final response = await _functions
+        .httpsCallable('createVoiceInvite')
+        .call({'voiceId': voiceId});
+    final data = Map<String, dynamic>.from(response.data as Map);
+    return (url: data['url'] as String, expiresAt: data['expiresAt'] as String);
+  }
 }

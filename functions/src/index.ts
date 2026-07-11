@@ -1,4 +1,4 @@
-import {createHash} from "node:crypto";
+import {createHash, randomBytes} from "node:crypto";
 import {initializeApp} from "firebase-admin/app";
 import {FieldValue, Timestamp, getFirestore} from "firebase-admin/firestore";
 import {getStorage} from "firebase-admin/storage";
@@ -9,9 +9,16 @@ import {onDocumentCreated, onDocumentUpdated} from "firebase-functions/v2/firest
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import {logger} from "firebase-functions";
 import {
-  StoryRequest, parseFamilyVoiceId, safetyPassed, utcQuotaDay, validateStoryRequest, wordCountFor,
+  StoryRequest, contentTypeForSamplePath, isValidInviteToken, parseFamilyVoiceId, safetyPassed, utcQuotaDay,
+  validateCreateInviteRequest, validateStoryRequest, wordCountFor,
 } from "./domain";
 import {ElevenLabsAlignment, deriveWordStarts} from "./timing";
+import {flipVoiceToQueued, isFamilyVoiceEnabled} from "./voiceClone";
+import {createVoiceInviteCore} from "./voiceInvite";
+import {
+  INVALID_REDEEM_MESSAGE, redeemVoiceInviteCore, requireInviteClaims, submitVoiceInviteCore,
+  uploadVoiceInviteSampleCore,
+} from "./inviteRedeem";
 
 initializeApp();
 const db = getFirestore();
@@ -20,6 +27,11 @@ const bucket = getStorage().bucket();
 // Base URL for the ElevenLabs API. Overridable via env only for local emulator
 // testing (point at a mock); unset in production, so prod always hits the real API.
 const ELEVENLABS_BASE = process.env.ELEVENLABS_BASE_URL ?? "https://api.elevenlabs.io";
+
+// Firebase Hosting default URL for project shiru-bcdd2 (Task 6 wired up
+// firebase.json's hosting block + the /invite/** rewrite). No custom domain
+// yet — follow up here if/when one is configured.
+const INVITE_HOST = "https://shiru-bcdd2.web.app";
 
 const anthropicKey = defineSecret("ANTHROPIC_API_KEY");
 const elevenLabsKey = defineSecret("ELEVENLABS_API_KEY");
@@ -30,11 +42,6 @@ const rayVoice = defineSecret("ELEVENLABS_VOICE_RAY");
 function requireTrusted(request: {auth?: unknown; app?: unknown}): asserts request is {auth: {uid: string; token: Record<string, unknown>}; app: unknown} {
   if (!request.auth) throw new HttpsError("unauthenticated", "Sign in is required.");
   if (!request.app) throw new HttpsError("failed-precondition", "App Check is required.");
-}
-
-async function isFamilyVoiceEnabled(): Promise<boolean> {
-  const doc = await db.doc("storytimeConfig/familyVoice").get();
-  return doc.data()?.enabled !== false;
 }
 
 // ---------------------------------------------------------------------------
@@ -102,22 +109,7 @@ export const submitVoiceClone = onCall({enforceAppCheck: true}, async (request) 
     }
   }
 
-  const enabled = await isFamilyVoiceEnabled();
-  if (!enabled) throw new HttpsError("failed-precondition", "family-voice-disabled");
-
-  const voiceRef = db.doc(`users/${uid}/voices/${voiceId}`);
-  const voiceSnap = await voiceRef.get();
-  if (!voiceSnap.exists) throw new HttpsError("not-found", "Voice not found.");
-  const voiceData = voiceSnap.data()!;
-  if (voiceData.status !== "consented" && voiceData.status !== "failed") {
-    throw new HttpsError("failed-precondition", "Voice is not in consented or failed state.");
-  }
-
-  await voiceRef.update({
-    status: "queued",
-    samplePaths,
-    updatedAt: FieldValue.serverTimestamp(),
-  });
+  await flipVoiceToQueued(db, uid, voiceId, samplePaths);
 
   return {ok: true};
 });
@@ -174,8 +166,9 @@ export const processVoiceClone = onDocumentUpdated({
     const form = new FormData();
     form.append("name", freshData.name as string);
     for (let i = 0; i < sampleBuffers.length; i++) {
+      const {contentType, ext} = contentTypeForSamplePath(samplePaths[i]);
       // Copy into a tightly-fit Uint8Array so only this sample's bytes are sent; Buffer.buffer can over-read a pooled allocation.
-      form.append("files", new Blob([new Uint8Array(sampleBuffers[i])], {type: "audio/mp4"}), `sample_${i}.m4a`);
+      form.append("files", new Blob([new Uint8Array(sampleBuffers[i])], {type: contentType}), `sample_${i}.${ext}`);
     }
 
     const elResponse = await fetch(`${ELEVENLABS_BASE}/v1/voices/add`, {
@@ -241,6 +234,59 @@ export const deleteVoice = onCall({enforceAppCheck: true, secrets: [elevenLabsKe
   return {ok: true};
 });
 
+export const createVoiceInvite = onCall({enforceAppCheck: true}, async (request) => {
+  requireTrusted(request);
+  const input = validateCreateInviteRequest(request.data);
+  if (!input) throw new HttpsError("invalid-argument", "voiceId is required.");
+
+  const uid = request.auth.uid;
+  const token = randomBytes(32).toString("base64url");
+  const result = await createVoiceInviteCore(db, uid, input.voiceId, token, Date.now(), INVITE_HOST);
+
+  return {url: result.url, expiresAt: result.expiresAt.toDate().toISOString()};
+});
+
+// `redeemVoiceInvite` deliberately has NO prior auth requirement (that's the
+// point — it's how an invitee with no account gets one) and does not enforce
+// App Check, since the static invite web page signs in via custom token, not
+// an App-Check-attested native/web client. All request-shape validation and
+// the generic not-valid error live here; the security-critical branching
+// (not-found / wrong-status / expired, all identical) lives in
+// `redeemVoiceInviteCore`.
+export const redeemVoiceInvite = onCall({enforceAppCheck: false}, async (request) => {
+  const data = request.data as Record<string, unknown>;
+  const token = data?.token;
+  if (!isValidInviteToken(token)) {
+    throw new HttpsError("failed-precondition", INVALID_REDEEM_MESSAGE);
+  }
+  return redeemVoiceInviteCore(db, token, Date.now(), (uid, claims) => getAuth().createCustomToken(uid, claims));
+});
+
+// Invite-claim gated (see requireInviteClaims), no App Check — same reasoning
+// as redeemVoiceInvite. uid/voiceId come ONLY from the verified custom-token
+// claims minted by redeemVoiceInvite, never from request.data.
+export const submitVoiceInvite = onCall({enforceAppCheck: false}, async (request) => {
+  const {parentUid, voiceId, syntheticUid} = requireInviteClaims(request);
+  await submitVoiceInviteCore(db, bucket, parentUid, voiceId, syntheticUid, Date.now());
+  return {ok: true};
+});
+
+// Invite-claim gated, no App Check. Proxies the upload through the Admin SDK
+// so storage.rules never has to change for the web invite flow.
+export const uploadVoiceInviteSample = onCall({enforceAppCheck: false}, async (request) => {
+  const {parentUid, voiceId, syntheticUid} = requireInviteClaims(request);
+  const data = request.data as Record<string, unknown>;
+  const idx = data?.idx;
+  const dataBase64 = data?.dataBase64;
+  const mimeType = data?.mimeType;
+  if (typeof idx !== "number" || typeof dataBase64 !== "string" || typeof mimeType !== "string") {
+    throw new HttpsError("invalid-argument", "idx, dataBase64, and mimeType are required.");
+  }
+  return uploadVoiceInviteSampleCore(
+    db, bucket, parentUid, voiceId, syntheticUid, Date.now(), idx, dataBase64, mimeType,
+  );
+});
+
 // ---------------------------------------------------------------------------
 // Story creation & processing
 // ---------------------------------------------------------------------------
@@ -255,7 +301,7 @@ export const createStoryJob = onCall({enforceAppCheck: true}, async (request) =>
   // Family voice entitlement + readiness check
   const familyVoiceId = parseFamilyVoiceId(input.narratorKey);
   if (familyVoiceId !== null) {
-    const enabled = await isFamilyVoiceEnabled();
+    const enabled = await isFamilyVoiceEnabled(db);
     if (!enabled) throw new HttpsError("invalid-argument", "Invalid story choices.");
     const voiceSnap = await db.doc(`users/${uid}/voices/${familyVoiceId}`).get();
     if (!voiceSnap.exists || voiceSnap.data()?.status !== "ready") {
