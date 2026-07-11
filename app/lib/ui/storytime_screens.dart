@@ -762,6 +762,7 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
         position: cards.length,
         createdAt: DateTime.now().millisecondsSinceEpoch,
         storyText: job.story,
+        wordStarts: job.wordStarts,
       );
       await ref.read(cardsProvider.notifier).addCard(card);
       await ref.read(storyGenerationRepositoryProvider).confirmImported(job.id);
@@ -1339,6 +1340,14 @@ class _StoryPlayerScreenState extends ConsumerState<StoryPlayerScreen>
                           // ElevenLabs per-word timestamps.
                           highlightedWordIndex = wordIndexForTime(
                             _wordStarts!,
+                            position.inMilliseconds / 1000.0,
+                          );
+                        } else if (_card!.wordStarts != null &&
+                            _card!.wordStarts!.isNotEmpty) {
+                          // Generated stories with backend-derived per-word
+                          // timestamps: same helper, different data source.
+                          highlightedWordIndex = wordIndexForTime(
+                            _card!.wordStarts!,
                             position.inMilliseconds / 1000.0,
                           );
                         } else if (durationMs == 0) {

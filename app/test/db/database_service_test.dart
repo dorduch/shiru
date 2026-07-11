@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiru/db/database_service.dart';
+import 'package:shiru/models/audio_card.dart';
 import 'package:shiru/models/category.dart';
 
 void main() {
@@ -86,5 +87,52 @@ void main() {
 
       expect(seedCount, 1);
     });
+  });
+
+  group('word_starts column', () {
+    test('v10 to v11 migration adds the word_starts column', () async {
+      final executedStatements = <String>[];
+
+      await DatabaseService.applyVersion11Migration(
+        10,
+        (sql) async => executedStatements.add(sql),
+      );
+
+      expect(executedStatements, [
+        'ALTER TABLE cards ADD COLUMN word_starts TEXT',
+      ]);
+    });
+
+    test('v11 databases do not repeat the word_starts migration', () async {
+      final executedStatements = <String>[];
+
+      await DatabaseService.applyVersion11Migration(
+        11,
+        (sql) async => executedStatements.add(sql),
+      );
+
+      expect(executedStatements, isEmpty);
+    });
+
+    test(
+      'AudioCard with non-null wordStarts round-trips through toMap/fromMap',
+      () {
+        final card = AudioCard(
+          id: 'card-1',
+          title: 'Story',
+          color: '#FFFFFF',
+          audioPath: '/library/story.mp3',
+          position: 0,
+          createdAt: 123,
+          wordStarts: const [0.0, 0.42, 1.1],
+        );
+
+        final map = card.toMap();
+        expect(map['word_starts'], '[0.0,0.42,1.1]');
+
+        final restored = AudioCard.fromMap(map);
+        expect(restored.wordStarts, const [0.0, 0.42, 1.1]);
+      },
+    );
   });
 }

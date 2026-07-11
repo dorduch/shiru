@@ -11,6 +11,7 @@ import {logger} from "firebase-functions";
 import {
   StoryRequest, parseFamilyVoiceId, safetyPassed, utcQuotaDay, validateStoryRequest, wordCountFor,
 } from "./domain";
+import {ElevenLabsAlignment, deriveWordStarts} from "./timing";
 
 initializeApp();
 const db = getFirestore();
@@ -342,14 +343,32 @@ Return only JSON: {"safe":true|false,"concerns":["..."]}. Story: ${generated.sto
   throw new Error("safety-rejected");
 }
 
-async function synthesize(text: string, resolvedVoiceId: string): Promise<Buffer> {
-  const response = await fetch(`${ELEVENLABS_BASE}/v1/text-to-speech/${resolvedVoiceId}`, {
+async function synthesize(text: string, resolvedVoiceId: string): Promise<{audio: Buffer; wordStarts: number[]}> {
+  // /with-timestamps returns JSON (audio_base64 + a per-character alignment)
+  // instead of a raw audio/mpeg body, so read-along highlighting works for
+  // AI-generated stories the same way it already does for the bundled
+  // curated ones (see functions/dev/generate_starter_stories.mjs).
+  const response = await fetch(`${ELEVENLABS_BASE}/v1/text-to-speech/${resolvedVoiceId}/with-timestamps`, {
     method: "POST",
-    headers: {"xi-api-key": elevenLabsKey.value(), "content-type": "application/json", accept: "audio/mpeg"},
+    headers: {"xi-api-key": elevenLabsKey.value(), "content-type": "application/json"},
     body: JSON.stringify({text, model_id: "eleven_multilingual_v2", voice_settings: {stability: 0.55, similarity_boost: 0.75}}),
   });
   if (!response.ok) throw new Error(`ElevenLabs ${response.status}`);
-  return Buffer.from(await response.arrayBuffer());
+  const body = await response.json() as {audio_base64?: string; audioBase64?: string; alignment?: ElevenLabsAlignment};
+  const audioBase64 = body.audio_base64 ?? body.audioBase64;
+  if (!audioBase64) throw new Error("ElevenLabs response missing audio_base64");
+  const audio = Buffer.from(audioBase64, "base64");
+
+  // Word timing is a nice-to-have, not a hard requirement: a malformed or
+  // missing alignment must never fail the whole story job — the client falls
+  // back to a linear-progress estimate when wordStarts is empty.
+  let wordStarts: number[] = [];
+  try {
+    wordStarts = deriveWordStarts(text, body.alignment);
+  } catch (error) {
+    logger.warn("story_word_timing_derivation_failed", {error: String(error)});
+  }
+  return {audio, wordStarts};
 }
 
 export const processStoryJob = onDocumentCreated({
@@ -392,7 +411,7 @@ export const processStoryJob = onDocumentCreated({
       resolvedVoiceId = voiceId;
     }
 
-    const audio = await synthesize(story.story, resolvedVoiceId);
+    const {audio, wordStarts} = await synthesize(story.story, resolvedVoiceId);
     const objectPath = `story-jobs/${uid}/${event.params.jobId}.mp3`;
     const file = bucket.file(objectPath);
     await file.save(audio, {contentType: "audio/mpeg", resumable: false});
@@ -400,7 +419,7 @@ export const processStoryJob = onDocumentCreated({
     const [downloadUrl] = await file.getSignedUrl({action: "read", expires: expiresAt});
     await ref.update({
       status: "ready", title: story.title, story: story.story, downloadUrl, storagePath: objectPath,
-      expiresAt: Timestamp.fromDate(expiresAt), updatedAt: FieldValue.serverTimestamp(),
+      wordStarts, expiresAt: Timestamp.fromDate(expiresAt), updatedAt: FieldValue.serverTimestamp(),
     });
     logger.info("story_job_ready", {durationMs: Date.now() - started});
   } catch (error) {

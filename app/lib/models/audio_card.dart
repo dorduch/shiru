@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../services/app_paths.dart';
 import 'storytime_models.dart';
 
@@ -21,6 +23,7 @@ class AudioCard {
   final int position;
   final int createdAt;
   final String? storyText;
+  final List<double>? wordStarts;
 
   AudioCard({
     required this.id,
@@ -40,6 +43,7 @@ class AudioCard {
     required this.position,
     required this.createdAt,
     this.storyText,
+    this.wordStarts,
   });
 
   factory AudioCard.fromMap(Map<String, dynamic> map) {
@@ -74,6 +78,11 @@ class AudioCard {
       position: map['position'] ?? 0,
       createdAt: map['created_at'],
       storyText: map['story_text'] as String?,
+      wordStarts: map['word_starts'] == null
+          ? null
+          : (jsonDecode(map['word_starts'] as String) as List)
+                .map((n) => (n as num).toDouble())
+                .toList(),
     );
   }
 
@@ -98,6 +107,7 @@ class AudioCard {
       'position': position,
       'created_at': createdAt,
       'story_text': storyText,
+      'word_starts': wordStarts == null ? null : jsonEncode(wordStarts),
     };
   }
 
@@ -124,6 +134,7 @@ class AudioCard {
     bool clearLastPlayedAt = false,
     int? position,
     String? storyText,
+    List<double>? wordStarts,
   }) {
     return AudioCard(
       id: id,
@@ -147,6 +158,7 @@ class AudioCard {
       position: position ?? this.position,
       createdAt: createdAt,
       storyText: storyText ?? this.storyText,
+      wordStarts: wordStarts ?? this.wordStarts,
     );
   }
 }

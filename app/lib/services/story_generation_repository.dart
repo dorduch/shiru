@@ -16,6 +16,7 @@ class StoryJob {
     this.errorCode,
     this.remaining,
     this.story,
+    this.wordStarts,
   });
 
   final String id;
@@ -28,6 +29,7 @@ class StoryJob {
   final String? errorCode;
   final int? remaining;
   final String? story;
+  final List<double>? wordStarts;
 
   factory StoryJob.fromSnapshot(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
@@ -45,6 +47,9 @@ class StoryJob {
       errorCode: data['errorCode'] as String?,
       remaining: data['remaining'] as int?,
       story: data['story'] as String?,
+      wordStarts: (data['wordStarts'] as List<dynamic>?)
+          ?.map((n) => (n as num).toDouble())
+          .toList(),
     );
   }
 }
