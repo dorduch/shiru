@@ -101,9 +101,8 @@ class _EmptyVoices extends StatelessWidget {
           centerAlign: true,
         ),
         const SizedBox(height: 24),
-        StButton(
+        GlowButton(
           label: 'Add a voice',
-          fullWidth: true,
           onTap: () => context.push('/parent/family-voices/consent'),
         ),
       ],
@@ -451,9 +450,8 @@ class _VoiceConsentScreenState extends ConsumerState<VoiceConsentScreen> {
               ),
               const SizedBox(height: 12),
             ],
-            StButton(
+            GlowButton(
               label: _busy ? 'Setting up…' : 'Continue',
-              fullWidth: true,
               onTap: _canContinue ? _continue : null,
             ),
           ],
@@ -789,9 +787,8 @@ class _GuidedCaptureScreenState extends ConsumerState<GuidedCaptureScreen> {
                         ),
                         const SizedBox(height: 24),
                         if (_error != null)
-                          StButton(
+                          GlowButton(
                             label: 'Retry upload',
-                            fullWidth: true,
                             onTap: _submitSamples,
                           ),
                       ],

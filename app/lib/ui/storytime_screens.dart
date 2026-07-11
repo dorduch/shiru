@@ -322,9 +322,8 @@ class _StorytimeAuthScreenState extends ConsumerState<StorytimeAuthScreen> {
                     ),
                   ],
                   const SizedBox(height: 18),
-                  StButton(
+                  GlowButton(
                     label: _busy ? 'Please wait…' : 'Continue',
-                    fullWidth: true,
                     onTap: _busy
                         ? null
                         : () => _run(() {
@@ -498,9 +497,8 @@ class _ChildSetupScreenState extends ConsumerState<ChildSetupScreen> {
                     ),
                   ],
                   const SizedBox(height: 28),
-                  StButton(
+                  GlowButton(
                     label: _busy ? 'Setting up…' : 'Done',
-                    fullWidth: true,
                     onTap: _busy ? null : _save,
                   ),
                 ],
@@ -1422,7 +1420,7 @@ class StoryLibraryScreen extends ConsumerWidget {
             child: cards.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, stackTrace) => Center(
-                child: StButton(
+                child: GlowButton(
                   label: 'Try again',
                   onTap: ref.read(cardsProvider.notifier).loadCards,
                 ),
@@ -1484,7 +1482,7 @@ class StoryLibraryScreen extends ConsumerWidget {
                     loading: () =>
                         const Center(child: CircularProgressIndicator()),
                     error: (e, _) => Center(
-                      child: StButton(
+                      child: GlowButton(
                         label: 'Try again',
                         onTap: ref.read(cardsProvider.notifier).loadCards,
                       ),
@@ -2379,7 +2377,7 @@ class _StorytimePrivacyScreenState
                 title: 'Share anonymous diagnostics',
                 subtitle:
                     'Sends crash and usage signals without child names, story text, email addresses, or audio links.',
-                trailing: StToggle(
+                trailing: LanternToggle(
                   value: _enabled ?? false,
                   onChanged: _enabled == null ? (_) {} : _setEnabled,
                 ),

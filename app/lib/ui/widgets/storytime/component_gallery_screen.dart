@@ -48,6 +48,8 @@ class _ComponentGalleryScreenState extends State<ComponentGalleryScreen> {
   int _lanternChoiceSel = 0;
   String _lanternKeypadInput = '';
   bool _lanternKeypadLocked = false;
+  bool _lanternToggle1 = true;
+  bool _lanternToggle2 = false;
 
   static const _storyText =
       'Once upon a time, in a forest full of glowing mushrooms, '
@@ -868,6 +870,39 @@ class _ComponentGalleryScreenState extends State<ComponentGalleryScreen> {
                                   style: AppTypography.labelMedium
                                       .copyWith(color: lantern.lantern),
                                 ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 24),
+                          _SubLabel(
+                              text: 'Lantern Toggle',
+                              labelColor: lantern.moonDim),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Text('Notifications',
+                                  style: AppTypography.bodyMedium
+                                      .copyWith(color: lantern.moon)),
+                              const Spacer(),
+                              LanternToggle(
+                                value: _lanternToggle1,
+                                onChanged: (v) =>
+                                    setState(() => _lanternToggle1 = v),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Text('Diagnostics',
+                                  style: AppTypography.bodyMedium
+                                      .copyWith(color: lantern.moon)),
+                              const Spacer(),
+                              LanternToggle(
+                                value: _lanternToggle2,
+                                onChanged: (v) =>
+                                    setState(() => _lanternToggle2 = v),
                               ),
                             ],
                           ),

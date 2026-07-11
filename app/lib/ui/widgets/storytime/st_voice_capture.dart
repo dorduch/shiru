@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_typography.dart';
-import '../../../theme/app_shadows.dart';
+import '../../../theme/lantern_tokens.dart';
 
 // ─── StCaptureRing ────────────────────────────────────────────────────────────
 
@@ -121,15 +121,15 @@ class StPrompt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: tokens.night3.withValues(alpha: 0.4),
+        color: tokens.nightCard.withValues(alpha: 0.4),
         borderRadius: AppRadius.medium,
         border:
-            Border.all(color: tokens.cream.withValues(alpha: 0.15), width: 1),
+            Border.all(color: tokens.moon.withValues(alpha: 0.15), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,13 +138,13 @@ class StPrompt extends StatelessWidget {
           Text(
             label,
             style: AppTypography.labelLarge.copyWith(
-              color: tokens.cream.withValues(alpha: 0.5),
+              color: tokens.moon.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             promptText,
-            style: AppTypography.storyBody.copyWith(color: tokens.cream),
+            style: AppTypography.storyBody.copyWith(color: tokens.moon),
           ),
         ],
       ),
@@ -196,7 +196,7 @@ class _StRecordButtonState extends State<StRecordButton>
 
   @override
   Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -219,7 +219,7 @@ class _StRecordButtonState extends State<StRecordButton>
                       height: haloSize,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: tokens.ember.withValues(alpha: 0.22),
+                        color: tokens.lantern.withValues(alpha: 0.22),
                       ),
                     ),
                   Container(
@@ -228,7 +228,18 @@ class _StRecordButtonState extends State<StRecordButton>
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: tokens.ctaGradient,
-                      boxShadow: AppShadows.primaryGlow,
+                      // AppShadows.primaryGlow is a hardcoded terracotta
+                      // (ember-family) tint shared with the old StButton —
+                      // inlined here as a lantern-tinted glow (matching
+                      // GlowButton's own boxShadow treatment) so the halo
+                      // doesn't clash with the now-amber ctaGradient fill.
+                      boxShadow: [
+                        BoxShadow(
+                          color: tokens.lantern.withValues(alpha: 0.3),
+                          blurRadius: 24,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
                     ),
                     child: Icon(
                       widget.isRecording
@@ -316,8 +327,8 @@ class _StVoiceWaveState extends State<StVoiceWave>
 
   @override
   Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
-    final barColor = widget.color ?? tokens.gold;
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
+    final barColor = widget.color ?? tokens.lantern;
 
     return SizedBox(
       height: widget.height,

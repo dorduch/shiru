@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../../theme/app_theme.dart';
+import '../../../theme/lantern_tokens.dart';
 
 /// Wizard step progress indicator.
 ///
 /// The active step renders as an elongated pill; inactive steps are small
-/// filled circles. All steps use the ember accent color — inactive at reduced
-/// opacity.
+/// filled circles. All steps use the lantern accent color — inactive at
+/// reduced opacity.
 ///
 /// ```dart
 /// StDots(totalSteps: 5, activeStep: 2)
@@ -25,7 +25,7 @@ class StDots extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -39,8 +39,8 @@ class StDots extends StatelessWidget {
           height: 8,
           decoration: BoxDecoration(
             color: isActive
-                ? tokens.ember
-                : tokens.ember.withValues(alpha: 0.28),
+                ? tokens.lantern
+                : tokens.lantern.withValues(alpha: 0.28),
             borderRadius: BorderRadius.circular(999),
           ),
         );

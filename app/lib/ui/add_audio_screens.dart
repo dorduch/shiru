@@ -16,7 +16,6 @@ import 'concept_icons.dart';
 import 'pixel_sprite.dart';
 import 'widgets/audio_recorder_widget.dart';
 import 'widgets/lantern/lantern.dart';
-import 'widgets/storytime/storytime.dart';
 
 /// Swatches offered for the card color (warm storytime palette).
 const _swatches = <String>[
@@ -68,7 +67,7 @@ class _AddAudioCaptureScreenState extends ConsumerState<AddAudioCaptureScreen> {
                   onMediaSelected: (sel) => setState(() => _selection = sel),
                 ),
                 const Spacer(),
-                StButton(
+                GlowButton(
                   label: 'Next',
                   onTap: _selection == null
                       ? null
@@ -251,13 +250,13 @@ class _AddAudioDetailsScreenState extends ConsumerState<AddAudioDetailsScreen> {
               ),
               const SizedBox(height: 28),
               if (_editing != null) ...[
-                StButton(
+                GlowButton(
                   label: 'Replace audio',
                   onTap: () => context.go('/parent/edit-audio/${_editing!.id}/replace'),
                 ),
                 const SizedBox(height: 12),
               ],
-              StButton(label: 'Save', onTap: _save),
+              GlowButton(label: 'Save', onTap: _save),
             ],
           ),
         ),
