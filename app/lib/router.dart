@@ -93,21 +93,6 @@ GoRouter createRouter(WidgetRef ref) {
         builder: (context, state) => const StorytimeHomeScreen(),
       ),
       GoRoute(
-        // Superseded by the Composer (Task 7 cutover). Kept redirecting for
-        // one release so deep links / resumed sessions still land somewhere
-        // valid; StoryWizardScreen itself is removed in a later cleanup pass.
-        path: '/make/:step',
-        redirect: (context, state) => '/compose',
-        builder: (context, state) =>
-            StoryWizardScreen(step: state.pathParameters['step']!),
-      ),
-      GoRoute(
-        // Superseded by the Composer (Task 7 cutover); see note above.
-        path: '/review',
-        redirect: (context, state) => '/compose',
-        builder: (context, state) => const StoryReviewScreen(),
-      ),
-      GoRoute(
         path: '/compose',
         builder: (context, state) => const StoryComposerScreen(),
       ),

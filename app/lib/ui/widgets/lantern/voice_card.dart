@@ -25,10 +25,8 @@ enum VoiceCardVariant {
 ///
 /// Kept deliberately dumb: [selected] and [previewPlaying] are supplied by
 /// the caller (the Composer screen watches `storyDraftProvider` /
-/// `narratorPreviewServiceProvider` and passes the resolved booleans down),
-/// mirroring how `_NarratorPreviewButton` in the current wizard
-/// (`lib/ui/storytime_screens.dart`) is driven from outside rather than
-/// reaching into providers itself.
+/// `narratorPreviewServiceProvider` and passes the resolved booleans down)
+/// rather than this widget reaching into providers itself.
 class VoiceCard extends StatelessWidget {
   const VoiceCard({
     super.key,
@@ -196,9 +194,7 @@ class VoiceCard extends StatelessWidget {
       selected: effectiveSelected,
       label: label,
       // Keep child semantics live for built-ins so the nested Preview
-      // button stays independently reachable by screen readers — mirrors
-      // `_NarratorRow`'s `excludeSemantics: !isBuiltIn` convention in
-      // `lib/ui/storytime_screens.dart`.
+      // button stays independently reachable by screen readers.
       excludeSemantics: variant != VoiceCardVariant.builtIn,
       child: Opacity(
         opacity: isProcessing ? 0.6 : 1.0,
@@ -240,10 +236,8 @@ class VoiceCard extends StatelessWidget {
 
 /// 44pt-tall Preview/Playing pill nested inside a [VoiceCard] for built-in
 /// narrators. Its own [GestureDetector] means tapping it resolves in the
-/// gesture arena before the card's outer [GestureDetector] — the same
-/// nesting relationship `_NarratorPreviewButton` relies on today inside
-/// `_NarratorRow` (`lib/ui/storytime_screens.dart`) to avoid also selecting
-/// the row.
+/// gesture arena before the card's outer [GestureDetector], so previewing a
+/// narrator doesn't also select the card.
 class _PreviewPill extends StatelessWidget {
   const _PreviewPill({required this.playing, required this.onTap});
 
