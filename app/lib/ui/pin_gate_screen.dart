@@ -9,12 +9,12 @@ import '../providers/auth_provider.dart';
 import '../providers/pin_provider.dart';
 import '../services/analytics_service.dart';
 import '../services/key_value_store.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_responsive.dart';
-import '../theme/app_theme.dart';
+import '../theme/lantern_tokens.dart';
 import '../theme/app_typography.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_radius.dart';
+import 'widgets/lantern/lantern.dart';
 
 const _kFailedAttemptsKey = 'pin_failed_attempts';
 const _kLockUntilKey = 'pin_lock_until';
@@ -233,104 +233,114 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
     final pinAsync = ref.watch(pinProvider);
     final isPortrait = AppResponsive.isPortrait(context);
     final horizontalPadding = AppResponsive.basePadding(context);
     final verticalPadding = AppResponsive.spacing(context, 16);
 
     return Scaffold(
-      backgroundColor: tokens.cream,
-      body: SafeArea(
-        child: pinAsync.when(
-          loading: () => Center(
-            child: CircularProgressIndicator(color: tokens.ember),
-          ),
-          error: (err, _) => Center(
-            child: Text(
-              'Something went wrong loading your PIN.',
-              style: AppTypography.bodySmall.copyWith(
-                color: Theme.of(context).colorScheme.error,
+      backgroundColor: tokens.nightDeep,
+      body: DecoratedBox(
+        decoration: BoxDecoration(gradient: tokens.nightGradient),
+        child: SafeArea(
+          child: pinAsync.when(
+            loading: () => Center(
+              child: CircularProgressIndicator(color: tokens.lantern),
+            ),
+            error: (err, _) => Center(
+              child: Text(
+                'Something went wrong loading your PIN.',
+                // hueCoral: the established Lantern destructive/error color
+                // used for the same purpose elsewhere (AgeGateScreen,
+                // storytime_screens.dart), swapped in for Material's
+                // generic colorScheme.error for visual consistency with
+                // the rest of the app — same judgment call as Batch 5's
+                // AgeGateScreen.
+                style: AppTypography.bodySmall.copyWith(
+                  color: tokens.hueCoral,
+                ),
               ),
             ),
-          ),
-          data: (savedPin) {
-            _syncStepWithSavedPin(savedPin);
+            data: (savedPin) {
+              _syncStepWithSavedPin(savedPin);
 
-            final intro = _buildIntro(savedPin, context, tokens);
-            final keypad = _buildKeypad(savedPin, context, tokens);
+              final intro = _buildIntro(savedPin, context, tokens);
+              final keypad = _buildKeypad(savedPin, context, tokens);
 
-            if (isPortrait) {
-              return LayoutBuilder(
-                builder: (context, constraints) => SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: horizontalPadding,
-                    vertical: verticalPadding,
-                  ),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight - (verticalPadding * 2),
+              if (isPortrait) {
+                return LayoutBuilder(
+                  builder: (context, constraints) => SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                      vertical: verticalPadding,
                     ),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 480),
-                        child: Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.all(
-                            AppResponsive.spacing(context, 24),
-                          ),
-                          decoration: BoxDecoration(
-                            color: tokens.paper,
-                            borderRadius: AppRadius.sheet,
-                            boxShadow: AppShadows.elevated,
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              intro,
-                              SizedBox(
-                                height: AppResponsive.spacing(context, 24),
-                              ),
-                              Center(child: keypad),
-                            ],
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight:
+                            constraints.maxHeight - (verticalPadding * 2),
+                      ),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 480),
+                          child: Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(
+                              AppResponsive.spacing(context, 24),
+                            ),
+                            decoration: BoxDecoration(
+                              color: tokens.nightCard,
+                              borderRadius: AppRadius.sheet,
+                              boxShadow: AppShadows.elevated,
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                intro,
+                                SizedBox(
+                                  height: AppResponsive.spacing(context, 24),
+                                ),
+                                Center(child: keypad),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              );
-            }
+                );
+              }
 
-            return Row(
-              children: [
-                Expanded(
-                  child: Padding(
+              return Row(
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: horizontalPadding,
+                        vertical: verticalPadding,
+                      ),
+                      child: intro,
+                    ),
+                  ),
+                  Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: horizontalPadding,
                       vertical: verticalPadding,
                     ),
-                    child: intro,
+                    child: keypad,
                   ),
-                ),
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: horizontalPadding,
-                    vertical: verticalPadding,
-                  ),
-                  child: keypad,
-                ),
-              ],
-            );
-          },
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
   }
 
   Widget _buildIntro(
-      String? savedPin, BuildContext context, StorytimeTokens tokens) {
+      String? savedPin, BuildContext context, LanternTokens tokens) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -339,7 +349,7 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
           icon: Icon(
             Icons.arrow_back_ios_new,
             size: AppResponsive.iconSize(context, 28),
-            color: tokens.ink2,
+            color: tokens.moonDim,
           ),
           onPressed: () => context.go('/'),
           padding: EdgeInsets.zero,
@@ -348,132 +358,33 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
         SizedBox(height: AppResponsive.spacing(context, 8)),
         Text(
           'GROWN-UPS ONLY',
-          style: tokens.eyebrow.copyWith(color: AppColors.eyebrow),
+          // moonDim, not a cream-specific accent: the old AppColors.eyebrow
+          // burnt-terracotta was cream-specific — see spec §3. Same
+          // resolution used in every prior batch (e.g. AgeGateScreen).
+          style: AppTypography.eyebrow.copyWith(color: tokens.moonDim),
         ),
         SizedBox(height: AppResponsive.spacing(context, 8)),
         Text(
           _title(savedPin),
-          style: AppTypography.displayMedium.copyWith(color: tokens.ink),
+          style: AppTypography.displayMedium.copyWith(color: tokens.moon),
         ),
         SizedBox(height: AppResponsive.spacing(context, 8)),
         Text(
           _subtitle(savedPin),
-          style: AppTypography.bodySmall.copyWith(color: tokens.ink2),
-        ),
-        SizedBox(height: AppResponsive.spacing(context, 24)),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: List.generate(4, (index) {
-            final filled = index < _input.length;
-            return Semantics(
-              label:
-                  'PIN digit ${index + 1} of 4, ${filled ? "entered" : "empty"}',
-              child: Container(
-                margin: EdgeInsets.only(
-                  right: AppResponsive.spacing(context, 12),
-                ),
-                width: AppResponsive.spacing(context, 20),
-                height: AppResponsive.spacing(context, 20),
-                decoration: BoxDecoration(
-                  color: filled ? tokens.ember : tokens.line2,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            );
-          }),
+          style: AppTypography.bodySmall.copyWith(color: tokens.moonDim),
         ),
       ],
     );
   }
 
   Widget _buildKeypad(
-      String? savedPin, BuildContext context, StorytimeTokens tokens) {
-    final keySize = AppResponsive.isPortrait(context)
-        ? AppResponsive.buttonSize(context) + AppResponsive.spacing(context, 16)
-        : AppResponsive.buttonSize(context);
-    final keypadWidth = (keySize * 3) + AppResponsive.spacing(context, 48);
-
-    if (_isLocked) {
-      return SizedBox(
-        width: keypadWidth,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.lock_clock,
-              size: AppResponsive.iconSize(context, 48),
-              color: tokens.ink3,
-            ),
-            SizedBox(height: AppResponsive.spacing(context, 16)),
-            Text(
-              'Too many attempts.\nTry again in ${_secondsRemaining}s.',
-              textAlign: TextAlign.center,
-              style: AppTypography.titleMedium.copyWith(color: tokens.ink2),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildKeyRow(['1', '2', '3'], savedPin, keySize, tokens),
-        SizedBox(height: AppResponsive.spacing(context, 16)),
-        _buildKeyRow(['4', '5', '6'], savedPin, keySize, tokens),
-        SizedBox(height: AppResponsive.spacing(context, 16)),
-        _buildKeyRow(['7', '8', '9'], savedPin, keySize, tokens),
-        SizedBox(height: AppResponsive.spacing(context, 16)),
-        _buildKeyRow(['', '0', 'DEL'], savedPin, keySize, tokens),
-      ],
-    );
-  }
-
-  Widget _buildKeyRow(List<String> keys, String? savedPin, double keySize,
-      StorytimeTokens tokens) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: keys.map((key) {
-        if (key.isEmpty) {
-          return SizedBox(width: keySize, height: keySize);
-        }
-
-        return Semantics(
-          label: key == 'DEL' ? 'Delete' : key,
-          button: true,
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppResponsive.spacing(context, 8),
-            ),
-            child: GestureDetector(
-              onTap: () => _onKeyPress(key, savedPin),
-              child: Container(
-                width: keySize,
-                height: keySize,
-                decoration: BoxDecoration(
-                  color: tokens.paper,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: tokens.line, width: 1),
-                  boxShadow: AppShadows.card,
-                ),
-                alignment: Alignment.center,
-                child: key == 'DEL'
-                    ? Icon(
-                        Icons.backspace_rounded,
-                        size: AppResponsive.iconSize(context, 28),
-                        color: tokens.ink,
-                      )
-                    : Text(
-                        key,
-                        style: AppTypography.keypadDigit.copyWith(
-                          color: tokens.ink,
-                        ),
-                      ),
-              ),
-            ),
-          ),
-        );
-      }).toList(),
+      String? savedPin, BuildContext context, LanternTokens tokens) {
+    return LanternKeypad(
+      enteredLength: _input.length,
+      totalDigits: 4,
+      locked: _isLocked,
+      lockSecondsRemaining: _secondsRemaining,
+      onKeyPress: (key) => _onKeyPress(key, savedPin),
     );
   }
 }

@@ -7,9 +7,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../models/family_voice.dart';
 import '../providers/storytime_providers.dart';
 import '../services/recording_service.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
-import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import '../theme/lantern_tokens.dart';
 import 'widgets/lantern/lantern.dart';
@@ -698,7 +696,7 @@ class _GuidedCaptureScreenState extends ConsumerState<GuidedCaptureScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
     final prompt = _capturePrompts[_promptIndex];
 
     return PopScope(
@@ -706,97 +704,100 @@ class _GuidedCaptureScreenState extends ConsumerState<GuidedCaptureScreen> {
         if (_recording) await _recorder.stop();
       },
       child: Scaffold(
-        backgroundColor: tokens.night1,
+        backgroundColor: tokens.nightMid,
         appBar: AppBar(
           title: Text('${widget.name}\'s voice'),
           backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
-          foregroundColor: tokens.cream,
+          foregroundColor: tokens.moon,
         ),
-        body: SafeArea(
-          child: _uploading
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const CircularProgressIndicator(color: Colors.white),
-                      const SizedBox(height: 20),
-                      Text(
-                        'Uploading samples…',
-                        style: AppTypography.bodyLarge.copyWith(
-                          color: tokens.cream,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Center(
-                        child: StDots(
-                          totalSteps: _capturePrompts.length,
-                          activeStep: _promptIndex,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Center(
-                        child: Text(
-                          '${_promptIndex + 1} of ${_capturePrompts.length}',
-                          style: AppTypography.labelMedium.copyWith(
-                            color: tokens.cream.withValues(alpha: 0.6),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      StChip(
-                        label: prompt.label,
-                        color: tokens.ember.withValues(alpha: 0.2),
-                      ),
-                      const SizedBox(height: 16),
-                      StPrompt(promptText: prompt.text),
-                      const Spacer(),
-                      if (_error != null) ...[
+        body: Container(
+          decoration: BoxDecoration(gradient: tokens.nightGradient),
+          child: SafeArea(
+            child: _uploading
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(color: tokens.lantern),
+                        const SizedBox(height: 20),
                         Text(
-                          _error!,
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.destructive,
+                          'Uploading samples…',
+                          style: AppTypography.bodyLarge.copyWith(
+                            color: tokens.moon,
                           ),
-                          textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 12),
                       ],
-                      Center(
-                        child: StVoiceWave(active: _recording),
-                      ),
-                      const SizedBox(height: 20),
-                      Center(
-                        child: StRecordButton(
-                          isRecording: _recording,
-                          onTap: _toggleRecord,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Center(
-                        child: Text(
-                          _recording ? 'Tap to stop' : 'Tap to record',
-                          style: AppTypography.labelMedium.copyWith(
-                            color: tokens.cream.withValues(alpha: 0.7),
+                    ),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Center(
+                          child: StDots(
+                            totalSteps: _capturePrompts.length,
+                            activeStep: _promptIndex,
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      if (_error != null)
-                        StButton(
-                          label: 'Retry upload',
-                          fullWidth: true,
-                          onTap: _submitSamples,
+                        const SizedBox(height: 8),
+                        Center(
+                          child: Text(
+                            '${_promptIndex + 1} of ${_capturePrompts.length}',
+                            style: AppTypography.labelMedium.copyWith(
+                              color: tokens.moonDim,
+                            ),
+                          ),
                         ),
-                    ],
+                        const SizedBox(height: 24),
+                        LanternChip(
+                          label: prompt.label,
+                          hue: tokens.lantern,
+                        ),
+                        const SizedBox(height: 16),
+                        StPrompt(promptText: prompt.text),
+                        const Spacer(),
+                        if (_error != null) ...[
+                          Text(
+                            _error!,
+                            style: AppTypography.bodySmall.copyWith(
+                              color: tokens.hueCoral,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                        Center(
+                          child: StVoiceWave(active: _recording),
+                        ),
+                        const SizedBox(height: 20),
+                        Center(
+                          child: StRecordButton(
+                            isRecording: _recording,
+                            onTap: _toggleRecord,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Center(
+                          child: Text(
+                            _recording ? 'Tap to stop' : 'Tap to record',
+                            style: AppTypography.labelMedium.copyWith(
+                              color: tokens.moonDim,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        if (_error != null)
+                          StButton(
+                            label: 'Retry upload',
+                            fullWidth: true,
+                            onTap: _submitSamples,
+                          ),
+                      ],
+                    ),
                   ),
-                ),
+          ),
         ),
       ),
     );

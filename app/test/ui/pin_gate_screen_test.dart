@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiru/providers/auth_provider.dart';
 import 'package:shiru/services/key_value_store.dart';
+import 'package:shiru/theme/app_theme.dart';
 import 'package:shiru/ui/pin_gate_screen.dart';
 
 import '../test_helpers/fake_key_value_store.dart';
@@ -46,7 +47,14 @@ class _TestPinAppState extends State<_TestPinApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(routerConfig: _router);
+    // PinGateScreen reads LanternTokens off the ambient Theme (as it does in
+    // production, via main.dart's `theme: StorytimeTheme.bedtime`) — without
+    // this, `Theme.of(context).extension<LanternTokens>()!` null-checks on
+    // MaterialApp's default ThemeData, which carries no custom extensions.
+    return MaterialApp.router(
+      theme: StorytimeTheme.bedtime,
+      routerConfig: _router,
+    );
   }
 }
 

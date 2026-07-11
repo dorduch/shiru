@@ -46,6 +46,8 @@ class _ComponentGalleryScreenState extends State<ComponentGalleryScreen> {
   final List<bool> _lanternSlotSuggested = [true, false, true, false];
   int _lanternSegmentSel = 1;
   int _lanternChoiceSel = 0;
+  String _lanternKeypadInput = '';
+  bool _lanternKeypadLocked = false;
 
   static const _storyText =
       'Once upon a time, in a forest full of glowing mushrooms, '
@@ -824,6 +826,48 @@ class _ComponentGalleryScreenState extends State<ComponentGalleryScreen> {
                               LanternChip(
                                 label: 'Processing',
                                 hue: lantern.lantern,
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 24),
+                          _SubLabel(
+                              text: 'Lantern Keypad',
+                              labelColor: lantern.moonDim),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              LanternKeypad(
+                                enteredLength: _lanternKeypadInput.length,
+                                totalDigits: 4,
+                                locked: _lanternKeypadLocked,
+                                lockSecondsRemaining: 12,
+                                onKeyPress: (key) => setState(() {
+                                  if (key == 'DEL') {
+                                    if (_lanternKeypadInput.isNotEmpty) {
+                                      _lanternKeypadInput =
+                                          _lanternKeypadInput.substring(
+                                              0,
+                                              _lanternKeypadInput.length - 1);
+                                    }
+                                  } else if (_lanternKeypadInput.length < 4) {
+                                    _lanternKeypadInput += key;
+                                  }
+                                }),
+                              ),
+                              const SizedBox(width: 16),
+                              TextButton(
+                                onPressed: () => setState(() =>
+                                    _lanternKeypadLocked =
+                                        !_lanternKeypadLocked),
+                                child: Text(
+                                  _lanternKeypadLocked
+                                      ? 'Show grid'
+                                      : 'Show lockout',
+                                  style: AppTypography.labelMedium
+                                      .copyWith(color: lantern.lantern),
+                                ),
                               ),
                             ],
                           ),

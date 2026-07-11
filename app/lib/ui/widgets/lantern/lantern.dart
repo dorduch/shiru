@@ -18,3 +18,4 @@ export 'lantern_text_field.dart';
 export 'lantern_segment.dart';
 export 'lantern_choice_card.dart';
 export 'lantern_chip.dart';
+export 'lantern_keypad.dart';

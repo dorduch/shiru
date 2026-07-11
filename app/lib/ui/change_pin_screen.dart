@@ -6,12 +6,12 @@ import 'package:go_router/go_router.dart';
 import '../providers/pin_provider.dart';
 import '../services/analytics_service.dart';
 import '../services/key_value_store.dart';
-import '../theme/app_colors.dart';
 import '../theme/app_responsive.dart';
-import '../theme/app_theme.dart';
+import '../theme/lantern_tokens.dart';
 import '../theme/app_typography.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_radius.dart';
+import 'widgets/lantern/lantern.dart';
 
 const _kFailedAttemptsKey = 'pin_failed_attempts';
 const _kLockUntilKey = 'pin_lock_until';
@@ -212,32 +212,32 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
     final pinAsync = ref.watch(pinProvider);
     final isPortrait = AppResponsive.isPortrait(context);
     final horizontalPadding = AppResponsive.basePadding(context);
     final verticalPadding = AppResponsive.spacing(context, 16);
 
     return pinAsync.when(
-      loading: () => Scaffold(
-        backgroundColor: tokens.cream,
+      loading: () => _groundScaffold(
+        tokens,
         body: Center(
-          child: CircularProgressIndicator(color: tokens.ember),
+          child: CircularProgressIndicator(color: tokens.lantern),
         ),
       ),
-      error: (err, _) => Scaffold(
-        backgroundColor: tokens.cream,
+      error: (err, _) => _groundScaffold(
+        tokens,
         body: Center(
           child: Text(
             'Something went wrong loading your PIN.',
-            style: AppTypography.bodySmall.copyWith(color: tokens.ink),
+            style: AppTypography.bodySmall.copyWith(color: tokens.moon),
           ),
         ),
       ),
       data: (currentPin) {
         if (currentPin == null) {
-          return Scaffold(
-            backgroundColor: tokens.cream,
+          return _groundScaffold(
+            tokens,
             body: Center(
               child: Padding(
                 padding: EdgeInsets.all(AppResponsive.basePadding(context)),
@@ -247,7 +247,7 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
                     Text(
                       'Set up a parent PIN first.',
                       style: AppTypography.headlineMedium.copyWith(
-                        color: tokens.ink,
+                        color: tokens.moon,
                       ),
                     ),
                     SizedBox(height: AppResponsive.spacing(context, 16)),
@@ -262,81 +262,93 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
           );
         }
 
-        return Scaffold(
-          backgroundColor: tokens.cream,
-          body: SafeArea(
-            child: isPortrait
-                ? LayoutBuilder(
-                    builder: (context, constraints) => SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: horizontalPadding,
-                        vertical: verticalPadding,
+        return _groundScaffold(
+          tokens,
+          body: isPortrait
+              ? LayoutBuilder(
+                  builder: (context, constraints) => SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                      vertical: verticalPadding,
+                    ),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight:
+                            constraints.maxHeight - (verticalPadding * 2),
                       ),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight:
-                              constraints.maxHeight - (verticalPadding * 2),
-                        ),
-                        child: Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 480),
-                            child: Container(
-                              width: double.infinity,
-                              padding: EdgeInsets.all(
-                                AppResponsive.spacing(context, 24),
-                              ),
-                              decoration: BoxDecoration(
-                                color: tokens.paper,
-                                borderRadius: AppRadius.sheet,
-                                boxShadow: AppShadows.elevated,
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildStepIntro(context, tokens),
-                                  SizedBox(
-                                    height: AppResponsive.spacing(context, 24),
-                                  ),
-                                  Center(
-                                    child: _buildKeypad(
-                                        currentPin, context, tokens),
-                                  ),
-                                ],
-                              ),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 480),
+                          child: Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(
+                              AppResponsive.spacing(context, 24),
+                            ),
+                            decoration: BoxDecoration(
+                              color: tokens.nightCard,
+                              borderRadius: AppRadius.sheet,
+                              boxShadow: AppShadows.elevated,
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildStepIntro(context, tokens),
+                                SizedBox(
+                                  height: AppResponsive.spacing(context, 24),
+                                ),
+                                Center(
+                                  child: _buildKeypad(
+                                      currentPin, context, tokens),
+                                ),
+                              ],
                             ),
                           ),
                         ),
                       ),
                     ),
-                  )
-                : Row(
-                    children: [
-                      Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: horizontalPadding,
-                            vertical: verticalPadding,
-                          ),
-                          child: _buildStepIntro(context, tokens),
-                        ),
-                      ),
-                      Padding(
+                  ),
+                )
+              : Row(
+                  children: [
+                    Expanded(
+                      child: Padding(
                         padding: EdgeInsets.symmetric(
                           horizontal: horizontalPadding,
                           vertical: verticalPadding,
                         ),
-                        child: _buildKeypad(currentPin, context, tokens),
+                        child: _buildStepIntro(context, tokens),
                       ),
-                    ],
-                  ),
-          ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: horizontalPadding,
+                        vertical: verticalPadding,
+                      ),
+                      child: _buildKeypad(currentPin, context, tokens),
+                    ),
+                  ],
+                ),
         );
       },
     );
   }
 
-  Widget _buildStepIntro(BuildContext context, StorytimeTokens tokens) {
+  /// Shared Lantern-night ground (`nightMid → nightDeep` gradient) for this
+  /// screen's four top-level Scaffolds (loading/error/no-pin-yet/data) —
+  /// same recipe as `ParentAccessScreen`/`StoryComposerScreen` since this
+  /// screen has no AppBar.
+  Widget _groundScaffold(LanternTokens tokens, {required Widget body}) {
+    return Scaffold(
+      backgroundColor: tokens.nightDeep,
+      body: DecoratedBox(
+        decoration: BoxDecoration(gradient: tokens.nightGradient),
+        child: SafeArea(child: body),
+      ),
+    );
+  }
+
+  Widget _buildStepIntro(BuildContext context, LanternTokens tokens) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -347,7 +359,7 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
             icon: Icon(
               Icons.arrow_back_ios_new,
               size: AppResponsive.iconSize(context, 28),
-              color: tokens.ink2,
+              color: tokens.moonDim,
             ),
             onPressed: () => context.pop(),
           ),
@@ -355,131 +367,35 @@ class _ChangePinScreenState extends ConsumerState<ChangePinScreen> {
         SizedBox(height: AppResponsive.spacing(context, 12)),
         Text(
           'CHANGE PIN',
-          style: tokens.eyebrow.copyWith(color: AppColors.eyebrow),
+          // moonDim, not a cream-specific accent: the old AppColors.eyebrow
+          // burnt-terracotta was cream-specific — see spec §3. Same
+          // resolution used in every prior batch (e.g. AgeGateScreen).
+          style: AppTypography.eyebrow.copyWith(color: tokens.moonDim),
         ),
         SizedBox(height: AppResponsive.spacing(context, 8)),
         Text(
           _title,
           textAlign: TextAlign.left,
-          style: AppTypography.displayMedium.copyWith(color: tokens.ink),
+          style: AppTypography.displayMedium.copyWith(color: tokens.moon),
         ),
         SizedBox(height: AppResponsive.spacing(context, 8)),
         Text(
           _stepSubtitle,
           textAlign: TextAlign.left,
-          style: AppTypography.bodySmall.copyWith(color: tokens.ink2),
-        ),
-        SizedBox(height: AppResponsive.spacing(context, 32)),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: List.generate(4, (index) {
-            final filled = index < _input.length;
-            return Semantics(
-              label:
-                  'PIN digit ${index + 1} of 4, ${filled ? "entered" : "empty"}',
-              child: Container(
-                margin: EdgeInsets.only(
-                  right: AppResponsive.spacing(context, 12),
-                ),
-                width: AppResponsive.spacing(context, 20),
-                height: AppResponsive.spacing(context, 20),
-                decoration: BoxDecoration(
-                  color: filled ? tokens.ember : tokens.line2,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            );
-          }),
+          style: AppTypography.bodySmall.copyWith(color: tokens.moonDim),
         ),
       ],
     );
   }
 
   Widget _buildKeypad(
-      String currentPin, BuildContext context, StorytimeTokens tokens) {
-    final keySize = AppResponsive.isPortrait(context)
-        ? AppResponsive.buttonSize(context) + AppResponsive.spacing(context, 16)
-        : AppResponsive.buttonSize(context);
-    final keypadWidth = (keySize * 3) + AppResponsive.spacing(context, 60);
-    if (_isLocked) {
-      return SizedBox(
-        width: keypadWidth,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.lock_clock,
-              size: AppResponsive.iconSize(context, 48),
-              color: tokens.ink3,
-            ),
-            SizedBox(height: AppResponsive.spacing(context, 16)),
-            Text(
-              'Too many attempts.\nTry again in ${_secondsRemaining}s.',
-              textAlign: TextAlign.center,
-              style: AppTypography.titleMedium.copyWith(color: tokens.ink2),
-            ),
-          ],
-        ),
-      );
-    }
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildKeyRow(['1', '2', '3'], currentPin, keySize, tokens),
-        SizedBox(height: AppResponsive.spacing(context, 16)),
-        _buildKeyRow(['4', '5', '6'], currentPin, keySize, tokens),
-        SizedBox(height: AppResponsive.spacing(context, 16)),
-        _buildKeyRow(['7', '8', '9'], currentPin, keySize, tokens),
-        SizedBox(height: AppResponsive.spacing(context, 16)),
-        _buildKeyRow(['', '0', 'DEL'], currentPin, keySize, tokens),
-      ],
-    );
-  }
-
-  Widget _buildKeyRow(List<String> keys, String currentPin, double keySize,
-      StorytimeTokens tokens) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: keys.map((k) {
-        if (k.isEmpty) {
-          return SizedBox(width: keySize, height: keySize);
-        }
-        return Semantics(
-          label: k == 'DEL' ? 'Delete' : k,
-          button: true,
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppResponsive.spacing(context, 10),
-            ),
-            child: GestureDetector(
-              onTap: () => _onKeyPress(k, currentPin),
-              child: Container(
-                width: keySize,
-                height: keySize,
-                decoration: BoxDecoration(
-                  color: k == 'DEL' ? tokens.cream : tokens.paper,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: tokens.line, width: 1),
-                  boxShadow: AppShadows.card,
-                ),
-                alignment: Alignment.center,
-                child: k == 'DEL'
-                    ? Icon(
-                        Icons.backspace_rounded,
-                        size: AppResponsive.iconSize(context, 28),
-                        color: tokens.ink2,
-                      )
-                    : Text(
-                        k,
-                        style: AppTypography.keypadDigit.copyWith(
-                          color: tokens.ink,
-                        ),
-                      ),
-              ),
-            ),
-          ),
-        );
-      }).toList(),
+      String currentPin, BuildContext context, LanternTokens tokens) {
+    return LanternKeypad(
+      enteredLength: _input.length,
+      totalDigits: 4,
+      locked: _isLocked,
+      lockSecondsRemaining: _secondsRemaining,
+      onKeyPress: (key) => _onKeyPress(key, currentPin),
     );
   }
 }
