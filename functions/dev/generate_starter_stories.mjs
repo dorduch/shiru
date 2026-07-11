@@ -53,9 +53,24 @@ function tokenize(text) {
   return tokens;
 }
 
+const WHITESPACE_RE = /\s/;
+
+// How far to peek ahead on either stream when the two characters at the
+// current positions don't match, looking for a resync point.
+const LOOKAHEAD = 8;
+
 // Map each storyText character index to its start time (seconds) from the
-// literal `alignment` block. The literal alignment's characters reconstruct the
-// exact input text; if they don't line up, walk both to stay robust.
+// literal `alignment` block. The literal alignment's characters reconstruct
+// the exact input text on the fast path; otherwise walk both character
+// streams with a two-pointer scan that recovers from omissions (text has a
+// character the alignment skipped), insertions (alignment has an extra
+// character not in text), and substitutions (the two streams render the
+// "same" character differently — em dash vs. hyphen, curly vs. straight
+// quotes, an ellipsis glyph vs. three dots — where neither stream has a
+// nearby resync anchor for the other's character, so both pointers advance
+// together and the alignment's start time is carried through). This must
+// stay byte-for-byte in sync with `charStartTimes` in
+// `functions/src/timing.ts`.
 function charStartTimes(text, alignment) {
   const chars = alignment.characters ?? [];
   const starts =
@@ -65,19 +80,70 @@ function charStartTimes(text, alignment) {
   if (chars.join("") === text && starts.length === text.length) {
     return starts;
   }
-  // Fallback: align the two character streams, carrying the last known start
-  // through any positions the API collapsed or expanded.
   const out = new Array(text.length).fill(0);
+  let ti = 0;
   let ai = 0;
   let last = 0;
-  for (let ti = 0; ti < text.length; ti++) {
-    if (ai < chars.length && chars[ai] === text[ti]) {
+
+  while (ti < text.length) {
+    if (WHITESPACE_RE.test(text[ti])) {
+      out[ti] = last;
+      ti++;
+      continue;
+    }
+    while (ai < chars.length && WHITESPACE_RE.test(chars[ai])) {
+      last = starts[ai] ?? last;
+      ai++;
+    }
+    if (ai >= chars.length) {
+      out[ti] = last;
+      ti++;
+      continue;
+    }
+    if (chars[ai] === text[ti]) {
       last = starts[ai] ?? last;
       out[ti] = last;
       ai++;
-    } else {
-      out[ti] = last;
+      ti++;
+      continue;
     }
+
+    let insertionOffset = -1; // chars[ai + k] === text[ti]: alignment has extra char(s)
+    for (let k = 1; k <= LOOKAHEAD && ai + k < chars.length; k++) {
+      if (chars[ai + k] === text[ti]) {
+        insertionOffset = k;
+        break;
+      }
+    }
+    let omissionOffset = -1; // text[ti + k] === chars[ai]: text has extra char(s)
+    for (let k = 1; k <= LOOKAHEAD && ti + k < text.length; k++) {
+      if (text[ti + k] === chars[ai]) {
+        omissionOffset = k;
+        break;
+      }
+    }
+
+    if (insertionOffset !== -1 && (omissionOffset === -1 || insertionOffset <= omissionOffset)) {
+      for (let k = 0; k < insertionOffset; k++) {
+        last = starts[ai] ?? last;
+        ai++;
+      }
+      continue;
+    }
+    if (omissionOffset !== -1) {
+      for (let k = 0; k < omissionOffset; k++) {
+        out[ti] = last;
+        ti++;
+      }
+      continue;
+    }
+
+    // No resync anchor nearby: treat as a one-for-one substitution so both
+    // pointers keep advancing together instead of desyncing permanently.
+    last = starts[ai] ?? last;
+    out[ti] = last;
+    ai++;
+    ti++;
   }
   return out;
 }

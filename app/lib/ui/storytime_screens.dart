@@ -647,6 +647,10 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
   String _status = 'Getting the story ready…';
   String? _error;
   bool _importing = false;
+  // Set once the first job snapshot arrives — used as the loading-art
+  // concept on the resume path, where the draft may be empty (app relaunched
+  // mid-generation) so there's no character/theme choice to read locally yet.
+  StoryTheme? _jobTheme;
 
   @override
   void initState() {
@@ -714,16 +718,17 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
 
   void _onJob(StoryJob job) {
     if (!mounted) return;
-    setState(
-      () => _status = switch (job.status) {
+    setState(() {
+      _jobTheme = job.theme;
+      _status = switch (job.status) {
         StoryJobStatus.queued => 'Gathering a little magic…',
         StoryJobStatus.writing => 'Writing your story…',
         StoryJobStatus.checking => 'Making sure it feels just right…',
         StoryJobStatus.narrating => "Adding the storyteller's voice…",
         StoryJobStatus.ready => 'Saving your story…',
         StoryJobStatus.failed => 'The story magic fizzled this time.',
-      },
-    );
+      };
+    });
     if (job.status == StoryJobStatus.failed) {
       _jobId = null;
       final uid = ref.read(authRepositoryProvider).currentUser?.uid;
@@ -755,7 +760,7 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
         collectionId: 'default-stories',
         title: job.title!,
         color: job.theme.color,
-        spriteKey: autoAssignSprite(job.title!).id,
+        spriteKey: job.theme.name,
         audioPath: path,
         storyOrigin: StoryOrigin.generated,
         narratorKey: job.narratorKey,
@@ -788,6 +793,16 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
     // so this screen reads it directly instead of forcing a redundant
     // sub-theme (see docs/superpowers/specs/2026-07-10-lantern-app-wide-design.md §2).
     final tokens = Theme.of(context).extension<LanternTokens>()!;
+    // Loading art follows the story being generated: prefer the chosen
+    // character, then the chosen theme (fresh-creation path, from the local
+    // draft), then the in-flight job's theme once its first snapshot arrives
+    // (resume path, where the draft may be empty). Falls back to a neutral
+    // bedtime/moon token before any of those are available so the layout
+    // never collapses.
+    final draft = ref.watch(storyDraftProvider);
+    final Object concept = draft.character ?? draft.theme ?? _jobTheme ?? StoryTheme.bedtime;
+    final conceptEmoji = draft.character?.emoji ??
+        (draft.theme ?? _jobTheme ?? StoryTheme.bedtime).emoji;
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(gradient: tokens.nightGradient),
@@ -803,7 +818,12 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    PixelSprite(sprite: autoAssignSprite('magic story'), scale: 7),
+                    StConceptToken(
+                      value: concept,
+                      emoji: conceptEmoji,
+                      iconSize: 112,
+                      fill: false,
+                    ),
                     const SizedBox(height: 24),
                     Text(
                       // Don't keep the loading headline over a failure —
@@ -1458,9 +1478,14 @@ class StoryEndScreen extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    PixelSprite(
-                      sprite: autoAssignSprite('celebration stars'),
-                      scale: 7,
+                    SizedBox(
+                      width: 112,
+                      height: 112,
+                      child: StoryAvatar(
+                        card: card,
+                        conceptSize: 112,
+                        pixelScale: 7,
+                      ),
                     ),
                     const SizedBox(height: 20),
                     Text(

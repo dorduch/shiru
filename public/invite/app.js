@@ -33,17 +33,15 @@ import {
 // SHA-1 fingerprint, iOS by bundle ID) and will be rejected when called from
 // a browser origin.
 //
-// TODO(web-app-config): Register a Web app for shiru-bcdd2 in the Firebase
-// console (Project settings -> Your apps -> Add app -> Web), then replace
-// the two placeholders below with the real values before deploying this
-// page. Do not ship with placeholders.
+// Web app "Shiru Web" (1:310525193859:web:19b1a756d21bbc656475b6),
+// registered 2026-07-11 via `firebase apps:create web`.
 const firebaseConfig = {
-  apiKey: "TODO-REPLACE-WITH-WEB-API-KEY",
+  apiKey: "AIzaSyBvT3Kf4GTcTd5VYlG_fE7-JI9ft4GkbZU",
   authDomain: "shiru-bcdd2.firebaseapp.com",
   projectId: "shiru-bcdd2",
   storageBucket: "shiru-bcdd2.firebasestorage.app",
   messagingSenderId: "310525193859",
-  appId: "TODO-REPLACE-WITH-WEB-APP-ID",
+  appId: "1:310525193859:web:19b1a756d21bbc656475b6",
 };
 
 const NUM_PROMPTS = 5;

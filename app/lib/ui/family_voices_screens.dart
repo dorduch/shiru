@@ -211,6 +211,15 @@ class _VoiceRow extends ConsumerWidget {
           hue: _statusColor(tokens, voice.status),
         ),
         const SizedBox(width: 8),
+        if (voice.status == FamilyVoiceStatus.consented || voice.status == FamilyVoiceStatus.failed)
+          IconButton(
+            icon: Icon(Icons.person_add_rounded, color: tokens.moonFaint, size: 20),
+            tooltip: 'Invite someone to record',
+            onPressed: () => context.push(
+              '/parent/family-voices/invite',
+              extra: {'voiceId': voice.id, 'name': voice.name},
+            ),
+          ),
         IconButton(
           icon: Icon(Icons.delete_outline_rounded, color: tokens.moonFaint, size: 20),
           tooltip: 'Remove voice',
