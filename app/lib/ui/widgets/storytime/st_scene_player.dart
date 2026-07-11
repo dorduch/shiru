@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
 import '../../../logic/story_tokenizer.dart';
-import '../../../theme/app_theme.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_typography.dart';
-import '../../../theme/app_colors.dart';
 import '../../../theme/app_shadows.dart';
+import '../../../theme/lantern_tokens.dart';
 
 /// Dark bedtime story player widget.
 ///
 /// Layout:
 ///  - Art panel (top half) — any widget, usually a colored container / image.
-///  - Follow-along read text with gold-highlighted current word.
+///  - Follow-along read text with lantern-highlighted current word.
 ///  - Bottom transport row: play/pause + elapsed/total time + progress bar.
 ///
 /// [highlightedWordIndex] is the zero-based word index within [bodyText] to
-/// highlight in gold. Real audio sync is NOT wired here — the parameter is
-/// kept external so the parent can drive it from any source.
+/// highlight in the lantern accent color. Real audio sync is NOT wired here —
+/// the parameter is kept external so the parent can drive it from any source.
 class StScenePlayer extends StatelessWidget {
   const StScenePlayer({
     super.key,
@@ -56,7 +55,7 @@ class StScenePlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
 
     return Container(
       decoration: BoxDecoration(
@@ -73,10 +72,10 @@ class StScenePlayer extends StatelessWidget {
             aspectRatio: 16 / 9,
             child: artPanel ??
                 Container(
-                  color: tokens.night3,
+                  color: tokens.nightCard,
                   child: Icon(
                     Icons.auto_awesome_rounded,
-                    color: tokens.gold.withValues(alpha: 0.4),
+                    color: tokens.lantern.withValues(alpha: 0.4),
                     size: 64,
                   ),
                 ),
@@ -88,7 +87,7 @@ class StScenePlayer extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
             child: Text(
               title,
-              style: AppTypography.titleLarge.copyWith(color: tokens.cream),
+              style: AppTypography.titleLarge.copyWith(color: tokens.moon),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -101,10 +100,10 @@ class StScenePlayer extends StatelessWidget {
               highlightedIndex: highlightedWordIndex,
               padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
               baseStyle: AppTypography.storyBody.copyWith(
-                color: tokens.cream.withValues(alpha: 0.85),
+                color: tokens.moon.withValues(alpha: 0.85),
               ),
               highlightStyle: AppTypography.storyBody.copyWith(
-                color: AppColors.gold,
+                color: tokens.lantern,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -292,7 +291,7 @@ class _Transport extends StatelessWidget {
   final double progress;
   final String elapsed;
   final String total;
-  final StorytimeTokens tokens;
+  final LanternTokens tokens;
   final VoidCallback? onPlayPause;
   final ValueChanged<double>? onSeek;
 
@@ -311,10 +310,15 @@ class _Transport extends StatelessWidget {
                   const RoundSliderThumbShape(enabledThumbRadius: 6),
               overlayShape:
                   const RoundSliderOverlayShape(overlayRadius: 14),
-              activeTrackColor: tokens.gold,
-              inactiveTrackColor: tokens.trackInactive,
-              thumbColor: tokens.gold,
-              overlayColor: tokens.gold.withValues(alpha: 0.18),
+              activeTrackColor: tokens.lantern,
+              // LanternTokens has no direct `trackInactive` equivalent (that
+              // field was mode-aware on StorytimeTokens — day vs bedtime);
+              // `hush` is the single dim/inactive hairline token that plays
+              // the same "the rest of the track" role on the one permanent
+              // dark ground.
+              inactiveTrackColor: tokens.hush,
+              thumbColor: tokens.lantern,
+              overlayColor: tokens.lantern.withValues(alpha: 0.18),
             ),
             child: Slider(
               value: progress.clamp(0.0, 1.0),
@@ -328,7 +332,7 @@ class _Transport extends StatelessWidget {
               Text(
                 elapsed,
                 style: AppTypography.labelSmall.copyWith(
-                  color: tokens.cream.withValues(alpha: 0.55),
+                  color: tokens.moon.withValues(alpha: 0.55),
                 ),
               ),
               // Play/pause button
@@ -339,14 +343,16 @@ class _Transport extends StatelessWidget {
                   height: 48,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: tokens.ember,
+                    color: tokens.lantern,
                     boxShadow: AppShadows.primaryGlow,
                   ),
                   child: Icon(
                     isPlaying
                         ? Icons.pause_rounded
                         : Icons.play_arrow_rounded,
-                    color: tokens.onAccent,
+                    // nightDeep: same on-accent contrast convention GlowButton
+                    // uses for its label/icon on the lantern/ctaGradient fill.
+                    color: tokens.nightDeep,
                     size: 26,
                   ),
                 ),
@@ -354,7 +360,7 @@ class _Transport extends StatelessWidget {
               Text(
                 total,
                 style: AppTypography.labelSmall.copyWith(
-                  color: tokens.cream.withValues(alpha: 0.55),
+                  color: tokens.moon.withValues(alpha: 0.55),
                 ),
               ),
             ],

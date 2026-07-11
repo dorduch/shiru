@@ -44,40 +44,39 @@ class StorytimeLaunchScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authUserProvider);
-    return Theme(
-      data: StorytimeTheme.bedtime,
-      child: Builder(builder: (context) {
-        final tokens = Theme.of(context).extension<StorytimeTokens>()!;
-        Widget content = user.when(
+    // No more per-screen `Theme(data: StorytimeTheme.bedtime, ...)` wrap here
+    // — the root theme (main.dart) already registers LanternTokens.night(),
+    // so this screen reads it directly (see
+    // docs/superpowers/specs/2026-07-10-lantern-app-wide-design.md §2).
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
+    Widget content = user.when(
+      loading: () => const _NightLoadingScaffold(),
+      error: (error, stackTrace) =>
+          _LaunchError(onRetry: () => ref.invalidate(authUserProvider)),
+      data: (authUser) {
+        if (authUser == null) {
+          _goAfterBuild(context, '/welcome');
+          return const _NightLoadingScaffold();
+        }
+        final profile = ref.watch(childProfileProvider);
+        return profile.when(
           loading: () => const _NightLoadingScaffold(),
           error: (error, stackTrace) =>
-              _LaunchError(onRetry: () => ref.invalidate(authUserProvider)),
-          data: (authUser) {
-            if (authUser == null) {
-              _goAfterBuild(context, '/welcome');
-              return const _NightLoadingScaffold();
+              _LaunchError(onRetry: () => ref.invalidate(childProfileProvider)),
+          data: (child) {
+            if (child == null) {
+              _goAfterBuild(context, '/child-setup');
+            } else {
+              _resumeOrGoHome(context, ref, authUser.uid);
             }
-            final profile = ref.watch(childProfileProvider);
-            return profile.when(
-              loading: () => const _NightLoadingScaffold(),
-              error: (error, stackTrace) =>
-                  _LaunchError(onRetry: () => ref.invalidate(childProfileProvider)),
-              data: (child) {
-                if (child == null) {
-                  _goAfterBuild(context, '/child-setup');
-                } else {
-                  _resumeOrGoHome(context, ref, authUser.uid);
-                }
-                return const _NightLoadingScaffold();
-              },
-            );
+            return const _NightLoadingScaffold();
           },
         );
-        return Container(
-          color: tokens.night1,
-          child: content,
-        );
-      }),
+      },
+    );
+    return Container(
+      color: tokens.nightDeep,
+      child: content,
     );
   }
 
@@ -117,11 +116,11 @@ class _NightLoadingScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
     return Scaffold(
-      backgroundColor: tokens.night1,
+      backgroundColor: tokens.nightDeep,
       body: Center(
-        child: CircularProgressIndicator(color: tokens.gold),
+        child: CircularProgressIndicator(color: tokens.lantern),
       ),
     );
   }
@@ -133,9 +132,9 @@ class _LaunchError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = Theme.of(context).extension<StorytimeTokens>()!;
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
     return Scaffold(
-      backgroundColor: tokens.night1,
+      backgroundColor: tokens.nightDeep,
       body: SafeArea(
         child: StErrorView(
           icon: Icons.nightlight_round,
@@ -1799,157 +1798,142 @@ class _StoryPlayerScreenState extends ConsumerState<StoryPlayerScreen>
   @override
   Widget build(BuildContext context) {
     if (_loading) return const _NightLoadingScaffold();
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
     if (_error != null || _card == null) {
-      return Theme(
-        data: StorytimeTheme.bedtime,
-        child: Builder(
-          builder: (context) {
-            final tokens = Theme.of(context).extension<StorytimeTokens>()!;
-            return Scaffold(
-              backgroundColor: tokens.night1,
-              body: SafeArea(
-                child: StErrorView(
-                  icon: Icons.menu_book_rounded,
-                  title: 'Story not found',
-                  message: _error ?? 'We couldn\'t open this story.',
-                  retryLabel: 'Back to stories',
-                  onRetry: () => context.go('/listen'),
-                ),
-              ),
-            );
-          },
+      return Scaffold(
+        backgroundColor: tokens.nightDeep,
+        body: SafeArea(
+          child: StErrorView(
+            icon: Icons.menu_book_rounded,
+            title: 'Story not found',
+            message: _error ?? 'We couldn\'t open this story.',
+            retryLabel: 'Back to stories',
+            onRetry: () => context.go('/listen'),
+          ),
         ),
       );
     }
     final player = _player!;
-    return Theme(
-      data: StorytimeTheme.bedtime,
-      child: Builder(
-        builder: (context) {
-          final tokens = Theme.of(context).extension<StorytimeTokens>()!;
-          return Scaffold(
-            backgroundColor: tokens.night1,
-            body: SafeArea(
-              child: Column(
+    return Scaffold(
+      backgroundColor: tokens.nightDeep,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Top action row
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Top action row
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        IconButton(
-                          onPressed: () async {
-                            await _savePosition();
-                            if (context.mounted) context.go('/listen');
-                          },
-                          icon: Icon(Icons.arrow_back_rounded, color: tokens.cream),
-                        ),
-                        IconButton(
-                          onPressed: _favorite,
-                          tooltip: _card!.isFavorite
-                              ? 'Remove from favorites'
-                              : 'Save to favorites',
-                          icon: Icon(
-                            _card!.isFavorite ? Icons.favorite : Icons.favorite_border,
-                            color: tokens.gold,
-                          ),
-                        ),
-                      ],
-                    ),
+                  IconButton(
+                    onPressed: () async {
+                      await _savePosition();
+                      if (context.mounted) context.go('/listen');
+                    },
+                    icon: Icon(Icons.arrow_back_rounded, color: tokens.moon),
                   ),
-                  // Scene player
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      child: StreamBuilder<Duration>(
-                        stream: player.positionStream,
-                        builder: (context, posSnap) {
-                          final position = posSnap.data ?? Duration.zero;
-                          final duration = player.duration ?? Duration.zero;
-                          final maxMs = max(1, duration.inMilliseconds).toDouble();
-                          final progress = (position.inMilliseconds.toDouble() / maxMs)
-                              .clamp(0.0, 1.0);
-                          return StreamBuilder<PlayerState>(
-                            stream: player.playerStateStream,
-                            builder: (context, stateSnap) {
-                              final isPlaying = stateSnap.data?.playing ?? false;
-                              final text = _card!.storyText ?? '';
-                              final wordCount = tokenizeStory(text).length;
-                              final durationMs = duration.inMilliseconds;
-                              final int? highlightedWordIndex;
-                              if (text.isEmpty || wordCount == 0) {
-                                highlightedWordIndex = null;
-                              } else if (_wordStarts != null) {
-                                // Curated stories: drive the highlight from real
-                                // ElevenLabs per-word timestamps.
-                                highlightedWordIndex = wordIndexForTime(
-                                  _wordStarts!,
-                                  position.inMilliseconds / 1000.0,
-                                );
-                              } else if (durationMs == 0) {
-                                highlightedWordIndex = null;
-                              } else {
-                                // No timing (e.g. generated stories): estimate.
-                                highlightedWordIndex = (progress * wordCount)
-                                    .floor()
-                                    .clamp(0, wordCount - 1);
-                              }
-                              return StScenePlayer(
-                                title: _card!.title,
-                                bodyText: _card!.storyText ?? '',
-                                highlightedWordIndex: highlightedWordIndex,
-                                isPlaying: isPlaying,
-                                progress: progress,
-                                elapsed: _clock(position),
-                                total: _clock(duration),
-                                // Tint the night background with the story's
-                                // color as a soft top-down glow (rather than
-                                // lerping to a muddy mid-tone). Harmonizes with
-                                // the bedtime gradient while keeping a hint of
-                                // the story's identity.
-                                artPanel: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        Color.alphaBlend(
-                                          hexOrFallback(_card!.color)
-                                              .withValues(alpha: 0.32),
-                                          AppColors.night3,
-                                        ),
-                                        AppColors.night1,
-                                      ],
-                                    ),
-                                  ),
-                                  child: Center(
-                                    child: StoryAvatar(
-                                      card: _card!,
-                                      conceptSize: 150,
-                                      pixelScale: 10,
-                                    ),
-                                  ),
-                                ),
-                                onPlayPause: () =>
-                                    player.playing ? player.pause() : player.play(),
-                                onSeek: (value) => player.seek(
-                                  Duration(
-                                    milliseconds: (value * maxMs).round(),
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
+                  IconButton(
+                    onPressed: _favorite,
+                    tooltip: _card!.isFavorite
+                        ? 'Remove from favorites'
+                        : 'Save to favorites',
+                    icon: Icon(
+                      _card!.isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: tokens.lantern,
                     ),
                   ),
                 ],
               ),
             ),
-          );
-        },
+            // Scene player
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: StreamBuilder<Duration>(
+                  stream: player.positionStream,
+                  builder: (context, posSnap) {
+                    final position = posSnap.data ?? Duration.zero;
+                    final duration = player.duration ?? Duration.zero;
+                    final maxMs = max(1, duration.inMilliseconds).toDouble();
+                    final progress = (position.inMilliseconds.toDouble() / maxMs)
+                        .clamp(0.0, 1.0);
+                    return StreamBuilder<PlayerState>(
+                      stream: player.playerStateStream,
+                      builder: (context, stateSnap) {
+                        final isPlaying = stateSnap.data?.playing ?? false;
+                        final text = _card!.storyText ?? '';
+                        final wordCount = tokenizeStory(text).length;
+                        final durationMs = duration.inMilliseconds;
+                        final int? highlightedWordIndex;
+                        if (text.isEmpty || wordCount == 0) {
+                          highlightedWordIndex = null;
+                        } else if (_wordStarts != null) {
+                          // Curated stories: drive the highlight from real
+                          // ElevenLabs per-word timestamps.
+                          highlightedWordIndex = wordIndexForTime(
+                            _wordStarts!,
+                            position.inMilliseconds / 1000.0,
+                          );
+                        } else if (durationMs == 0) {
+                          highlightedWordIndex = null;
+                        } else {
+                          // No timing (e.g. generated stories): estimate.
+                          highlightedWordIndex = (progress * wordCount)
+                              .floor()
+                              .clamp(0, wordCount - 1);
+                        }
+                        return StScenePlayer(
+                          title: _card!.title,
+                          bodyText: _card!.storyText ?? '',
+                          highlightedWordIndex: highlightedWordIndex,
+                          isPlaying: isPlaying,
+                          progress: progress,
+                          elapsed: _clock(position),
+                          total: _clock(duration),
+                          // Tint the night background with the story's
+                          // color as a soft top-down glow (rather than
+                          // lerping to a muddy mid-tone). Harmonizes with
+                          // the bedtime gradient while keeping a hint of
+                          // the story's identity.
+                          artPanel: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Color.alphaBlend(
+                                    hexOrFallback(_card!.color)
+                                        .withValues(alpha: 0.32),
+                                    tokens.nightCard,
+                                  ),
+                                  tokens.nightDeep,
+                                ],
+                              ),
+                            ),
+                            child: Center(
+                              child: StoryAvatar(
+                                card: _card!,
+                                conceptSize: 150,
+                                pixelScale: 10,
+                              ),
+                            ),
+                          ),
+                          onPlayPause: () =>
+                              player.playing ? player.pause() : player.play(),
+                          onSeek: (value) => player.seek(
+                            Duration(
+                              milliseconds: (value * maxMs).round(),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
