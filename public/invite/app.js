@@ -12,6 +12,8 @@ import {
 import {
   getAuth,
   signInWithCustomToken,
+  onAuthStateChanged,
+  getIdTokenResult,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {
   getFunctions,
@@ -74,6 +76,7 @@ let functionsInstance = null;
 let redeemVoiceInviteFn = null;
 let uploadVoiceInviteSampleFn = null;
 let submitVoiceInviteFn = null;
+let currentToken = "";
 
 function extractToken() {
   // Expect "/invite/<token>" (optionally with a trailing slash).
@@ -86,6 +89,119 @@ function extractToken() {
   } catch {
     return raw;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Session persistence (survive tab reload without burning the single-use
+// redeem token). Firebase Auth already persists the signed-in user across
+// reloads on its own (indexedDB persistence); the gap this closes is that
+// `main()` used to call `redeemVoiceInviteFn` unconditionally on every load,
+// which re-redeems (and fails) a token that was already consumed earlier in
+// this same browser session. sessionStorage — scoped to this tab, cleared
+// when the tab closes — is the right lifetime: it should not leak across
+// tabs or survive a real restart, only a reload/background of THIS tab.
+// ---------------------------------------------------------------------------
+
+const SESSION_STORAGE_PREFIX = "storytimeInviteSession:v1:";
+
+function sessionStorageKey(token) {
+  return SESSION_STORAGE_PREFIX + token;
+}
+
+function readStoredSession(token) {
+  let raw;
+  try {
+    raw = sessionStorage.getItem(sessionStorageKey(token));
+  } catch {
+    return null; // sessionStorage unavailable (privacy mode, etc.)
+  }
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || parsed.token !== token || !parsed.customToken || !parsed.uid || !parsed.invite) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveStoredSession(token, patch) {
+  const existing = readStoredSession(token) || { token };
+  const next = { ...existing, ...patch, token };
+  try {
+    sessionStorage.setItem(sessionStorageKey(token), JSON.stringify(next));
+  } catch {
+    // Best-effort only — if storage is unavailable, the page still works,
+    // it just falls back to hitting redeem again next load.
+  }
+}
+
+function clearStoredSession(token) {
+  try {
+    sessionStorage.removeItem(sessionStorageKey(token));
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * Resolves once Firebase Auth has finished restoring (or failing to
+ * restore) any persisted session for this tab, so we know definitively
+ * whether there's already a signed-in user before deciding to call redeem.
+ */
+function waitForAuthInit(authInstance) {
+  return new Promise((resolve) => {
+    const unsubscribe = onAuthStateChanged(authInstance, (user) => {
+      unsubscribe();
+      resolve(user);
+    });
+  });
+}
+
+/** True only if `user` carries the invite claims minted by redeemVoiceInvite. */
+async function hasLiveInviteClaims(user) {
+  if (!user) return false;
+  try {
+    const result = await getIdTokenResult(user);
+    return result?.claims?.invite === true;
+  } catch {
+    return false;
+  }
+}
+
+function buildPromptsFromInvite(invite) {
+  const prompts = invite.prompts.slice(0, NUM_PROMPTS).map((pr) => ({
+    label: pr.label || "",
+    text: pr.text || "",
+    status: "idle", // idle | recording | recorded | uploading | uploaded
+    blob: null,
+    mimeType: "",
+    audioUrl: null,
+    recorder: null,
+    stream: null,
+    source: null,
+    micFailed: false,
+    uploadError: "",
+  }));
+  // Pad defensively if the server ever returns fewer/more than 5.
+  while (prompts.length < NUM_PROMPTS) {
+    prompts.push({
+      label: `Prompt ${prompts.length + 1}`,
+      text: "",
+      status: "idle",
+      blob: null,
+      mimeType: "",
+      audioUrl: null,
+      recorder: null,
+      stream: null,
+      source: null,
+      micFailed: false,
+      uploadError: "",
+    });
+  }
+  return prompts;
 }
 
 function normalizeMimeType(mimeType) {
@@ -472,6 +588,7 @@ async function handleSubmit() {
 
     await submitVoiceInviteFn({});
 
+    if (currentToken) saveStoredSession(currentToken, { submitted: true });
     state.phase = "success";
     render();
   } catch (err) {
@@ -538,6 +655,7 @@ async function main() {
     render();
     return;
   }
+  currentToken = token;
 
   render(); // show "redeeming…"
 
@@ -560,48 +678,85 @@ async function main() {
     return;
   }
 
+  // A tab reload (mobile Safari backgrounding, accidental refresh mid-
+  // recording, etc.) must NOT call redeemVoiceInviteFn again — the token is
+  // single-use server-side, so a second redeem always fails and would show
+  // a terminal "no longer valid" error even though the 2h session is still
+  // very much alive. Resolve whether we already redeemed this token in this
+  // browser session before ever touching the network for a fresh redeem.
+  const stored = readStoredSession(token);
+
+  if (stored && stored.submitted) {
+    // Already fully submitted earlier this session — reloading should land
+    // back on the thank-you screen, not re-show the recording form.
+    state.phase = "success";
+    render();
+    return;
+  }
+
+  if (stored) {
+    // Let Firebase Auth's own persisted session (indexedDB, survives
+    // reload automatically) settle first — that's the common case and
+    // needs no network call at all.
+    const restoredUser = await waitForAuthInit(auth);
+    let liveUser = restoredUser && restoredUser.uid === stored.uid && (await hasLiveInviteClaims(restoredUser))
+      ? restoredUser
+      : null;
+
+    if (!liveUser) {
+      // Auth session didn't survive (storage cleared, first paint before
+      // indexedDB restore, etc.) but we still hold the custom token minted
+      // by the original redeem — sign in with it again rather than
+      // re-redeeming. Custom tokens can be used to sign in more than once
+      // within their validity window, so this is safe and makes no call to
+      // redeemVoiceInvite.
+      try {
+        const cred = await signInWithCustomToken(auth, stored.customToken);
+        if (await hasLiveInviteClaims(cred.user)) {
+          liveUser = cred.user;
+        }
+      } catch {
+        liveUser = null;
+      }
+    }
+
+    if (liveUser) {
+      state.invite = stored.invite;
+      state.prompts = buildPromptsFromInvite(stored.invite);
+      state.phase = "form";
+      render();
+      return;
+    }
+
+    // Stored session is unrecoverable (custom token also expired) — clear
+    // it and fall through to a real redeem attempt below. If the invite
+    // link itself is still genuinely valid this recovers gracefully;
+    // if it was a one-time link already consumed, the redeem call below
+    // correctly surfaces the terminal error.
+    clearStoredSession(token);
+  }
+
   try {
     const result = await redeemVoiceInviteFn({ token });
     const data = result.data || {};
 
-    await signInWithCustomToken(auth, data.customToken);
+    const cred = await signInWithCustomToken(auth, data.customToken);
 
-    state.invite = {
+    const invite = {
       name: data.name || "",
       relationship: data.relationship || "",
       prompts: Array.isArray(data.prompts) ? data.prompts : [],
       expiresAt: data.expiresAt || "",
     };
-    state.prompts = state.invite.prompts.slice(0, NUM_PROMPTS).map((pr) => ({
-      label: pr.label || "",
-      text: pr.text || "",
-      status: "idle", // idle | recording | recorded | uploading | uploaded
-      blob: null,
-      mimeType: "",
-      audioUrl: null,
-      recorder: null,
-      stream: null,
-      source: null,
-      micFailed: false,
-      uploadError: "",
-    }));
-    // Pad defensively if the server ever returns fewer/more than 5.
-    while (state.prompts.length < NUM_PROMPTS) {
-      state.prompts.push({
-        label: `Prompt ${state.prompts.length + 1}`,
-        text: "",
-        status: "idle",
-        blob: null,
-        mimeType: "",
-        audioUrl: null,
-        recorder: null,
-        stream: null,
-        source: null,
-        micFailed: false,
-        uploadError: "",
-      });
-    }
 
+    saveStoredSession(token, {
+      customToken: data.customToken,
+      uid: cred.user.uid,
+      invite,
+    });
+
+    state.invite = invite;
+    state.prompts = buildPromptsFromInvite(invite);
     state.phase = "form";
     render();
   } catch (err) {

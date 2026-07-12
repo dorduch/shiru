@@ -20,7 +20,6 @@ FamilyVoice _voice(
     id: id,
     name: 'Voice $id',
     relationship: 'Grandma',
-    subjectLiving: true,
     status: status,
     createdAt: DateTime(2026, 1, 1),
   );

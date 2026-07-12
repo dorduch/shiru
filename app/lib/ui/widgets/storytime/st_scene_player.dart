@@ -1,9 +1,20 @@
 import 'package:flutter/material.dart';
 import '../../../logic/story_tokenizer.dart';
+import '../../../services/key_value_store.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_typography.dart';
 import '../../../theme/app_shadows.dart';
 import '../../../theme/lantern_tokens.dart';
+
+/// Persisted key for the read-along text-size preference (`'1.0'` or
+/// `'1.25'`). Stored via the same secure key-value store the PIN gate uses
+/// for its lockout counters — there's no dedicated "app settings" store yet,
+/// so this reuses that existing pattern rather than introducing a new one.
+const _kTextScaleKey = 'storytime_text_scale';
+
+/// The enlarged ("A+") read-along text scale multiplier, applied on top of
+/// `AppTypography.storyBody`.
+const double _kLargeTextScale = 1.25;
 
 /// Dark bedtime story player widget.
 ///
@@ -15,7 +26,7 @@ import '../../../theme/lantern_tokens.dart';
 /// [highlightedWordIndex] is the zero-based word index within [bodyText] to
 /// highlight in the lantern accent color. Real audio sync is NOT wired here —
 /// the parameter is kept external so the parent can drive it from any source.
-class StScenePlayer extends StatelessWidget {
+class StScenePlayer extends StatefulWidget {
   const StScenePlayer({
     super.key,
     required this.title,
@@ -54,8 +65,41 @@ class StScenePlayer extends StatelessWidget {
   final ValueChanged<double>? onSeek;
 
   @override
+  State<StScenePlayer> createState() => _StScenePlayerState();
+}
+
+class _StScenePlayerState extends State<StScenePlayer> {
+  // Direct instantiation (rather than reading `keyValueStoreProvider` via
+  // Riverpod) so this widget stays a plain `StatefulWidget` — it's mounted
+  // in tests without a `ProviderScope` ancestor. Same secure-storage backend
+  // `PinGateScreen` uses for its lockout counters, just without the DI layer.
+  final KeyValueStore _store = SecureKeyValueStore();
+  double _textScale = 1.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTextScale();
+  }
+
+  Future<void> _loadTextScale() async {
+    final saved = await _store.read(key: _kTextScaleKey);
+    final scale = double.tryParse(saved ?? '');
+    if (mounted && scale != null) {
+      setState(() => _textScale = scale);
+    }
+  }
+
+  Future<void> _toggleTextScale() async {
+    final next = _textScale == 1.0 ? _kLargeTextScale : 1.0;
+    setState(() => _textScale = next);
+    await _store.write(key: _kTextScaleKey, value: next.toString());
+  }
+
+  @override
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<LanternTokens>()!;
+    final isLarge = _textScale != 1.0;
 
     return Container(
       decoration: BoxDecoration(
@@ -70,7 +114,7 @@ class StScenePlayer extends StatelessWidget {
           // Art panel
           AspectRatio(
             aspectRatio: 16 / 9,
-            child: artPanel ??
+            child: widget.artPanel ??
                 Container(
                   color: tokens.nightCard,
                   child: Icon(
@@ -85,24 +129,39 @@ class StScenePlayer extends StatelessWidget {
           // title → story → controls (not story → title).
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-            child: Text(
-              title,
-              style: AppTypography.titleLarge.copyWith(color: tokens.moon),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.title,
+                    style: AppTypography.titleLarge.copyWith(color: tokens.moon),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                _TextSizeToggle(
+                  isLarge: isLarge,
+                  tokens: tokens,
+                  onTap: _toggleTextScale,
+                ),
+              ],
             ),
           ),
 
           // Read text — auto-follows the highlighted word as it is narrated.
           Expanded(
             child: _ReadAlongText(
-              text: bodyText,
-              highlightedIndex: highlightedWordIndex,
+              text: widget.bodyText,
+              highlightedIndex: widget.highlightedWordIndex,
               padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
               baseStyle: AppTypography.storyBody.copyWith(
+                fontSize: (AppTypography.storyBody.fontSize ?? 20) * _textScale,
                 color: tokens.moon.withValues(alpha: 0.85),
               ),
               highlightStyle: AppTypography.storyBody.copyWith(
+                fontSize: (AppTypography.storyBody.fontSize ?? 20) * _textScale,
                 color: tokens.lantern,
                 fontWeight: FontWeight.w600,
               ),
@@ -111,15 +170,69 @@ class StScenePlayer extends StatelessWidget {
 
           // Transport row
           _Transport(
-            isPlaying: isPlaying,
-            progress: progress,
-            elapsed: elapsed,
-            total: total,
-            onPlayPause: onPlayPause,
-            onSeek: onSeek,
+            isPlaying: widget.isPlaying,
+            progress: widget.progress,
+            elapsed: widget.elapsed,
+            total: widget.total,
+            onPlayPause: widget.onPlayPause,
+            onSeek: widget.onSeek,
             tokens: tokens,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Small "A / A+" segmented control that scales the read-along text.
+/// Persisted per device via [keyValueStoreProvider] (see [_kTextScaleKey]).
+class _TextSizeToggle extends StatelessWidget {
+  const _TextSizeToggle({
+    required this.isLarge,
+    required this.tokens,
+    required this.onTap,
+  });
+
+  final bool isLarge;
+  final LanternTokens tokens;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: isLarge ? 'Text size: large. Switch to normal.' : 'Text size: normal. Switch to large.',
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: tokens.nightCard,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: tokens.hush),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'A',
+                style: AppTypography.labelSmall.copyWith(
+                  color: isLarge ? tokens.moonFaint : tokens.lantern,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(width: 2),
+              Text(
+                'A+',
+                style: AppTypography.labelSmall.copyWith(
+                  color: isLarge ? tokens.lantern : tokens.moonFaint,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -157,7 +270,12 @@ class _ReadAlongTextState extends State<_ReadAlongText> {
   @override
   void didUpdateWidget(_ReadAlongText old) {
     super.didUpdateWidget(old);
-    if (widget.highlightedIndex != old.highlightedIndex) {
+    // Re-sync on a highlight change (normal narration tick) or a text-size
+    // change (the A/A+ toggle) — the latter shifts line heights enough that
+    // the current word can fall outside the comfort band even though its
+    // index didn't move.
+    if (widget.highlightedIndex != old.highlightedIndex ||
+        widget.baseStyle.fontSize != old.baseStyle.fontSize) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _follow());
     }
   }
@@ -298,33 +416,45 @@ class _Transport extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+      // Vertical insets trimmed from the original (8, 20) to fund the
+      // slider→row gap below without growing the transport row's total
+      // height — see the SizedBox between the slider and the time row.
+      padding: const EdgeInsets.fromLTRB(20, 2, 20, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Progress bar
-          SliderTheme(
-            data: SliderThemeData(
-              trackHeight: 3,
-              thumbShape:
-                  const RoundSliderThumbShape(enabledThumbRadius: 6),
-              overlayShape:
-                  const RoundSliderOverlayShape(overlayRadius: 14),
-              activeTrackColor: tokens.lantern,
-              // LanternTokens has no direct `trackInactive` equivalent (that
-              // field was mode-aware on StorytimeTokens — day vs bedtime);
-              // `hush` is the single dim/inactive hairline token that plays
-              // the same "the rest of the track" role on the one permanent
-              // dark ground.
-              inactiveTrackColor: tokens.hush,
-              thumbColor: tokens.lantern,
-              overlayColor: tokens.lantern.withValues(alpha: 0.18),
-            ),
-            child: Slider(
-              value: progress.clamp(0.0, 1.0),
-              onChanged: onSeek,
+          Semantics(
+            label: 'Story progress',
+            child: SliderTheme(
+              data: SliderThemeData(
+                trackHeight: 3,
+                thumbShape:
+                    const RoundSliderThumbShape(enabledThumbRadius: 6),
+                overlayShape:
+                    const RoundSliderOverlayShape(overlayRadius: 14),
+                activeTrackColor: tokens.lantern,
+                // LanternTokens has no direct `trackInactive` equivalent (that
+                // field was mode-aware on StorytimeTokens — day vs bedtime);
+                // `hush` is the single dim/inactive hairline token that plays
+                // the same "the rest of the track" role on the one permanent
+                // dark ground.
+                inactiveTrackColor: tokens.hush,
+                thumbColor: tokens.lantern,
+                overlayColor: tokens.lantern.withValues(alpha: 0.18),
+              ),
+              child: Slider(
+                value: progress.clamp(0.0, 1.0),
+                onChanged: onSeek,
+                semanticFormatterCallback: (value) =>
+                    '${(value * 100).round()} percent',
+              ),
             ),
           ),
+          // Slack between the slider's touch target and the transport row
+          // below — small fingers were catching the seek track while
+          // reaching for play/pause.
+          const SizedBox(height: 10),
           // Time row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -336,24 +466,28 @@ class _Transport extends StatelessWidget {
                 ),
               ),
               // Play/pause button
-              GestureDetector(
-                onTap: onPlayPause,
-                child: Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: tokens.lantern,
-                    boxShadow: AppShadows.primaryGlow,
-                  ),
-                  child: Icon(
-                    isPlaying
-                        ? Icons.pause_rounded
-                        : Icons.play_arrow_rounded,
-                    // nightDeep: same on-accent contrast convention GlowButton
-                    // uses for its label/icon on the lantern/ctaGradient fill.
-                    color: tokens.nightDeep,
-                    size: 26,
+              Semantics(
+                button: true,
+                label: isPlaying ? 'Pause story' : 'Play story',
+                child: GestureDetector(
+                  onTap: onPlayPause,
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: tokens.lantern,
+                      boxShadow: AppShadows.primaryGlow,
+                    ),
+                    child: Icon(
+                      isPlaying
+                          ? Icons.pause_rounded
+                          : Icons.play_arrow_rounded,
+                      // nightDeep: same on-accent contrast convention GlowButton
+                      // uses for its label/icon on the lantern/ctaGradient fill.
+                      color: tokens.nightDeep,
+                      size: 26,
+                    ),
                   ),
                 ),
               ),

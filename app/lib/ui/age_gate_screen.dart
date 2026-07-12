@@ -188,7 +188,7 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
                         ),
                         SizedBox(height: AppResponsive.spacing(context, 8)),
                         Text(
-                          'Grown-ups only for this part',
+                          'Just a quick check',
                           style: AppTypography.displayMedium.copyWith(
                             color: tokens.moon,
                           ),

@@ -218,8 +218,10 @@ const String _tiara =
 const String _hardHat =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">'
     '<g transform="translate(3.27,2.36) scale(0.86)">'
-    '<rect x="21" y="14" width="6" height="12" rx="2" fill="#E0A21F"/>'
     '<path d="M9 31 a15 13 0 0 1 30 0 Z" fill="#F2C03E" stroke="#9A6A12" stroke-width="2.2" stroke-linejoin="round"/>'
+    '<path d="M24 16 Q21.5 24 24 31" fill="none" stroke="#9A6A12" stroke-width="2.2" stroke-linecap="round"/>'
+    '<path d="M12.5 27 Q17 20 24 18.5" fill="none" stroke="#9A6A12" stroke-width="1.6" stroke-linecap="round" opacity="0.55"/>'
+    '<path d="M35.5 27 Q31 20 24 18.5" fill="none" stroke="#9A6A12" stroke-width="1.6" stroke-linecap="round" opacity="0.55"/>'
     '<rect x="6" y="30" width="36" height="5" rx="2.5" fill="#E0A21F" stroke="#9A6A12" stroke-width="2.2"/>'
     '</g>'
     '</svg>';

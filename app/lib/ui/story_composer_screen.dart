@@ -11,6 +11,7 @@ import '../theme/app_responsive.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import '../theme/lantern_tokens.dart';
+import 'storytime_screens.dart' show StoriesLeftIndicator;
 import 'story_slot_sheet.dart';
 import 'widgets/lantern/lantern.dart';
 import 'widgets/storytime/st_concept_token.dart';
@@ -261,6 +262,16 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
                 child: Column(
                   children: [
                     _buildHeader(context, tokens),
+                    // Composer always shows the "stories left today"
+                    // indicator (spec §2.1), unlike Home which only
+                    // surfaces it once the count is low.
+                    Padding(
+                      padding: EdgeInsets.only(left: gutter, bottom: 4),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: const StoriesLeftIndicator(),
+                      ),
+                    ),
                     Expanded(
                       child: SingleChildScrollView(
                         padding: EdgeInsets.symmetric(
@@ -415,16 +426,17 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
 
         // A horizontal ListView gives every item a *tight* cross-axis
         // (height) constraint equal to this box's height, so it must fit the
-        // tallest card variant — a built-in card (well + name + subline +
-        // the 44pt preview pill) measures ~197pt regardless of breakpoint
-        // (only its width changes between compact/regular per
-        // `VoiceCard`'s own sizing), well past the family/processing
-        // cards' ~140pt. Sized to the built-in's measured height + a small
-        // buffer rather than `VoiceCard`'s nominal 148/160 target, which
-        // only fits the pill-less variants and would clip/overflow the
-        // built-ins.
+        // tallest card variant — a built-in card (well + up to 2-line name +
+        // up to 2-line subline + the 44pt preview pill) measures ~236pt
+        // regardless of breakpoint (only its width changes between
+        // compact/regular per `VoiceCard`'s own sizing), well past the
+        // family/processing cards' ~180pt. Sized to the built-in's measured
+        // height + a small buffer rather than `VoiceCard`'s nominal 148/160
+        // target, which only fits the pill-less, single-line variants and
+        // would clip/overflow the built-ins now that names/sublines can wrap
+        // to 2 lines (see voice_card.dart maxLines).
         return SizedBox(
-          height: 208,
+          height: 244,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: cards.length,

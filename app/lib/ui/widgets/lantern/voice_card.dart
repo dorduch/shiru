@@ -160,7 +160,7 @@ class VoiceCard extends StatelessWidget {
               color: tokens.moon,
             ),
             textAlign: TextAlign.center,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
           if (effectiveSubline != null) ...[
@@ -172,7 +172,7 @@ class VoiceCard extends StatelessWidget {
                 color: tokens.moonFaint,
               ),
               textAlign: TextAlign.center,
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ],

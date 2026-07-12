@@ -217,7 +217,7 @@ class _PinGateScreenState extends ConsumerState<PinGateScreen> {
     }
 
     return _step == _PinFlowStep.confirm
-        ? 'Enter it one more time'
+        ? 'Confirm your PIN'
         : 'Create a parent PIN';
   }
 

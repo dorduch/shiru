@@ -25,7 +25,8 @@ service cloud.firestore {
     }
 
     match /storytimeConfig/{document} {
-      allow read, write: if false;
+      allow read: if request.auth != null;
+      allow write: if false;
     }
 
     match /voiceInvites/{tokenHash} {

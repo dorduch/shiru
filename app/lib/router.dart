@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -123,11 +124,12 @@ GoRouter createRouter(WidgetRef ref) {
           StoryPlayerScreen(cardId: state.pathParameters['cardId']!),
         ),
       ),
-      // dev only — remove before prod
-      GoRoute(
-        path: '/dev/gallery',
-        builder: (c, s) => const ComponentGalleryScreen(),
-      ),
+      // dev only — gated out of release builds so it never ships to prod.
+      if (!kReleaseMode)
+        GoRoute(
+          path: '/dev/gallery',
+          builder: (c, s) => const ComponentGalleryScreen(),
+        ),
       GoRoute(
         path: '/parent-access',
         builder: (context, state) => ParentAccessScreen(

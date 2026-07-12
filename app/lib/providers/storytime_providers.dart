@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/family_voice.dart';
@@ -232,6 +233,79 @@ final lastNarratorProvider = Provider<AsyncValue<String>>((ref) {
       _resolveDefaultNarrator(null, readyVoices),
     ),
   );
+});
+
+// ─── Daily story allowance (quota) visibility ──────────────────────────────
+//
+// Spec §2.1: the daily allowance is enforced server-side (`createStoryJob` in
+// functions/src/index.ts), but a parent/child should be able to see how many
+// stories are left *before* they hit zero — including before the first job
+// of the day, when the only client-known number (`CreateStoryJobResult
+// .remaining`) hasn't been fetched yet. These providers read the same
+// Firestore documents the backend writes/reads.
+
+/// UTC calendar-day key, e.g. `2026-07-12` — must match the backend's
+/// `utcQuotaDay()` (`functions/src/domain.ts`: `date.toISOString().slice(0,
+/// 10)`), since both sides key `generationUsage` docs by this string.
+String _utcQuotaDay([DateTime? now]) =>
+    (now ?? DateTime.now()).toUtc().toIso8601String().substring(0, 10);
+
+/// Today's already-reserved story count, read live from
+/// `users/{uid}/generationUsage/{utcDay}` (Firestore rules permit
+/// user-scoped reads here — `firestore.rules`: `allow read: if owns(uid)`).
+/// Firestore's own snapshot stream means this updates the moment
+/// `createStoryJob` reserves a unit server-side, so no extra plumbing from
+/// `CreateStoryJobResult.remaining` is needed to keep it fresh mid-session.
+final _generationUsageProvider = StreamProvider.autoDispose<int>((ref) async* {
+  final user = await ref.watch(authUserProvider.future);
+  if (user == null) {
+    yield 0;
+    return;
+  }
+  final day = _utcQuotaDay();
+  final doc = FirebaseFirestore.instance
+      .collection('users')
+      .doc(user.uid)
+      .collection('generationUsage')
+      .doc(day);
+  yield* doc.snapshots().map(
+    (snap) => (snap.data()?['reserved'] as num?)?.toInt() ?? 0,
+  );
+});
+
+/// Configured daily story allowance, from `storytimeConfig/generation`
+/// (`dailyQuota`, legacy `dailyLimit` fallback — mirrors the backend's own
+/// fallback chain in `functions/src/index.ts`).
+///
+/// `firestore.rules` currently denies client reads of `storytimeConfig/*`
+/// (`allow read, write: if false`), so a permission-denied error here
+/// quietly degrades to the backend's own hardcoded default (10) rather than
+/// surfacing an error UI — this indicator is a soft nicety, not something
+/// worth a loading spinner or retry control over. Once the rule is opened to
+/// authenticated reads, this starts reflecting the real configured value
+/// with no client-side change needed.
+final _dailyQuotaProvider = FutureProvider.autoDispose<int>((ref) async {
+  try {
+    final snap = await FirebaseFirestore.instance
+        .doc('storytimeConfig/generation')
+        .get();
+    final data = snap.data();
+    final quota = (data?['dailyQuota'] as num?) ?? (data?['dailyLimit'] as num?);
+    return quota?.toInt() ?? 10;
+  } catch (_) {
+    return 10;
+  }
+});
+
+/// Stories left today — the configured allowance minus today's reserved
+/// count. Null while either input is still resolving; callers should treat
+/// null as "don't show the indicator yet", not as zero.
+final remainingStoriesTodayProvider = Provider.autoDispose<int?>((ref) {
+  final usage = ref.watch(_generationUsageProvider).valueOrNull;
+  final quota = ref.watch(_dailyQuotaProvider).valueOrNull;
+  if (usage == null || quota == null) return null;
+  final remaining = quota - usage;
+  return remaining < 0 ? 0 : remaining;
 });
 
 String _resolveDefaultNarrator(

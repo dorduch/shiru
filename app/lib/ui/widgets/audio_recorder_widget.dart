@@ -17,7 +17,7 @@ import '../../providers/recording_provider.dart';
 import '../../services/audio_service.dart';
 import '../../services/library_import_service.dart';
 import '../../services/recording_service.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/lantern_tokens.dart';
 
 typedef AudioFilePicker = Future<FilePickerResult?> Function();
 typedef MediaSelectionImporter =
@@ -71,14 +71,17 @@ class _MediaActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = emphasized ? AppColors.primaryInk : AppColors.textMuted;
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
+    final foreground = emphasized ? tokens.lantern : tokens.moonDim;
     return Semantics(
       button: true,
       label: '${emphasized ? 'Record' : 'Load'} $label',
       child: SizedBox(
         height: 56,
         child: Material(
-          color: emphasized ? const Color(0xFFECFDF3) : AppColors.surface,
+          color: emphasized
+              ? tokens.lantern.withValues(alpha: 0.16)
+              : tokens.nightCard,
           borderRadius: BorderRadius.circular(16),
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
@@ -88,9 +91,7 @@ class _MediaActionButton extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: emphasized
-                      ? const Color(0xFFBBF7D0)
-                      : AppColors.border,
+                  color: emphasized ? tokens.lantern : tokens.hush,
                 ),
               ),
               child: Row(
@@ -336,7 +337,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
             builder: (ctx) => AlertDialog(
               title: const Text('Microphone Permission'),
               content: const Text(
-                'Shiru needs microphone access to record. You can turn it on in Settings.',
+                'Storytime needs microphone access to record. You can turn it on in Settings.',
               ),
               actions: [
                 TextButton(
@@ -460,6 +461,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
       MediaQuery.of(context).orientation == Orientation.landscape;
 
   Widget _buildHasMedia() {
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
     final compactLandscape = _isCompactLandscape;
     final selection = widget.currentSelection!;
     final isVideo = selection.mediaType == CardMediaType.video;
@@ -467,15 +469,15 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
     return Container(
       padding: EdgeInsets.all(compactLandscape ? 12 : 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: tokens.nightCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF86EFAC)),
+        border: Border.all(color: tokens.hueMeadow),
       ),
       child: Row(
         children: [
           Icon(
             isVideo ? Icons.video_file_outlined : Icons.audio_file,
-            color: AppColors.primaryStrong,
+            color: tokens.hueMeadow,
             size: compactLandscape ? 24 : 28,
           ),
           SizedBox(width: compactLandscape ? 10 : 12),
@@ -488,6 +490,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
                   style: TextStyle(
                     fontSize: compactLandscape ? 14 : 16,
                     fontWeight: FontWeight.w600,
+                    color: tokens.moon,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -504,9 +507,9 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
                       }
                       return Text(
                         details.join('  •  '),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.textSecondary,
+                          color: tokens.moonDim,
                         ),
                       );
                     },
@@ -518,7 +521,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
             IconButton(
               tooltip: 'Preview video',
               onPressed: widget.onPreviewVideo,
-              icon: const Icon(Icons.play_circle_outline),
+              icon: Icon(Icons.play_circle_outline, color: tokens.moonDim),
             ),
           SizedBox(width: compactLandscape ? 6 : 8),
           TextButton(
@@ -529,7 +532,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
             child: Text(
               'Change',
               style: TextStyle(
-                color: AppColors.primaryInk,
+                color: tokens.lantern,
                 fontSize: compactLandscape ? 13 : null,
               ),
             ),
@@ -565,6 +568,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
   }
 
   Widget _buildSourceSelection() {
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
     final compactLandscape = _isCompactLandscape;
 
     return AbsorbPointer(
@@ -574,12 +578,12 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Load from device',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: tokens.moon,
               ),
             ),
             SizedBox(height: compactLandscape ? 6 : 8),
@@ -603,12 +607,12 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
               ],
             ),
             SizedBox(height: compactLandscape ? 10 : 14),
-            const Text(
+            Text(
               'Record now',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: tokens.moon,
               ),
             ),
             SizedBox(height: compactLandscape ? 6 : 8),
@@ -644,14 +648,15 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
   }
 
   Widget _buildRecording() {
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
     final isPaused = _recState == RecordingState.paused;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB),
+        color: tokens.nightCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEF4444), width: 2),
+        border: Border.all(color: tokens.hueCoral, width: 2),
       ),
       child: Column(
         children: [
@@ -665,10 +670,10 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
                   height: 14,
                   decoration: BoxDecoration(
                     color: isPaused
-                        ? const Color(0xFFFCD34D)
+                        ? tokens.lantern
                         : Color.lerp(
-                            const Color(0xFFEF4444),
-                            const Color(0x66EF4444),
+                            tokens.hueCoral,
+                            tokens.hueCoral.withValues(alpha: 0.4),
                             _pulseController.value,
                           ),
                     shape: BoxShape.circle,
@@ -681,25 +686,23 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: isPaused
-                      ? const Color(0xFFFCD34D)
-                      : const Color(0xFFEF4444),
+                  color: isPaused ? tokens.lantern : tokens.hueCoral,
                 ),
               ),
               const Spacer(),
               Text(
                 _formatDuration(_elapsed),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF1A1A1A),
+                  color: tokens.moon,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
           // Waveform
-          SizedBox(height: 60, child: _buildWaveform(const Color(0xFFEF4444))),
+          SizedBox(height: 60, child: _buildWaveform(tokens.hueCoral)),
           const SizedBox(height: 16),
           // Controls
           Row(
@@ -710,7 +713,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
                   child: Container(
                     height: 48,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF374151),
+                      color: tokens.hush,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -718,16 +721,16 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
                       children: [
                         Icon(
                           isPaused ? Icons.play_arrow : Icons.pause,
-                          color: Colors.white,
+                          color: tokens.moon,
                           size: 18,
                         ),
                         const SizedBox(width: 8),
                         Text(
                           isPaused ? 'Resume' : 'Pause',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            color: tokens.moon,
                           ),
                         ),
                       ],
@@ -742,20 +745,20 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
                   child: Container(
                     height: 48,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEF4444),
+                      color: tokens.hueCoral,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.stop, color: Colors.white, size: 18),
-                        SizedBox(width: 8),
+                        Icon(Icons.stop, color: tokens.nightDeep, size: 18),
+                        const SizedBox(width: 8),
                         Text(
                           'Stop',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            color: tokens.nightDeep,
                           ),
                         ),
                       ],
@@ -768,9 +771,9 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
           const SizedBox(height: 8),
           GestureDetector(
             onTap: _cancelRecording,
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+              style: TextStyle(fontSize: 13, color: tokens.moonFaint),
             ),
           ),
         ],
@@ -779,14 +782,15 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
   }
 
   Widget _buildPreview() {
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
     final service = ref.read(recordingServiceProvider);
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB),
+        color: tokens.nightCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF22C55E), width: 2),
+        border: Border.all(color: tokens.hueMeadow, width: 2),
       ),
       child: Column(
         children: [
@@ -796,27 +800,27 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
               Container(
                 width: 14,
                 height: 14,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF22C55E),
+                decoration: BoxDecoration(
+                  color: tokens.hueMeadow,
                   shape: BoxShape.circle,
                 ),
               ),
               const SizedBox(width: 10),
-              const Text(
+              Text(
                 'Recorded',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF22C55E),
+                  color: tokens.hueMeadow,
                 ),
               ),
               const Spacer(),
               Text(
                 _formatDuration(service.elapsed),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF1A1A1A),
+                  color: tokens.moon,
                 ),
               ),
             ],
@@ -827,7 +831,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
             height: 60,
             child: _buildStaticWaveform(
               service.amplitudeSamples,
-              const Color(0xFF22C55E),
+              tokens.hueMeadow,
             ),
           ),
           const SizedBox(height: 16),
@@ -840,7 +844,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
                   child: Container(
                     height: 48,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF22C55E),
+                      color: tokens.hueMeadow,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -848,16 +852,16 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
                       children: [
                         Icon(
                           _isPreviewPlaying ? Icons.pause : Icons.play_arrow,
-                          color: Colors.white,
+                          color: tokens.nightDeep,
                           size: 18,
                         ),
                         const SizedBox(width: 8),
                         Text(
                           _isPreviewPlaying ? 'Pause' : 'Play',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            color: tokens.nightDeep,
                           ),
                         ),
                       ],
@@ -872,20 +876,20 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
                   child: Container(
                     height: 48,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF374151),
+                      color: tokens.hush,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.refresh, color: Colors.white, size: 18),
-                        SizedBox(width: 8),
+                        Icon(Icons.refresh, color: tokens.moon, size: 18),
+                        const SizedBox(width: 8),
                         Text(
                           'Re-record',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            color: tokens.moon,
                           ),
                         ),
                       ],
@@ -901,6 +905,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
   }
 
   Widget _buildWaveform(Color color) {
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
     return LayoutBuilder(
       builder: (context, constraints) {
         final barWidth = 4.0;
@@ -937,7 +942,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
                 decoration: BoxDecoration(
                   color: i < (samples.isNotEmpty ? barCount : 0)
                       ? color
-                      : const Color(0xFF4B5563),
+                      : tokens.hush,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),

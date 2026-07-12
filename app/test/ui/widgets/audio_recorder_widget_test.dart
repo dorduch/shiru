@@ -6,12 +6,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shiru/models/audio_card.dart';
 import 'package:shiru/services/library_import_service.dart';
+import 'package:shiru/theme/app_theme.dart';
 import 'package:shiru/ui/widgets/audio_recorder_widget.dart';
 
 void main() {
   Widget buildSubject(AudioRecorderWidget child) {
     return ProviderScope(
       child: MaterialApp(
+        // AudioRecorderWidget reads LanternTokens off the ambient Theme (as
+        // it does in production, via main.dart's `theme: StorytimeTheme.bedtime`)
+        // — without this, `Theme.of(context).extension<LanternTokens>()!`
+        // null-checks on the default ThemeData's empty extensions map. Same
+        // fix already applied to PinGateScreen's test.
+        theme: StorytimeTheme.bedtime,
         home: Scaffold(body: SizedBox(width: 600, child: child)),
       ),
     );

@@ -49,25 +49,35 @@ GoRouter _buildRouter() => GoRouter(
     );
 
 void main() {
-  testWidgets('kid Listen shows a grid with origin subtitles', (tester) async {
-    final router = _buildRouter();
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        cardsProvider.overrideWith(
-          (ref) => _StubCards([
-            _card('1', 'Fox', StoryOrigin.generated),
-            _card('2', 'Gran', StoryOrigin.uploaded),
-          ]),
+  testWidgets(
+    'kid Listen badges non-default origins as "Made by you" and drops the '
+    'per-tile origin sublabel for curated stories',
+    (tester) async {
+      final router = _buildRouter();
+      await tester.pumpWidget(ProviderScope(
+        overrides: [
+          cardsProvider.overrideWith(
+            (ref) => _StubCards([
+              _card('1', 'Fox', StoryOrigin.generated),
+              _card('2', 'Gran', StoryOrigin.uploaded),
+              _card('3', 'Old Favorite', StoryOrigin.curated),
+            ]),
+          ),
+        ],
+        child: MaterialApp.router(
+          theme: StorytimeTheme.day,
+          routerConfig: router,
         ),
-      ],
-      child: MaterialApp.router(
-        theme: StorytimeTheme.day,
-        routerConfig: router,
-      ),
-    ));
-    await tester.pumpAndSettle();
-    expect(find.byType(GridView), findsOneWidget);
-    expect(find.text('Your story'), findsOneWidget);
-    expect(find.text('Your audio'), findsOneWidget);
-  });
+      ));
+      await tester.pumpAndSettle();
+      expect(find.byType(GridView), findsOneWidget);
+      // Non-default origins (generated, uploaded) get the badge...
+      expect(find.text('Made by you'), findsNWidgets(2));
+      // ...but the curated tile (the default origin) gets no sublabel at
+      // all — the old "Ready-made" repeated on every tile is gone.
+      expect(find.text('Ready-made'), findsNothing);
+      expect(find.text('Your story'), findsNothing);
+      expect(find.text('Your audio'), findsNothing);
+    },
+  );
 }

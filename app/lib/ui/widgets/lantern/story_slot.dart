@@ -64,28 +64,30 @@ class StorySlot extends StatelessWidget {
           mainAxisSize: MainAxisSize.max,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Stack(
-              clipBehavior: Clip.none,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  label.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                    color: tokens.moon.withValues(alpha: 0.75),
+                Expanded(
+                  child: Text(
+                    label.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                      color: tokens.moon.withValues(alpha: 0.75),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                if (suggested)
-                  Positioned(
-                    top: -2,
-                    right: 0,
-                    child: Icon(
-                      Icons.refresh_rounded,
-                      size: 16,
-                      color: tokens.moon.withValues(alpha: 0.6),
-                    ),
+                if (suggested) ...[
+                  const SizedBox(width: 6),
+                  Icon(
+                    Icons.refresh_rounded,
+                    size: 16,
+                    color: tokens.moon.withValues(alpha: 0.6),
                   ),
+                ],
               ],
             ),
             Expanded(

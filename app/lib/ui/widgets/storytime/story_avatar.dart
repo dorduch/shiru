@@ -22,6 +22,7 @@ class StoryAvatar extends StatelessWidget {
     required this.card,
     this.conceptSize = 46,
     this.pixelScale = 3,
+    this.isPlaying = false,
   });
 
   final AudioCard card;
@@ -31,6 +32,11 @@ class StoryAvatar extends StatelessWidget {
 
   /// `PixelSprite` scale used for the non-concept fallback.
   final double pixelScale;
+
+  /// Whether narration is currently playing. Drives the `PixelSprite`
+  /// fallback's animation state — active (pulsing) while playing, idle
+  /// otherwise. Has no effect on the concept-SVG render path (static art).
+  final bool isPlaying;
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +62,7 @@ class StoryAvatar extends StatelessWidget {
           ? (predefinedSprites[card.spriteKey!] ?? autoAssignSprite(card.title))
           : autoAssignSprite(card.title),
       scale: pixelScale,
+      state: isPlaying ? SpriteState.active : SpriteState.idle,
     );
   }
 }

@@ -123,11 +123,14 @@ class AppTypography {
     fontWeight: FontWeight.w500,
   );
 
-  /// Story "read" text — Nunito 500 at 17px with generous line-height
+  /// Story "read" text — Nunito 500 at 20px with generous line-height.
+  /// Sized for comfortable arm's-length reading during read-along playback
+  /// (bumped from 17px/1.85 — see `st_scene_player.dart`'s A/A+ size toggle
+  /// for the further-enlarged variant).
   static final storyBody = GoogleFonts.nunito(
-    fontSize: 17,
+    fontSize: 20,
     fontWeight: FontWeight.w500,
-    height: 1.85,
+    height: 1.8,
   );
 
   /// Eyebrow label — Inter 700, 12.5px, wide tracking, uppercase. Color applied

@@ -498,6 +498,43 @@ class _ChildSetupScreenState extends ConsumerState<ChildSetupScreen> {
   }
 }
 
+/// Small in-voice "stories left today" indicator (spec §2.1). The Composer
+/// always shows it once the count resolves; Home only surfaces it when the
+/// count is low ([onlyWhenLow]) so it isn't visual noise on every visit.
+/// Never uses the word "quota" in its copy.
+class StoriesLeftIndicator extends ConsumerWidget {
+  const StoriesLeftIndicator({super.key, this.onlyWhenLow = false});
+
+  /// When true, renders nothing unless `remaining <= 3` (Home's placement).
+  /// When false (Composer's placement), always renders once the count
+  /// resolves.
+  final bool onlyWhenLow;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tokens = Theme.of(context).extension<LanternTokens>()!;
+    final remaining = ref.watch(remainingStoriesTodayProvider);
+    if (remaining == null) return const SizedBox.shrink();
+    if (onlyWhenLow && remaining > 3) return const SizedBox.shrink();
+    final label = switch (remaining) {
+      0 => 'No stories left today',
+      1 => '1 story left today',
+      _ => '$remaining stories left today',
+    };
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.nightlight_round, size: 14, color: tokens.moonDim),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: AppTypography.labelMedium.copyWith(color: tokens.moonDim),
+        ),
+      ],
+    );
+  }
+}
+
 class StorytimeHomeScreen extends ConsumerWidget {
   const StorytimeHomeScreen({super.key});
 
@@ -542,6 +579,8 @@ class StorytimeHomeScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
+                const SizedBox(height: 10),
+                const StoriesLeftIndicator(onlyWhenLow: true),
                 if (resumable.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   _ResumeStrip(card: resumable.first),
@@ -651,6 +690,17 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
   // concept on the resume path, where the draft may be empty (app relaunched
   // mid-generation) so there's no character/theme choice to read locally yet.
   StoryTheme? _jobTheme;
+  // True only for the expired-job dead-end (1.3): a `ready` job whose
+  // download URL is already gone (e.g. relaunching >24h after a
+  // completed-but-unimported job). Distinct from a plain `_error` because the
+  // recovery action differs — "Try again" would just re-subscribe to the
+  // same dead job and loop forever, so this instead offers "Make it again"
+  // (a fresh trip through the composer).
+  bool _deadEnd = false;
+  // Timestamp of the most recent `_start()` call — lets `_showError` hold
+  // the loading state for a minimum visible beat (spec §2.3) so an instant
+  // server rejection (e.g. daily limit hit) doesn't read as a broken button.
+  DateTime? _startedAt;
 
   @override
   void initState() {
@@ -666,6 +716,7 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
   }
 
   Future<void> _start() async {
+    _startedAt = DateTime.now();
     final user = ref.read(authRepositoryProvider).currentUser;
     final profile = await ref.read(childProfileProvider.future);
     if (user == null || profile == null) {
@@ -675,6 +726,14 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
     try {
       await _subscription?.cancel();
       var jobId = _jobId;
+      // Duplicate-in-flight-job guard (spec §2.2): when this screen wasn't
+      // handed a jobId (fresh "Tell tonight's story" tap, not a resume), a
+      // live job may already exist for this uid — e.g. Android hardware-back
+      // out of this screen and re-tapping the CTA. Consult the active-job
+      // marker first and resume it instead of minting a fresh one, which
+      // would burn a second quota unit for a single user intent. Mirrors the
+      // cold-start resume path in `StorytimeLaunchScreen._resumeOrGoHome`.
+      jobId ??= await ref.read(activeStoryJobServiceProvider).load(user.uid);
       if (jobId == null) {
         final draft = ref.read(storyDraftProvider);
         final result = await ref
@@ -685,35 +744,46 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
               idempotencyKey: const Uuid().v4(),
             );
         jobId = result.jobId;
-        _jobId = jobId;
         await ref.read(activeStoryJobServiceProvider).save(user.uid, jobId);
       }
+      _jobId = jobId;
       _subscription = ref
           .read(storyGenerationRepositoryProvider)
           .watchJob(user.uid, jobId)
           .listen(
             _onJob,
             onError: (Object error) {
-              if (mounted) {
-                setState(
-                  () => _error =
-                      'We lost the connection. Check the internet and try again.',
-                );
-              }
+              _showError(
+                'We lost the connection. Check the internet and try again.',
+              );
             },
           );
     } on FirebaseFunctionsException catch (error) {
       if (!mounted) return;
-      setState(
-        () => _error = error.code == 'resource-exhausted'
+      await _showError(
+        error.code == 'resource-exhausted'
             ? "That's all of today's stories. More story magic will be ready tomorrow."
             : 'Story making is resting right now. Please try again.',
       );
     } catch (_) {
-      if (mounted) {
-        setState(() => _error = 'Could not start the story. Please try again.');
-      }
+      await _showError('Could not start the story. Please try again.');
     }
+  }
+
+  /// Sets [_error], but never sooner than ~1s after the most recent
+  /// `_start()` call (spec §2.3) — an instant server rejection (e.g. the
+  /// daily limit) shouldn't make the "Tell tonight's story" tap feel like a
+  /// broken button. Transient failures that already took a while (lost
+  /// connection mid-stream, a `failed` job status after real generation
+  /// work) simply pass through with no added delay.
+  Future<void> _showError(String message) async {
+    final startedAt = _startedAt;
+    if (startedAt != null) {
+      const minHold = Duration(seconds: 1);
+      final remaining = minHold - DateTime.now().difference(startedAt);
+      if (remaining > Duration.zero) await Future.delayed(remaining);
+    }
+    if (mounted) setState(() => _error = message);
   }
 
   void _onJob(StoryJob job) {
@@ -735,8 +805,8 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
       if (uid != null) {
         ref.read(activeStoryJobServiceProvider).clear(uid);
       }
-      setState(
-        () => _error = job.errorCode == 'safety'
+      _showError(
+        job.errorCode == 'safety'
             ? 'That story did not pass our safety check. Try a different surprise.'
             : 'The storytellers could not finish. Please try again.',
       );
@@ -747,6 +817,34 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
 
   Future<void> _import(StoryJob job) async {
     _importing = true;
+    if (job.downloadUrl == null || job.downloadUrl!.isEmpty) {
+      // Expired, not merely failed (spec §1.3): the job completed at some
+      // point but its download URL is already gone — e.g. relaunching the
+      // app more than ~24h after a completed-but-unimported job (the cloud
+      // audio's own TTL). This is not retryable — subscribing to the same
+      // job again would just replay this same missing-URL snapshot forever
+      // (the resume-trap this guard exists to close) — so the active-job
+      // marker is cleared here, not left for a "Try again" tap, and the UI
+      // offers a one-time friendly dead-end instead of the retry loop.
+      // Not awaited: cancelling from inside this very subscription's own
+      // event-delivery callback only needs to be requested, not finished,
+      // before moving on — the job is already terminal (`ready`), so no
+      // further snapshots would arrive on it even without this call.
+      unawaited(_subscription?.cancel());
+      final uid = ref.read(authRepositoryProvider).currentUser?.uid;
+      if (uid != null) {
+        await ref.read(activeStoryJobServiceProvider).clear(uid);
+      }
+      _jobId = null;
+      if (mounted) {
+        setState(() {
+          _deadEnd = true;
+          _error =
+              "This story took too long to save and isn't available anymore.";
+        });
+      }
+      return;
+    }
     try {
       final response = await http.get(Uri.parse(job.downloadUrl!));
       if (response.statusCode != 200) throw HttpException('Download failed');
@@ -776,6 +874,11 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
       ref.read(storyDraftProvider.notifier).reset();
       if (mounted) context.go('/story/${card.id}');
     } catch (_) {
+      // Transient failure (network/disk) — deliberately does NOT clear the
+      // active-job marker (unlike the missing-URL branch above): the job
+      // itself did complete, so a retry should re-subscribe to this same
+      // completed job and try the download again, not mint a fresh
+      // (quota-consuming) one.
       if (mounted) {
         setState(
           () => _error =
@@ -833,7 +936,7 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
                       style: AppTypography.headlineMedium.copyWith(color: tokens.moon),
                     ),
                     const SizedBox(height: 20),
-                    if (_error == null)
+                    if (_error == null) ...[
                       LinearProgressIndicator(
                         minHeight: 8,
                         // Lantern accent for the active fill, `hush` for the
@@ -842,8 +945,23 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
                         // processing, family_voices_screens.dart).
                         color: tokens.lantern,
                         backgroundColor: tokens.hush,
-                      )
-                    else ...[
+                      ),
+                      const SizedBox(height: 18),
+                      // Every dark/generating screen needs an explicit
+                      // back/home control (router.dart's routing comment
+                      // already promises one) — this was previously only
+                      // reachable from the error branch, stranding a parent
+                      // who wants out while generation is still in flight.
+                      // Safe to leave mid-flight: the active-job marker
+                      // stays saved, so re-entering (Home → Make a Story →
+                      // generate, or a cold relaunch) resumes this same job
+                      // via the duplicate-job guard in `_start` instead of
+                      // starting a fresh one.
+                      LanternOutlineButton(
+                        label: 'Back home',
+                        onTap: () => context.go('/home'),
+                      ),
+                    ] else ...[
                       Text(
                         _error!,
                         textAlign: TextAlign.center,
@@ -855,13 +973,20 @@ class _StoryGeneratingScreenState extends ConsumerState<StoryGeneratingScreen> {
                         ),
                       ),
                       const SizedBox(height: 18),
-                      GlowButton(
-                        label: 'Try again',
-                        onTap: () {
-                          setState(() => _error = null);
-                          _start();
-                        },
-                      ),
+                      if (_deadEnd)
+                        GlowButton(
+                          label: 'Make it again',
+                          leading: const Icon(Icons.auto_awesome),
+                          onTap: () => context.go('/compose'),
+                        )
+                      else
+                        GlowButton(
+                          label: 'Try again',
+                          onTap: () {
+                            setState(() => _error = null);
+                            _start();
+                          },
+                        ),
                       const SizedBox(height: 8),
                       LanternOutlineButton(
                         label: 'Back home',
@@ -1035,10 +1160,18 @@ class _StoryTile extends ConsumerWidget {
             ),
           ),
         ),
+        // No per-tile origin sublabel (spec §3.6 — "Ready-made" repeated on
+        // every curated tile was noise, not information); non-default
+        // origins instead get a "Made by you" badge in the trailing row
+        // below. `LanternRow`'s title has no `maxLines` cap, so it already
+        // wraps to a second line rather than truncating a long title.
         title: card.title,
-        subtitle: storyOriginSubtitle(card.storyOrigin),
         trailing: parentMode
             ? Row(mainAxisSize: MainAxisSize.min, children: [
+                if (card.storyOrigin != StoryOrigin.curated) ...[
+                  LanternChip(label: 'Made by you', hue: tokens.lantern),
+                  const SizedBox(width: 10),
+                ],
                 if (card.storyOrigin == StoryOrigin.uploaded)
                   GestureDetector(
                     onTap: () => context.go('/parent/edit-audio/${card.id}'),
@@ -1117,20 +1250,26 @@ class _StoryGridTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
+              // 2-line titles (spec §3.6): a fixed-height grid cell has room
+              // for a wrap since the sibling `Expanded` image area simply
+              // absorbs the difference; ellipsis still caps genuinely long
+              // titles rather than overflowing the cell.
               Text(
                 card.title,
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
                 style: AppTypography.labelLarge.copyWith(
                   color: tokens.moon,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              Text(
-                storyOriginSubtitle(card.storyOrigin),
-                style:
-                    AppTypography.labelMedium.copyWith(color: tokens.moonDim),
-              ),
+              // No sublabel for the default (curated) origin — badge only
+              // for stories the family actually made/added.
+              if (card.storyOrigin != StoryOrigin.curated) ...[
+                const SizedBox(height: 4),
+                LanternChip(label: 'Made by you', hue: tokens.lantern),
+              ],
             ],
           ),
         ),
@@ -1313,12 +1452,17 @@ class _StoryPlayerScreenState extends ConsumerState<StoryPlayerScreen>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  IconButton(
-                    onPressed: () async {
-                      await _savePosition();
-                      if (context.mounted) context.go('/listen');
-                    },
-                    icon: Icon(Icons.arrow_back_rounded, color: tokens.moon),
+                  Semantics(
+                    button: true,
+                    label: 'Back',
+                    child: IconButton(
+                      onPressed: () async {
+                        await _savePosition();
+                        if (context.mounted) context.go('/listen');
+                      },
+                      tooltip: 'Back',
+                      icon: Icon(Icons.arrow_back_rounded, color: tokens.moon),
+                    ),
                   ),
                   IconButton(
                     onPressed: _favorite,
@@ -1411,6 +1555,7 @@ class _StoryPlayerScreenState extends ConsumerState<StoryPlayerScreen>
                                 card: _card!,
                                 conceptSize: 150,
                                 pixelScale: 10,
+                                isPlaying: isPlaying,
                               ),
                             ),
                           ),
@@ -1654,6 +1799,18 @@ class _DashboardGlyph extends StatelessWidget {
   );
 }
 
+/// Maps a Firebase Auth provider id (`AuthUser.providerIds`, sourced from
+/// `user.providerData[].providerId`) to a human-friendly label for the
+/// Account screen. Never surfaces the raw provider id string or "Unknown"
+/// (spec §3.5) — an unrecognized id falls back to itself rather than a
+/// blank/placeholder value, since it's still more informative than hiding it.
+String _friendlyProviderName(String providerId) => switch (providerId) {
+  'password' => 'Email & password',
+  'google.com' => 'Google',
+  'apple.com' => 'Apple',
+  _ => providerId,
+};
+
 class StorytimeAccountScreen extends ConsumerStatefulWidget {
   const StorytimeAccountScreen({super.key});
   @override
@@ -1721,6 +1878,9 @@ class _StorytimeAccountScreenState
     final tokens = Theme.of(context).extension<LanternTokens>()!;
     final user = ref.watch(authUserProvider).valueOrNull;
     final canReset = user?.providerIds.contains('password') == true;
+    final providerNames = (user?.providerIds ?? const <String>[])
+        .map(_friendlyProviderName)
+        .toList();
     return Scaffold(
       backgroundColor: tokens.nightMid,
       appBar: AppBar(
@@ -1739,15 +1899,23 @@ class _StorytimeAccountScreenState
               LanternRow(
                 leading: Icon(Icons.mail_outline, color: tokens.moonDim),
                 title: 'Email',
-                subtitle: user?.email ?? 'Signed in with a provider',
+                // Never "Signed in with a provider": name the actual
+                // provider(s) when there's no email to show (e.g. an Apple
+                // sign-in that withheld it).
+                subtitle: user?.email ??
+                    (providerNames.isNotEmpty
+                        ? 'Signed in with ${providerNames.join(' & ')}'
+                        : 'Signed in'),
               ),
               const SizedBox(height: 8),
               LanternRow(
                 leading: Icon(Icons.verified_user_outlined, color: tokens.moonDim),
                 title: 'Sign-in methods',
-                subtitle: user?.providerIds.isNotEmpty == true
-                    ? user!.providerIds.join(', ')
-                    : 'Unknown',
+                // Never "Unknown" (spec §3.5) — a real provider list, or a
+                // plain fallback for the (shouldn't-happen) empty case.
+                subtitle: providerNames.isNotEmpty
+                    ? providerNames.join(', ')
+                    : 'Not available',
               ),
               if (canReset) ...[
                 const SizedBox(height: 8),
