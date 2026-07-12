@@ -53,15 +53,11 @@ export const createVoiceConsent = onCall({enforceAppCheck: true}, async (request
   const data = request.data as Record<string, unknown>;
   const name = data?.name;
   const relationship = data?.relationship;
-  const subjectLiving = data?.subjectLiving;
   if (typeof name !== "string" || name.trim().length === 0 || name.length > 60) {
     throw new HttpsError("invalid-argument", "name must be a non-empty string of at most 60 characters.");
   }
   if (typeof relationship !== "string" || relationship.trim().length === 0) {
     throw new HttpsError("invalid-argument", "relationship is required.");
-  }
-  if (typeof subjectLiving !== "boolean") {
-    throw new HttpsError("invalid-argument", "subjectLiving must be a boolean.");
   }
 
   const uid = request.auth.uid;
@@ -73,12 +69,10 @@ export const createVoiceConsent = onCall({enforceAppCheck: true}, async (request
   await db.doc(`users/${uid}/voices/${voiceId}`).set({
     name,
     relationship,
-    subjectLiving,
     consent: {
       agreedByUid: uid,
       agreedAt: FieldValue.serverTimestamp(),
       relationship,
-      subjectLiving,
     },
     status: "consented",
     samplePaths: [],

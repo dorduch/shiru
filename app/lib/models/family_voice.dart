@@ -30,7 +30,6 @@ class FamilyVoice {
     required this.id,
     required this.name,
     required this.relationship,
-    required this.subjectLiving,
     required this.status,
     required this.createdAt,
     this.providerVoiceId,
@@ -40,7 +39,6 @@ class FamilyVoice {
   final String id;
   final String name;
   final String relationship;
-  final bool subjectLiving;
   final FamilyVoiceStatus status;
   final DateTime createdAt;
   final String? providerVoiceId;
@@ -54,7 +52,6 @@ class FamilyVoice {
       id: snapshot.id,
       name: (data['name'] as String?) ?? '',
       relationship: (data['relationship'] as String?) ?? '',
-      subjectLiving: (data['subjectLiving'] as bool?) ?? true,
       status: FamilyVoiceStatus.fromString(data['status'] as String?),
       createdAt:
           (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),

@@ -41,11 +41,10 @@ class VoiceRepository {
   Future<String> createConsent({
     required String name,
     required String relationship,
-    required bool subjectLiving,
   }) async {
     final response = await _functions
         .httpsCallable('createVoiceConsent')
-        .call({'name': name, 'relationship': relationship, 'subjectLiving': subjectLiving});
+        .call({'name': name, 'relationship': relationship});
     final data = Map<String, dynamic>.from(response.data as Map);
     return data['voiceId'] as String;
   }

@@ -243,7 +243,6 @@ class _VoiceConsentScreenState extends ConsumerState<VoiceConsentScreen> {
   final _nameCtrl = TextEditingController();
   final _relCtrl = TextEditingController();
   bool _agreed = false;
-  bool _personIsLiving = true;
   bool _busy = false;
   String? _error;
 
@@ -264,7 +263,6 @@ class _VoiceConsentScreenState extends ConsumerState<VoiceConsentScreen> {
           .createConsent(
             name: _nameCtrl.text.trim(),
             relationship: _relCtrl.text.trim(),
-            subjectLiving: _personIsLiving,
           );
       if (mounted) {
         context.push(
@@ -324,46 +322,6 @@ class _VoiceConsentScreenState extends ConsumerState<VoiceConsentScreen> {
                 label: 'Relationship to child',
                 hint: 'e.g. Grandmother, Dad, Uncle',
                 onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: 20),
-              // Living toggle
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: tokens.nightCard,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: tokens.hush, width: 1),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Is this person living?',
-                            style: AppTypography.bodyLarge.copyWith(
-                              color: tokens.moon,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Some voices are created to preserve memories.',
-                            style: AppTypography.bodySmall.copyWith(
-                              color: tokens.moonDim,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Switch(
-                      value: _personIsLiving,
-                      onChanged: (v) => setState(() => _personIsLiving = v),
-                      activeThumbColor: tokens.lantern,
-                      activeTrackColor: tokens.lantern.withValues(alpha: 0.5),
-                    ),
-                  ],
-                ),
               ),
               const SizedBox(height: 20),
               // Agreement
@@ -1187,7 +1145,6 @@ class VoiceReadyScreen extends ConsumerWidget {
         id: voiceId,
         name: name,
         relationship: '',
-        subjectLiving: true,
         status: FamilyVoiceStatus.queued,
         createdAt: DateTime.now(),
       ),
