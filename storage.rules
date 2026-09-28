@@ -9,5 +9,18 @@ service firebase.storage {
       allow read: if false;
       allow write: if request.auth != null && request.auth.uid == uid;
     }
+
+    // Relative Readings MVP: invite custom-token holders may upload exactly one
+    // full reading under their claimed parentUid. 25MB + mime enforced here and
+    // again in submitStoryInviteReading. Reads stay Admin-only.
+    match /relative-readings/{parentUid}/{readingId}/{fileName} {
+      allow read: if false;
+      allow write: if request.auth != null
+        && request.auth.token.invite == true
+        && request.auth.token.parentUid == parentUid
+        && request.resource.size > 0
+        && request.resource.size <= 25 * 1024 * 1024
+        && request.resource.contentType.matches('audio/(webm|mp4|aac)');
+    }
   }
 }

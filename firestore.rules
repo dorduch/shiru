@@ -20,6 +20,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Relative Readings MVP: parent can list/read pending items; all writes
+    // go through Admin SDK callables (submit / future approve-reject).
+    match /users/{uid}/relativeReadings/{readingId} {
+      allow read: if owns(uid);
+      allow write: if false;
+    }
+
     match /familyVoiceWaitlist/{uid} {
       allow read, write: if false;
     }
