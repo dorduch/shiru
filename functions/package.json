@@ -2,13 +2,11 @@
   "name": "storytime-functions",
   "private": true,
   "main": "lib/index.js",
-  "engines": {
-    "node": "22"
-  },
+  "engines": {"node": "22"},
   "scripts": {
-    "build": "node ../tools/rr-join-index.js && tsc",
+    "build": "tsc",
     "test": "vitest run src",
-    "lint": "node ../tools/rr-join-index.js && tsc --noEmit"
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "firebase-admin": "^13.0.0",
