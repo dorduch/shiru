@@ -1,3 +1,5 @@
-/** Relative Readings MVP entry: story-invite callables + Cloud Functions body. */
+/** Relative Readings MVP — Cloud Functions entry. */
 export {prepareStoryInviteUpload, submitStoryInviteReading} from "./storyInviteOnCall";
-export * from "./indexBody";
+export * from "./cfVoice";
+export * from "./cfStory";
+export * from "./cfAccount";
