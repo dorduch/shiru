@@ -125,3 +125,15 @@ export function extensionForMimeType(mimeType: string): string {
   if (mimeType === "audio/mp4" || mimeType === "audio/aac") return "m4a";
   throw new Error(`extensionForMimeType: unsupported mime type "${mimeType}"`);
 }
+
+/** Hard caps for relative full-reading uploads (MVP product locks). */
+export const MAX_READING_BYTES = 25 * 1024 * 1024;
+export const MAX_READING_DURATION_SECONDS = 15 * 60;
+export const ALLOWED_READING_MIME_TYPES = ["audio/webm", "audio/mp4", "audio/aac"] as const;
+
+export type AllowedReadingMimeType = typeof ALLOWED_READING_MIME_TYPES[number];
+
+export function isAllowedReadingMimeType(mimeType: unknown): mimeType is AllowedReadingMimeType {
+  return typeof mimeType === "string" &&
+    (ALLOWED_READING_MIME_TYPES as readonly string[]).includes(mimeType);
+}
