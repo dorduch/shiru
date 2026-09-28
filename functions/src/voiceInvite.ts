@@ -91,11 +91,15 @@ export async function createVoiceInviteCore(
     transaction.create(inviteRef, {
       parentUid: uid,
       voiceId,
+      // Relative Readings MVP: invite captures one full reading (not clone samples).
+      kind: "relativeReading",
       status: "pending",
       createdAt: FieldValue.serverTimestamp(),
       expiresAt,
       redeemedAt: null,
       redeemedSyntheticUid: null,
+      readingId: null,
+      submittedAt: null,
     });
   });
 
