@@ -1,10 +1,7 @@
-// Voice invite recording page — Task 7.
-// See docs/superpowers/specs/2026-07-11-voice-invite-implementation-plan.md
-// for the pinned request/response contracts this file codes against
-// (`redeemVoiceInvite`, `uploadVoiceInviteSample`, `submitVoiceInvite`).
-//
-// No framework, no bundler. Firebase JS SDK v9 modular, loaded from the
-// gstatic CDN, pinned to a specific 10.x release.
+// Relative Readings MVP — full-story invite capture page.
+// Contracts: redeemVoiceInvite (session | status), prepareStoryInviteUpload,
+// submitStoryInviteReading. Upload goes through Firebase Storage SDK under
+// invite custom-token claims (25MB exceeds callable payload limits).
 
 import {
   initializeApp,
@@ -19,24 +16,12 @@ import {
   getFunctions,
   httpsCallable,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js";
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
 
-// ---------------------------------------------------------------------------
-// Firebase web config
-// ---------------------------------------------------------------------------
-// Project `shiru-bcdd2` has Android + iOS app configs (see
-// app/lib/firebase_options.dart, app/ios/Runner/GoogleService-Info.plist,
-// app/android/app/google-services.json) but NO registered Web app as of this
-// writing, so there is no web-specific apiKey/appId to pull.
-//
-// projectId / messagingSenderId / storageBucket are project-wide and safe to
-// reuse. authDomain follows the standard `<projectId>.firebaseapp.com`
-// pattern. apiKey and appId are NOT safe to borrow from the Android/iOS
-// configs — those keys are platform-restricted (Android by package name +
-// SHA-1 fingerprint, iOS by bundle ID) and will be rejected when called from
-// a browser origin.
-//
-// Web app "Shiru Web" (1:310525193859:web:19b1a756d21bbc656475b6),
-// registered 2026-07-11 via `firebase apps:create web`.
 const firebaseConfig = {
   apiKey: "AIzaSyBvT3Kf4GTcTd5VYlG_fE7-JI9ft4GkbZU",
   authDomain: "shiru-bcdd2.firebaseapp.com",
@@ -46,40 +31,66 @@ const firebaseConfig = {
   appId: "1:310525193859:web:19b1a756d21bbc656475b6",
 };
 
-const NUM_PROMPTS = 5;
-const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // server rejects payloads decoding to >8MB
+const DEFAULT_MAX_DURATION_SECONDS = 15 * 60;
+const DEFAULT_MAX_BYTES = 25 * 1024 * 1024;
+const ALLOWED_MIMES = new Set(["audio/webm", "audio/mp4", "audio/aac"]);
 
 const root = document.getElementById("app");
 
 /** @type {{
- *  phase: "redeeming"|"invalid"|"form"|"submitting"|"submit_error"|"success",
+ *  phase: "redeeming"|"invalid"|"form"|"recording"|"review"|"uploading"|"upload_error"|"status",
  *  errorMessage: string,
- *  invite: null | { name: string, relationship: string, prompts: {label:string,text:string}[], expiresAt: string },
- *  prompts: any[],
+ *  invite: null | {
+ *    name: string,
+ *    relationship: string,
+ *    expiresAt: string,
+ *    maxDurationSeconds: number,
+ *    maxBytes: number,
+ *    allowedMimeTypes: string[],
+ *  },
+ *  approvalStatus: ""|"pending"|"approved"|"rejected",
  *  consentChecked: boolean,
  *  micDenied: boolean,
- *  submitBlockedMessage: string,
+ *  hardStopped: boolean,
+ *  elapsedSeconds: number,
+ *  blob: Blob|null,
+ *  mimeType: string,
+ *  audioUrl: string|null,
+ *  durationSeconds: number|null,
+ *  blockedMessage: string,
  * }}
  */
 const state = {
   phase: "redeeming",
   errorMessage: "",
   invite: null,
-  prompts: [],
+  approvalStatus: "",
   consentChecked: false,
   micDenied: false,
-  submitBlockedMessage: "",
+  hardStopped: false,
+  elapsedSeconds: 0,
+  blob: null,
+  mimeType: "",
+  audioUrl: null,
+  durationSeconds: null,
+  blockedMessage: "",
 };
 
 let auth = null;
 let functionsInstance = null;
+let storageInstance = null;
 let redeemVoiceInviteFn = null;
-let uploadVoiceInviteSampleFn = null;
-let submitVoiceInviteFn = null;
+let prepareStoryInviteUploadFn = null;
+let submitStoryInviteReadingFn = null;
 let currentToken = "";
+let mediaRecorder = null;
+let mediaStream = null;
+let recordChunks = [];
+let recordTimerId = null;
+let recordStartedAt = 0;
+let uploading = false;
 
 function extractToken() {
-  // Expect "/invite/<token>" (optionally with a trailing slash).
   const match = location.pathname.match(/\/invite\/([^/]+)\/?$/);
   if (!match) return "";
   const raw = match[1];
@@ -91,18 +102,7 @@ function extractToken() {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Session persistence (survive tab reload without burning the single-use
-// redeem token). Firebase Auth already persists the signed-in user across
-// reloads on its own (indexedDB persistence); the gap this closes is that
-// `main()` used to call `redeemVoiceInviteFn` unconditionally on every load,
-// which re-redeems (and fails) a token that was already consumed earlier in
-// this same browser session. sessionStorage — scoped to this tab, cleared
-// when the tab closes — is the right lifetime: it should not leak across
-// tabs or survive a real restart, only a reload/background of THIS tab.
-// ---------------------------------------------------------------------------
-
-const SESSION_STORAGE_PREFIX = "storytimeInviteSession:v1:";
+const SESSION_STORAGE_PREFIX = "shiruRelativeReadingInvite:v1:";
 
 function sessionStorageKey(token) {
   return SESSION_STORAGE_PREFIX + token;
@@ -113,14 +113,12 @@ function readStoredSession(token) {
   try {
     raw = sessionStorage.getItem(sessionStorageKey(token));
   } catch {
-    return null; // sessionStorage unavailable (privacy mode, etc.)
+    return null;
   }
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw);
-    if (!parsed || parsed.token !== token || !parsed.customToken || !parsed.uid || !parsed.invite) {
-      return null;
-    }
+    if (!parsed || parsed.token !== token) return null;
     return parsed;
   } catch {
     return null;
@@ -128,13 +126,12 @@ function readStoredSession(token) {
 }
 
 function saveStoredSession(token, patch) {
-  const existing = readStoredSession(token) || { token };
-  const next = { ...existing, ...patch, token };
+  const existing = readStoredSession(token) || {token};
+  const next = {...existing, ...patch, token};
   try {
     sessionStorage.setItem(sessionStorageKey(token), JSON.stringify(next));
   } catch {
-    // Best-effort only — if storage is unavailable, the page still works,
-    // it just falls back to hitting redeem again next load.
+    // best-effort
   }
 }
 
@@ -146,11 +143,6 @@ function clearStoredSession(token) {
   }
 }
 
-/**
- * Resolves once Firebase Auth has finished restoring (or failing to
- * restore) any persisted session for this tab, so we know definitively
- * whether there's already a signed-in user before deciding to call redeem.
- */
 function waitForAuthInit(authInstance) {
   return new Promise((resolve) => {
     const unsubscribe = onAuthStateChanged(authInstance, (user) => {
@@ -160,7 +152,6 @@ function waitForAuthInit(authInstance) {
   });
 }
 
-/** True only if `user` carries the invite claims minted by redeemVoiceInvite. */
 async function hasLiveInviteClaims(user) {
   if (!user) return false;
   try {
@@ -171,56 +162,8 @@ async function hasLiveInviteClaims(user) {
   }
 }
 
-function buildPromptsFromInvite(invite) {
-  const prompts = invite.prompts.slice(0, NUM_PROMPTS).map((pr) => ({
-    label: pr.label || "",
-    text: pr.text || "",
-    status: "idle", // idle | recording | recorded | uploading | uploaded
-    blob: null,
-    mimeType: "",
-    audioUrl: null,
-    recorder: null,
-    stream: null,
-    source: null,
-    micFailed: false,
-    uploadError: "",
-  }));
-  // Pad defensively if the server ever returns fewer/more than 5.
-  while (prompts.length < NUM_PROMPTS) {
-    prompts.push({
-      label: `Prompt ${prompts.length + 1}`,
-      text: "",
-      status: "idle",
-      blob: null,
-      mimeType: "",
-      audioUrl: null,
-      recorder: null,
-      stream: null,
-      source: null,
-      micFailed: false,
-      uploadError: "",
-    });
-  }
-  return prompts;
-}
-
 function normalizeMimeType(mimeType) {
-  // MediaRecorder typically reports "audio/webm;codecs=opus" — the server
-  // maps extension -> content-type from a bare mime type, so strip params.
   return (mimeType || "").split(";")[0].trim();
-}
-
-function blobToBase64(blob) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = String(reader.result || "");
-      const commaIdx = dataUrl.indexOf(",");
-      resolve(commaIdx >= 0 ? dataUrl.slice(commaIdx + 1) : dataUrl);
-    };
-    reader.onerror = () => reject(reader.error || new Error("Failed to read recording."));
-    reader.readAsDataURL(blob);
-  });
 }
 
 function escapeHtml(str) {
@@ -229,6 +172,56 @@ function escapeHtml(str) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function formatExpiry(iso) {
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "soon";
+    return `on ${d.toLocaleDateString(undefined, {year: "numeric", month: "long", day: "numeric"})}`;
+  } catch {
+    return "soon";
+  }
+}
+
+function formatClock(totalSeconds) {
+  const s = Math.max(0, Math.floor(totalSeconds));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
+}
+
+function maxDuration() {
+  return state.invite?.maxDurationSeconds || DEFAULT_MAX_DURATION_SECONDS;
+}
+
+function maxBytes() {
+  return state.invite?.maxBytes || DEFAULT_MAX_BYTES;
+}
+
+function isMimeAllowed(mimeType) {
+  const allowed = state.invite?.allowedMimeTypes;
+  if (Array.isArray(allowed) && allowed.length > 0) {
+    return allowed.includes(mimeType);
+  }
+  return ALLOWED_MIMES.has(mimeType);
+}
+
+function describeMimeBlock(mimeType) {
+  return `That audio format (${mimeType || "unknown"}) isn't supported. Please use webm, m4a, or aac.`;
+}
+
+function describeSizeBlock(bytes) {
+  const mb = (bytes / (1024 * 1024)).toFixed(1);
+  return `That recording is ${mb} MB — the limit is 25 MB. Please re-record a shorter reading.`;
+}
+
+function validateBlobOrReason(blob, mimeType) {
+  if (!blob) return "Please record a story reading first.";
+  if (!isMimeAllowed(mimeType)) return describeMimeBlock(mimeType);
+  if (blob.size > maxBytes()) return describeSizeBlock(blob.size);
+  if (blob.size <= 0) return "That recording is empty. Please try again.";
+  return "";
 }
 
 // ---------------------------------------------------------------------------
@@ -243,13 +236,15 @@ function render() {
     case "invalid":
       root.innerHTML = renderInvalid();
       break;
-    case "success":
-      root.innerHTML = renderSuccess();
+    case "status":
+      root.innerHTML = renderStatus();
       break;
     case "form":
-    case "submitting":
-    case "submit_error":
-      root.innerHTML = renderForm();
+    case "recording":
+    case "review":
+    case "uploading":
+    case "upload_error":
+      root.innerHTML = renderCapture();
       break;
     default:
       root.innerHTML = renderInvalid();
@@ -275,370 +270,426 @@ function renderInvalid() {
   `;
 }
 
-function renderSuccess() {
+function renderStatus() {
+  const labels = {
+    pending: "Pending",
+    approved: "Approved",
+    rejected: "Not approved",
+  };
+  const status = state.approvalStatus || "pending";
+  const label = labels[status] || "Pending";
+  const detail = {
+    pending: "Your reading was sent. A parent will review it soon — you can close this page.",
+    approved: "Your reading was approved and is ready for the child. Thank you!",
+    rejected: "This reading wasn't approved. You can close this page.",
+  }[status] || "";
+
   return `
     <section class="screen screen-center">
-      <div class="success-check" aria-hidden="true">&#10003;</div>
-      <h1>Thank you!</h1>
-      <p>Your voice is being prepared. You can close this page now.</p>
+      <div class="success-check" aria-hidden="true">${status === "rejected" ? "!" : "&#10003;"}</div>
+      <h1>${escapeHtml(label)}</h1>
+      <p>${escapeHtml(detail)}</p>
     </section>
   `;
 }
 
-function renderForm() {
-  const invite = state.invite || { name: "", relationship: "", prompts: [] };
-  const allRecorded = state.prompts.length === NUM_PROMPTS &&
-    state.prompts.every((p) => p.status === "recorded" || p.status === "uploaded" || p.status === "uploading");
-  const submitDisabled = !allRecorded || !state.consentChecked || state.phase === "submitting";
-  const submitting = state.phase === "submitting";
-
-  const cardsHtml = state.prompts.map((p, idx) => renderPromptCard(p, idx)).join("");
-
+function renderCapture() {
+  const invite = state.invite || {name: "", relationship: "", expiresAt: ""};
+  const recording = state.phase === "recording";
+  const reviewing = state.phase === "review" || state.phase === "upload_error" || state.phase === "uploading";
+  const uploadingNow = state.phase === "uploading";
   const relationshipLine = invite.relationship
     ? `<p class="header-sub">Relationship: ${escapeHtml(invite.relationship)}</p>`
     : "";
-
   const expiresLine = invite.expiresAt
     ? `<p class="muted small">This link expires ${escapeHtml(formatExpiry(invite.expiresAt))}.</p>`
     : "";
 
-  const blockedBanner = state.submitBlockedMessage
-    ? `<div class="banner banner-warn" role="alert">${escapeHtml(state.submitBlockedMessage)}</div>`
+  const blockedBanner = state.blockedMessage
+    ? `<div class="banner banner-warn" role="alert">${escapeHtml(state.blockedMessage)}</div>`
     : "";
 
-  const errorBanner = state.phase === "submit_error"
+  const errorBanner = state.phase === "upload_error"
     ? `
       <div class="banner banner-error" role="alert">
-        <p>${escapeHtml(state.errorMessage || "Something went wrong while submitting. Please try again.")}</p>
-        <button type="button" class="btn btn-secondary" data-action="retry">Try again</button>
+        <p>${escapeHtml(state.errorMessage || "Something went wrong while sending. Please try again.")}</p>
+        <button type="button" class="btn btn-secondary" data-action="retry">Retry</button>
       </div>
     `
     : "";
 
+  const hardStopBanner = state.hardStopped
+    ? `<div class="banner banner-warn" role="status">That's the limit — review or re-record.</div>`
+    : "";
+
+  let bodyHtml = "";
+  if (recording) {
+    bodyHtml = `
+      <article class="prompt-card record-card">
+        <div class="prompt-card-head">
+          <span class="prompt-number">Recording</span>
+          <span class="badge badge-live">Live</span>
+        </div>
+        <p class="timer" aria-live="polite">${formatClock(state.elapsedSeconds)}
+          <span class="muted small"> / ${formatClock(maxDuration())}</span>
+        </p>
+        <p class="muted">Up to 15 minutes</p>
+        <div class="prompt-controls">
+          <button type="button" class="btn btn-stop" data-action="stop">Stop recording</button>
+        </div>
+      </article>
+    `;
+  } else if (reviewing && state.blob) {
+    const audioSrc = state.audioUrl
+      ? `<audio class="playback" controls src="${state.audioUrl}"></audio>`
+      : "";
+    bodyHtml = `
+      <article class="prompt-card record-card">
+        <div class="prompt-card-head">
+          <span class="prompt-number">Your reading</span>
+          <span class="badge badge-recorded">Ready</span>
+        </div>
+        <p class="muted">Length: ${formatClock(state.durationSeconds || state.elapsedSeconds || 0)}
+          · ${(state.blob.size / (1024 * 1024)).toFixed(1)} MB</p>
+        ${audioSrc}
+        <div class="prompt-controls">
+          <button type="button" class="btn btn-secondary" data-action="rerecord" ${uploadingNow ? "disabled" : ""}>
+            Re-record
+          </button>
+        </div>
+      </article>
+    `;
+  } else {
+    const fileFallback = state.micDenied
+      ? `
+        <p class="mic-fallback-note">Microphone isn't available. Choose an audio file instead (webm, m4a, or aac · up to 25 MB · up to 15 minutes).</p>
+        <label class="btn btn-secondary file-label" for="file-input">Choose audio file</label>
+        <input type="file" id="file-input" class="visually-hidden-input" accept="audio/webm,audio/mp4,audio/aac,audio/*" aria-label="Upload a story reading" />
+      `
+      : `
+        <button type="button" class="btn btn-record" data-action="record">Start recording</button>
+        <label class="file-alt-link" for="file-input">or choose an audio file</label>
+        <input type="file" id="file-input" class="visually-hidden-input" accept="audio/webm,audio/mp4,audio/aac,audio/*" aria-label="Upload a story reading" />
+      `;
+    bodyHtml = `
+      <article class="prompt-card record-card">
+        <div class="prompt-card-head">
+          <span class="prompt-number">Full story reading</span>
+          <span class="badge badge-empty">Not recorded</span>
+        </div>
+        <p class="prompt-text">Read a story out loud, clearly and warmly. You can take up to 15 minutes.</p>
+        <div class="prompt-controls">
+          ${fileFallback}
+        </div>
+      </article>
+    `;
+  }
+
+  const canSubmit = !!state.blob && state.consentChecked && !uploadingNow &&
+    (state.phase === "review" || state.phase === "upload_error");
+
   return `
     <section class="screen">
       <header class="invite-header">
-        <h1>Record your voice for ${escapeHtml(invite.name || "them")}'s stories</h1>
+        <h1>Record a story for ${escapeHtml(invite.name || "them")}</h1>
         ${relationshipLine}
         ${expiresLine}
       </header>
 
       <p class="instructions">
-        Read each line below out loud, clearly and naturally. You can re-record
-        as many times as you like before submitting.
+        Record one full reading (up to 15 minutes, 25 MB). When you're happy with it, send it for a parent to approve.
       </p>
 
-      <div class="prompt-list">
-        ${cardsHtml}
-      </div>
-
+      ${hardStopBanner}
+      ${bodyHtml}
       ${blockedBanner}
       ${errorBanner}
 
       <div class="consent-row">
-        <input type="checkbox" id="consent-checkbox" ${state.consentChecked ? "checked" : ""} />
+        <input type="checkbox" id="consent-checkbox" ${state.consentChecked ? "checked" : ""} ${uploadingNow ? "disabled" : ""} />
         <label for="consent-checkbox">I agree to record my voice for use in this app.</label>
       </div>
 
-      <button type="button" class="btn btn-primary btn-submit" data-action="submit" ${submitDisabled ? "disabled" : ""}>
-        ${submitting ? "Submitting…" : "Submit my recordings"}
+      <button type="button" class="btn btn-primary btn-submit" data-action="submit" ${canSubmit ? "" : "disabled"}>
+        ${uploadingNow ? "Sending…" : "Send reading"}
       </button>
     </section>
   `;
 }
 
-function formatExpiry(iso) {
-  try {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return "soon";
-    return `on ${d.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}`;
-  } catch {
-    return "soon";
+// ---------------------------------------------------------------------------
+// Recording
+// ---------------------------------------------------------------------------
+
+function clearRecordTimer() {
+  if (recordTimerId !== null) {
+    clearInterval(recordTimerId);
+    recordTimerId = null;
   }
 }
 
-function renderPromptCard(p, idx) {
-  const num = idx + 1;
-  const isRecording = p.status === "recording";
-  const isRecorded = p.status === "recorded" || p.status === "uploaded" || p.status === "uploading";
-  const isUploaded = p.status === "uploaded";
-  const isUploading = p.status === "uploading";
-  const showFileFallback = p.micFailed || state.micDenied;
-
-  let statusBadge = "";
-  if (isUploaded) statusBadge = `<span class="badge badge-done">Uploaded &#10003;</span>`;
-  else if (isUploading) statusBadge = `<span class="badge badge-progress">Uploading…</span>`;
-  else if (isRecorded) statusBadge = `<span class="badge badge-recorded">Recorded &#10003;</span>`;
-  else if (isRecording) statusBadge = `<span class="badge badge-live">Recording…</span>`;
-  else statusBadge = `<span class="badge badge-empty">Not recorded</span>`;
-
-  let controlsHtml = "";
-  if (isRecording) {
-    controlsHtml = `<button type="button" class="btn btn-stop" data-action="stop" data-idx="${idx}">Stop recording</button>`;
-  } else if (isRecorded) {
-    const audioSrc = p.audioUrl ? `<audio class="playback" controls src="${p.audioUrl}"></audio>` : "";
-    const disableRerecord = isUploading ? "disabled" : "";
-    controlsHtml = `
-      ${audioSrc}
-      <button type="button" class="btn btn-secondary" data-action="rerecord" data-idx="${idx}" ${disableRerecord}>
-        Re-record
-      </button>
-    `;
-  } else if (showFileFallback) {
-    controlsHtml = `
-      <p class="mic-fallback-note">
-        Microphone isn't available. Choose an audio file instead.
-      </p>
-      <label class="btn btn-secondary file-label" for="file-input-${idx}">Choose audio file</label>
-      <input
-        type="file"
-        id="file-input-${idx}"
-        class="visually-hidden-input"
-        accept="audio/*"
-        data-idx="${idx}"
-        aria-label="Upload recording for prompt ${num}"
-      />
-    `;
-  } else {
-    controlsHtml = `
-      <button type="button" class="btn btn-record" data-action="record" data-idx="${idx}">
-        Record
-      </button>
-      <label class="file-alt-link" for="file-input-${idx}">or choose an audio file</label>
-      <input
-        type="file"
-        id="file-input-${idx}"
-        class="visually-hidden-input"
-        accept="audio/*"
-        data-idx="${idx}"
-        aria-label="Upload recording for prompt ${num}"
-      />
-    `;
+function stopTracks() {
+  if (mediaStream) {
+    mediaStream.getTracks().forEach((t) => t.stop());
+    mediaStream = null;
   }
-
-  const uploadErr = p.uploadError
-    ? `<p class="upload-error" role="alert">${escapeHtml(p.uploadError)}</p>`
-    : "";
-
-  return `
-    <article class="prompt-card" data-card-idx="${idx}">
-      <div class="prompt-card-head">
-        <span class="prompt-number">${num} / ${NUM_PROMPTS}</span>
-        ${statusBadge}
-      </div>
-      <p class="prompt-label">${escapeHtml(p.label)}</p>
-      <p class="prompt-text">&ldquo;${escapeHtml(p.text)}&rdquo;</p>
-      <div class="prompt-controls">
-        ${controlsHtml}
-      </div>
-      ${uploadErr}
-    </article>
-  `;
 }
 
-// ---------------------------------------------------------------------------
-// Recording logic
-// ---------------------------------------------------------------------------
+function resetRecordingState({keepConsent = true} = {}) {
+  clearRecordTimer();
+  if (mediaRecorder && mediaRecorder.state !== "inactive") {
+    try { mediaRecorder.stop(); } catch { /* ignore */ }
+  }
+  mediaRecorder = null;
+  stopTracks();
+  recordChunks = [];
+  if (state.audioUrl) URL.revokeObjectURL(state.audioUrl);
+  state.blob = null;
+  state.audioUrl = null;
+  state.mimeType = "";
+  state.durationSeconds = null;
+  state.elapsedSeconds = 0;
+  state.hardStopped = false;
+  state.blockedMessage = "";
+  state.errorMessage = "";
+  if (!keepConsent) state.consentChecked = false;
+}
 
-async function startRecording(idx) {
-  const p = state.prompts[idx];
-  if (!p || p.status === "recording") return;
+async function startRecording() {
+  if (state.phase === "recording" || uploading) return;
 
-  if (state.micDenied || p.micFailed) {
-    // Already known to be unavailable — just re-render to surface the file
-    // fallback rather than re-prompting for permission.
-    p.micFailed = true;
+  if (state.micDenied) {
     render();
     return;
   }
-
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    p.micFailed = true;
     state.micDenied = true;
+    state.phase = "form";
     render();
     return;
   }
 
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const recorder = new MediaRecorder(stream);
-    const chunks = [];
+    mediaStream = await navigator.mediaDevices.getUserMedia({audio: true});
+    const preferred = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+      ? "audio/webm;codecs=opus"
+      : MediaRecorder.isTypeSupported("audio/mp4")
+        ? "audio/mp4"
+        : "";
+    mediaRecorder = preferred ? new MediaRecorder(mediaStream, {mimeType: preferred}) : new MediaRecorder(mediaStream);
+    recordChunks = [];
+    state.hardStopped = false;
+    state.elapsedSeconds = 0;
+    state.blockedMessage = "";
+    recordStartedAt = Date.now();
 
-    p.stream = stream;
-    p.recorder = recorder;
-
-    recorder.ondataavailable = (e) => {
-      if (e.data && e.data.size > 0) chunks.push(e.data);
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) recordChunks.push(e.data);
     };
 
-    recorder.onstop = () => {
-      const mimeType = recorder.mimeType || "audio/webm";
-      const blob = new Blob(chunks, { type: mimeType });
-      if (p.audioUrl) URL.revokeObjectURL(p.audioUrl);
-      p.blob = blob;
-      p.mimeType = normalizeMimeType(mimeType);
-      p.audioUrl = URL.createObjectURL(blob);
-      p.status = "recorded";
-      p.source = "record";
-      p.recorder = null;
-      stream.getTracks().forEach((t) => t.stop());
-      p.stream = null;
+    mediaRecorder.onstop = () => {
+      clearRecordTimer();
+      const mimeType = normalizeMimeType(mediaRecorder?.mimeType || preferred || "audio/webm");
+      const blob = new Blob(recordChunks, {type: mimeType});
+      stopTracks();
+      mediaRecorder = null;
+      recordChunks = [];
+
+      if (state.audioUrl) URL.revokeObjectURL(state.audioUrl);
+      state.blob = blob;
+      state.mimeType = mimeType;
+      state.audioUrl = URL.createObjectURL(blob);
+      state.durationSeconds = Math.min(
+        maxDuration(),
+        Math.max(1, Math.round((Date.now() - recordStartedAt) / 1000)),
+      );
+      state.elapsedSeconds = state.durationSeconds;
+
+      const reason = validateBlobOrReason(blob, mimeType);
+      if (reason) {
+        state.blockedMessage = reason;
+        state.phase = "form";
+        state.blob = null;
+        if (state.audioUrl) URL.revokeObjectURL(state.audioUrl);
+        state.audioUrl = null;
+        state.mimeType = "";
+      } else {
+        state.phase = "review";
+      }
       render();
     };
 
-    recorder.start();
-    p.status = "recording";
+    mediaRecorder.start(1000);
+    state.phase = "recording";
     render();
-  } catch (err) {
-    p.micFailed = true;
+
+    recordTimerId = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - recordStartedAt) / 1000);
+      state.elapsedSeconds = elapsed;
+      const timerEl = root.querySelector(".timer");
+      if (timerEl) {
+        timerEl.innerHTML = `${formatClock(elapsed)} <span class="muted small"> / ${formatClock(maxDuration())}</span>`;
+      }
+      if (elapsed >= maxDuration()) {
+        state.hardStopped = true;
+        stopRecording();
+      }
+    }, 250);
+  } catch {
     state.micDenied = true;
+    state.phase = "form";
+    stopTracks();
     render();
   }
 }
 
-function stopRecording(idx) {
-  const p = state.prompts[idx];
-  if (p && p.recorder && p.status === "recording") {
-    p.recorder.stop();
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state === "recording") {
+    mediaRecorder.stop();
   }
 }
 
-function reRecord(idx) {
-  const p = state.prompts[idx];
-  if (!p || p.status === "uploading") return;
-  if (p.audioUrl) URL.revokeObjectURL(p.audioUrl);
-  p.blob = null;
-  p.audioUrl = null;
-  p.mimeType = "";
-  p.status = "idle";
-  p.source = null;
-  p.uploadError = "";
+function reRecord() {
+  if (uploading) return;
+  resetRecordingState({keepConsent: true});
+  state.phase = "form";
   render();
-  startRecording(idx);
+  startRecording();
 }
 
-function handleFileChosen(idx, file) {
-  const p = state.prompts[idx];
-  if (!p) return;
-  if (p.audioUrl) URL.revokeObjectURL(p.audioUrl);
-  p.blob = file;
-  p.mimeType = normalizeMimeType(file.type || "audio/mp4");
-  p.audioUrl = URL.createObjectURL(file);
-  p.status = "recorded";
-  p.source = "file";
-  p.uploadError = "";
+function handleFileChosen(file) {
+  if (!file || uploading) return;
+  const mimeType = normalizeMimeType(file.type || "");
+  const reason = validateBlobOrReason(file, mimeType);
+  if (reason) {
+    state.blockedMessage = reason;
+    state.phase = "form";
+    render();
+    return;
+  }
+  if (state.audioUrl) URL.revokeObjectURL(state.audioUrl);
+  state.blob = file;
+  state.mimeType = mimeType;
+  state.audioUrl = URL.createObjectURL(file);
+  state.durationSeconds = null;
+  state.elapsedSeconds = 0;
+  state.hardStopped = false;
+  state.blockedMessage = "";
+  state.phase = "review";
   render();
 }
 
 // ---------------------------------------------------------------------------
-// Submit flow
+// Upload / submit
 // ---------------------------------------------------------------------------
 
 async function handleSubmit() {
-  if (state.phase === "submitting") return;
-
-  // Edge case: still recording when submit pressed.
-  const activeIdx = state.prompts.findIndex((p) => p.status === "recording");
-  if (activeIdx !== -1) {
-    state.submitBlockedMessage = `Prompt ${activeIdx + 1} is still recording — please stop it before submitting.`;
+  if (uploading) return;
+  if (state.phase === "recording") {
+    state.blockedMessage = "Still recording — please stop before sending.";
     render();
     return;
   }
-
-  // Edge case: no mic + no file chosen for one or more prompts.
-  const missingIdx = state.prompts.findIndex((p) => !p.blob);
-  if (missingIdx !== -1) {
-    state.submitBlockedMessage = `Prompt ${missingIdx + 1} still needs a recording or an audio file.`;
-    render();
-    return;
-  }
-
   if (!state.consentChecked) {
-    state.submitBlockedMessage = "Please check the consent box before submitting.";
+    state.blockedMessage = "Please check the consent box before sending.";
+    render();
+    return;
+  }
+  const reason = validateBlobOrReason(state.blob, state.mimeType);
+  if (reason) {
+    state.blockedMessage = reason;
     render();
     return;
   }
 
-  state.submitBlockedMessage = "";
+  state.blockedMessage = "";
   state.errorMessage = "";
-  state.phase = "submitting";
+  state.phase = "uploading";
+  uploading = true;
   render();
 
   try {
-    for (let idx = 0; idx < NUM_PROMPTS; idx++) {
-      const p = state.prompts[idx];
-      p.status = "uploading";
-      p.uploadError = "";
-      render();
-
-      if (p.blob.size > MAX_UPLOAD_BYTES) {
-        throw new Error(`Prompt ${idx + 1}'s recording is too large. Please re-record a shorter clip.`);
-      }
-
-      const dataBase64 = await blobToBase64(p.blob);
-      await uploadVoiceInviteSampleFn({
-        idx,
-        dataBase64,
-        mimeType: p.mimeType || "audio/webm",
-      });
-
-      p.status = "uploaded";
-      render();
+    const prepared = await prepareStoryInviteUploadFn({mimeType: state.mimeType});
+    const {readingId, storagePath} = prepared.data || {};
+    if (!readingId || !storagePath) {
+      throw new Error("Could not start upload. Please try again.");
     }
 
-    await submitVoiceInviteFn({});
+    const objectRef = storageRef(storageInstance, storagePath);
+    await uploadBytes(objectRef, state.blob, {contentType: state.mimeType});
 
-    if (currentToken) saveStoredSession(currentToken, { submitted: true });
-    state.phase = "success";
+    await submitStoryInviteReadingFn({
+      readingId,
+      mimeType: state.mimeType,
+      durationSeconds: state.durationSeconds,
+    });
+
+    if (currentToken) {
+      saveStoredSession(currentToken, {
+        submitted: true,
+        approvalStatus: "pending",
+        invite: state.invite,
+      });
+    }
+    state.approvalStatus = "pending";
+    state.phase = "status";
+    uploading = false;
     render();
   } catch (err) {
-    state.errorMessage = describeError(err, "Something went wrong while submitting. Please try again.");
-    state.phase = "submit_error";
-    // Reset any prompt stuck mid-upload back to "recorded" so retry can
-    // re-attempt it (uploads are idempotent per idx).
-    state.prompts.forEach((p) => {
-      if (p.status === "uploading") p.status = "recorded";
-    });
+    uploading = false;
+    state.errorMessage = describeError(err, "Something went wrong while sending. Please try again.");
+    state.phase = "upload_error";
     render();
   }
 }
 
 function describeError(err, fallback) {
-  if (err && typeof err.message === "string" && err.message.trim()) {
-    return err.message;
+  const code = err && (err.code || err?.customData?.status);
+  const message = err && typeof err.message === "string" ? err.message : "";
+  if (message && !message.startsWith("Firebase")) return message;
+  if (typeof code === "string" && code.includes("storage/unauthorized")) {
+    return "Upload was blocked. Your invite session may have expired — ask for a new link.";
   }
+  if (message) return message;
   return fallback;
 }
 
 // ---------------------------------------------------------------------------
-// Event delegation
+// Leave-while-uploading warning
+// ---------------------------------------------------------------------------
+
+window.addEventListener("beforeunload", (e) => {
+  if (uploading || state.phase === "recording") {
+    e.preventDefault();
+    e.returnValue = "";
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Events
 // ---------------------------------------------------------------------------
 
 root.addEventListener("click", (e) => {
   const target = e.target.closest("[data-action]");
   if (!target) return;
   const action = target.dataset.action;
-  const idx = target.dataset.idx !== undefined ? Number(target.dataset.idx) : null;
-
-  if (action === "record") startRecording(idx);
-  else if (action === "stop") stopRecording(idx);
-  else if (action === "rerecord") reRecord(idx);
-  else if (action === "submit") handleSubmit();
-  else if (action === "retry") handleSubmit();
+  if (action === "record") startRecording();
+  else if (action === "stop") stopRecording();
+  else if (action === "rerecord") reRecord();
+  else if (action === "submit" || action === "retry") handleSubmit();
 });
 
 root.addEventListener("change", (e) => {
   const el = e.target;
   if (el && el.id === "consent-checkbox") {
     state.consentChecked = el.checked;
-    state.submitBlockedMessage = "";
+    state.blockedMessage = "";
     render();
     return;
   }
   if (el && el.matches && el.matches('input[type="file"]')) {
-    const idx = Number(el.dataset.idx);
     const file = el.files && el.files[0];
-    if (file) handleFileChosen(idx, file);
+    if (file) handleFileChosen(file);
   }
 });
 
@@ -646,9 +697,39 @@ root.addEventListener("change", (e) => {
 // Boot
 // ---------------------------------------------------------------------------
 
+function applyInviteSession(invite) {
+  state.invite = {
+    name: invite.name || "",
+    relationship: invite.relationship || "",
+    expiresAt: invite.expiresAt || "",
+    maxDurationSeconds: invite.maxDurationSeconds || DEFAULT_MAX_DURATION_SECONDS,
+    maxBytes: invite.maxBytes || DEFAULT_MAX_BYTES,
+    allowedMimeTypes: Array.isArray(invite.allowedMimeTypes)
+      ? invite.allowedMimeTypes
+      : [...ALLOWED_MIMES],
+  };
+  state.phase = "form";
+  render();
+}
+
+function applyStatus(approvalStatus, inviteMeta) {
+  state.approvalStatus = approvalStatus || "pending";
+  if (inviteMeta) {
+    state.invite = {
+      name: inviteMeta.name || "",
+      relationship: inviteMeta.relationship || "",
+      expiresAt: inviteMeta.expiresAt || "",
+      maxDurationSeconds: DEFAULT_MAX_DURATION_SECONDS,
+      maxBytes: DEFAULT_MAX_BYTES,
+      allowedMimeTypes: [...ALLOWED_MIMES],
+    };
+  }
+  state.phase = "status";
+  render();
+}
+
 async function main() {
   const token = extractToken();
-
   if (!token) {
     state.phase = "invalid";
     state.errorMessage = "This invite link is missing or malformed.";
@@ -656,110 +737,105 @@ async function main() {
     return;
   }
   currentToken = token;
-
-  render(); // show "redeeming…"
+  render();
 
   let app;
   try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
-    // No App Check on this page by design: redeemVoiceInvite,
-    // uploadVoiceInviteSample and submitVoiceInvite are all
-    // enforceAppCheck:false invite-claim-gated callables (see the pinned
-    // contracts doc), so there is nothing to attach here.
     functionsInstance = getFunctions(app);
+    storageInstance = getStorage(app);
     redeemVoiceInviteFn = httpsCallable(functionsInstance, "redeemVoiceInvite");
-    uploadVoiceInviteSampleFn = httpsCallable(functionsInstance, "uploadVoiceInviteSample");
-    submitVoiceInviteFn = httpsCallable(functionsInstance, "submitVoiceInvite");
-  } catch (err) {
+    prepareStoryInviteUploadFn = httpsCallable(functionsInstance, "prepareStoryInviteUpload");
+    submitStoryInviteReadingFn = httpsCallable(functionsInstance, "submitStoryInviteReading");
+  } catch {
     state.phase = "invalid";
     state.errorMessage = "This invite link is no longer valid.";
     render();
     return;
   }
 
-  // A tab reload (mobile Safari backgrounding, accidental refresh mid-
-  // recording, etc.) must NOT call redeemVoiceInviteFn again — the token is
-  // single-use server-side, so a second redeem always fails and would show
-  // a terminal "no longer valid" error even though the 2h session is still
-  // very much alive. Resolve whether we already redeemed this token in this
-  // browser session before ever touching the network for a fresh redeem.
   const stored = readStoredSession(token);
 
   if (stored && stored.submitted) {
-    // Already fully submitted earlier this session — reloading should land
-    // back on the thank-you screen, not re-show the recording form.
-    state.phase = "success";
-    render();
+    applyStatus(stored.approvalStatus || "pending", stored.invite);
+    // Also refresh from server so Approved / Not approved appear once parent flow writes them.
+    try {
+      const result = await redeemVoiceInviteFn({token});
+      const data = result.data || {};
+      if (data.kind === "status") {
+        applyStatus(data.approvalStatus, data);
+        saveStoredSession(token, {
+          submitted: true,
+          approvalStatus: data.approvalStatus,
+          invite: {name: data.name, relationship: data.relationship},
+        });
+      }
+    } catch {
+      // Keep local pending status if network/status lookup fails.
+    }
     return;
   }
 
-  if (stored) {
-    // Let Firebase Auth's own persisted session (indexedDB, survives
-    // reload automatically) settle first — that's the common case and
-    // needs no network call at all.
+  if (stored && stored.customToken && stored.invite && !stored.submitted) {
     const restoredUser = await waitForAuthInit(auth);
     let liveUser = restoredUser && restoredUser.uid === stored.uid && (await hasLiveInviteClaims(restoredUser))
       ? restoredUser
       : null;
-
     if (!liveUser) {
-      // Auth session didn't survive (storage cleared, first paint before
-      // indexedDB restore, etc.) but we still hold the custom token minted
-      // by the original redeem — sign in with it again rather than
-      // re-redeeming. Custom tokens can be used to sign in more than once
-      // within their validity window, so this is safe and makes no call to
-      // redeemVoiceInvite.
       try {
         const cred = await signInWithCustomToken(auth, stored.customToken);
-        if (await hasLiveInviteClaims(cred.user)) {
-          liveUser = cred.user;
-        }
+        if (await hasLiveInviteClaims(cred.user)) liveUser = cred.user;
       } catch {
         liveUser = null;
       }
     }
-
     if (liveUser) {
-      state.invite = stored.invite;
-      state.prompts = buildPromptsFromInvite(stored.invite);
-      state.phase = "form";
-      render();
+      applyInviteSession(stored.invite);
       return;
     }
-
-    // Stored session is unrecoverable (custom token also expired) — clear
-    // it and fall through to a real redeem attempt below. If the invite
-    // link itself is still genuinely valid this recovers gracefully;
-    // if it was a one-time link already consumed, the redeem call below
-    // correctly surfaces the terminal error.
     clearStoredSession(token);
   }
 
   try {
-    const result = await redeemVoiceInviteFn({ token });
+    const result = await redeemVoiceInviteFn({token});
     const data = result.data || {};
 
-    const cred = await signInWithCustomToken(auth, data.customToken);
+    if (data.kind === "status") {
+      applyStatus(data.approvalStatus, data);
+      saveStoredSession(token, {
+        submitted: true,
+        approvalStatus: data.approvalStatus,
+        invite: {name: data.name, relationship: data.relationship},
+      });
+      return;
+    }
 
+    // Backward-compat: older servers may omit kind but still return customToken.
+    const customToken = data.customToken;
+    if (!customToken) {
+      throw new Error("invalid");
+    }
+
+    const cred = await signInWithCustomToken(auth, customToken);
     const invite = {
       name: data.name || "",
       relationship: data.relationship || "",
-      prompts: Array.isArray(data.prompts) ? data.prompts : [],
       expiresAt: data.expiresAt || "",
+      maxDurationSeconds: data.maxDurationSeconds || DEFAULT_MAX_DURATION_SECONDS,
+      maxBytes: data.maxBytes || DEFAULT_MAX_BYTES,
+      allowedMimeTypes: Array.isArray(data.allowedMimeTypes)
+        ? data.allowedMimeTypes
+        : [...ALLOWED_MIMES],
     };
-
     saveStoredSession(token, {
-      customToken: data.customToken,
+      customToken,
       uid: cred.user.uid,
       invite,
+      submitted: false,
     });
-
-    state.invite = invite;
-    state.prompts = buildPromptsFromInvite(invite);
-    state.phase = "form";
-    render();
-  } catch (err) {
+    applyInviteSession(invite);
+  } catch {
     state.phase = "invalid";
     state.errorMessage = "This invite link is no longer valid.";
     render();
@@ -767,7 +843,6 @@ async function main() {
 }
 
 main().catch(() => {
-  // Last-resort safety net so nothing throws uncaught to the console.
   state.phase = "invalid";
   state.errorMessage = "This invite link is no longer valid.";
   render();
