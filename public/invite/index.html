@@ -1,7 +1,7 @@
 <!doctype html>
 <!-- Relative Readings MVP — full-story invite capture page.
      Contracts: redeemVoiceInvite, prepareStoryInviteUpload, submitStoryInviteReading.
-     invite-0.js loads Firebase then classic invite-1a/1b/2 for full-reading capture. -->
+     app.js owns all UI under #app via innerHTML + event delegation. -->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -25,6 +25,6 @@
     <noscript>
       <p class="noscript-banner">This page requires JavaScript to record. Please enable JavaScript and reload.</p>
     </noscript>
-    <script type="module" src="./invite-0.js"></script>
+    <script type="module" src="./app.js"></script>
   </body>
 </html>
