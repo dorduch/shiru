@@ -8,11 +8,20 @@ const root = path.join(__dirname, "..");
 function joinParts(dirName, destRel, shaFile) {
   const dir = path.join(__dirname, dirName);
   if (!fs.existsSync(dir)) { console.warn("skip missing", dirName); return null; }
-  const parts = fs.readdirSync(dir).filter((f) => /^part\d+\.txt$/.test(f)).sort(
+  const b64parts = fs.readdirSync(dir).filter((f) => /^part\d+\.b64$/.test(f)).sort(
     (a, b) => parseInt(a.match(/\d+/)[0], 10) - parseInt(b.match(/\d+/)[0], 10),
   );
-  let out = "";
-  for (const f of parts) out += fs.readFileSync(path.join(dir, f), "utf8");
+  const txtparts = fs.readdirSync(dir).filter((f) => /^part\d+\.txt$/.test(f)).sort(
+    (a, b) => parseInt(a.match(/\d+/)[0], 10) - parseInt(b.match(/\d+/)[0], 10),
+  );
+  let out;
+  if (b64parts.length) {
+    out = Buffer.concat(b64parts.map((f) => Buffer.from(fs.readFileSync(path.join(dir, f), "utf8").trim(), "base64")));
+  } else if (txtparts.length) {
+    out = Buffer.from(txtparts.map((f) => fs.readFileSync(path.join(dir, f), "utf8")).join(""), "utf8");
+  } else {
+    console.warn("no parts in", dirName); return null;
+  }
   const dest = path.join(root, destRel);
   fs.mkdirSync(path.dirname(dest), {recursive: true});
   fs.writeFileSync(dest, out);
