@@ -1,2 +1,0 @@
-thin-index-pushed
-run: node tools/rr-join-index.js before build
