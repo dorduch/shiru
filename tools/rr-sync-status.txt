@@ -1,0 +1,3 @@
+pending-index-and-appjs
+local-head:944bf01
+need: functions/src/index.ts + public/invite/app.js
