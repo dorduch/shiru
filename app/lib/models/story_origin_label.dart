@@ -9,6 +9,8 @@ String storyOriginSubtitle(StoryOrigin origin) {
       return 'Your audio';
     case StoryOrigin.generated:
       return 'Your story';
+    case StoryOrigin.relative:
+      return 'From family';
   }
 }
 
@@ -21,5 +23,7 @@ String storyOriginSemantics(StoryOrigin origin) {
       return 'your audio';
     case StoryOrigin.generated:
       return 'your story';
+    case StoryOrigin.relative:
+      return 'family reading';
   }
 }
