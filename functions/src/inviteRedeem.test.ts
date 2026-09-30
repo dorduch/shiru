@@ -2,8 +2,8 @@ import {describe, expect, it, vi} from "vitest";
 import type {Firestore} from "firebase-admin/firestore";
 import {Timestamp} from "firebase-admin/firestore";
 import {
-  INVALID_REDEEM_MESSAGE, INVALID_SESSION_MESSAGE, INVITE_PROMPTS,
-  redeemVoiceInviteCore, requireInviteClaims, submitVoiceInviteCore, uploadVoiceInviteSampleCore,
+  INVALID_REDEEM_MESSAGE,
+  redeemVoiceInviteCore, requireInviteClaims,
 } from "./inviteRedeem";
 import {hashInviteToken} from "./domain";
 
@@ -94,13 +94,18 @@ describe("redeemVoiceInviteCore", () => {
     const result = await redeemVoiceInviteCore(db, token, nowMillis, createCustomToken);
 
     expect(createCustomToken).toHaveBeenCalledWith(syntheticUid, {invite: true, parentUid: uid, voiceId});
-    expect(result.customToken).toBe("fake-custom-token");
-    expect(result.name).toBe("Grandma Rose");
-    expect(result.relationship).toBe("Grandmother");
-    expect(result.prompts).toEqual(INVITE_PROMPTS);
-    expect(result.expiresAt).toBe(expiresAt.toDate().toISOString());
+    expect(result).toMatchObject({
+      kind: "session",
+      customToken: "fake-custom-token",
+      name: "Grandma Rose",
+      relationship: "Grandmother",
+      expiresAt: expiresAt.toDate().toISOString(),
+      maxDurationSeconds: 15 * 60,
+      maxBytes: 25 * 1024 * 1024,
+    });
     expect(result).not.toHaveProperty("parentUid");
     expect(result).not.toHaveProperty("voiceId");
+    expect(result).not.toHaveProperty("prompts");
 
     const flip = writes.find((w) => w.path === inviteDocPath);
     expect(flip).toBeTruthy();
@@ -154,6 +159,7 @@ describe("redeemVoiceInviteCore", () => {
       },
     });
     const result = await redeemVoiceInviteCore(db, token, nowMillis, vi.fn(async () => "tok"));
+    expect(result.kind).toBe("session");
     expect(result.name).toBe("");
     expect(result.relationship).toBe("");
   });
@@ -189,190 +195,33 @@ describe("requireInviteClaims", () => {
   });
 });
 
-describe("submitVoiceInviteCore", () => {
-  function fakeBucket(files: string[]) {
-    const calls: {prefix: string}[] = [];
-    return {
-      bucket: {
-        getFiles: async (options: {prefix: string}) => {
-          calls.push(options);
-          return [files.map((name) => ({name}))] as [{name: string}[]];
-        },
-      },
-      calls,
-    };
-  }
-
-  it("happy path: lists Storage samples and calls flipVoiceToQueued with them", async () => {
-    const redeemedAt = Timestamp.fromMillis(nowMillis - 60 * 1000); // 1 min ago
-    const {db, writes} = fakeDb({
-      docs: {
-        "storytimeConfig/familyVoice": {enabled: true},
-        [voicePath]: {status: "consented"},
-      },
-      inviteQueryResults: [
-        {path: inviteDocPath, data: {parentUid: uid, voiceId, status: "redeemed", redeemedAt}},
-      ],
-    });
-    const samplePaths = [
-      `voice-samples/${uid}/${voiceId}/0.webm`,
-      `voice-samples/${uid}/${voiceId}/1.webm`,
-    ];
-    const {bucket, calls} = fakeBucket(samplePaths);
-
-    await expect(submitVoiceInviteCore(db, bucket, uid, voiceId, syntheticUid, nowMillis))
-      .resolves.toBeUndefined();
-    expect(calls).toEqual([{prefix: `voice-samples/${uid}/${voiceId}/`}]);
-
-    const flip = writes.find((w) => w.path === voicePath);
-    expect(flip).toBeTruthy();
-    expect(flip!.data).toMatchObject({status: "queued", samplePaths});
-  });
-
-  it("rejects when there is no redeemed invite doc for this synthetic uid", async () => {
-    const {db} = fakeDb({inviteQueryResults: []});
-    const {bucket} = fakeBucket([]);
-    await expect(submitVoiceInviteCore(db, bucket, uid, voiceId, syntheticUid, nowMillis))
-      .rejects.toMatchObject({code: "failed-precondition", message: INVALID_SESSION_MESSAGE});
-  });
-
-  it("rejects when the invite doc's redeemedAt is outside the 2h window", async () => {
-    const redeemedAt = Timestamp.fromMillis(nowMillis - 2 * 60 * 60 * 1000 - 1); // just over 2h ago
-    const {db} = fakeDb({
-      inviteQueryResults: [
-        {path: inviteDocPath, data: {parentUid: uid, voiceId, status: "redeemed", redeemedAt}},
-      ],
-    });
-    const {bucket} = fakeBucket(["voice-samples/x"]);
-    await expect(submitVoiceInviteCore(db, bucket, uid, voiceId, syntheticUid, nowMillis))
-      .rejects.toMatchObject({code: "failed-precondition", message: INVALID_SESSION_MESSAGE});
-  });
-
-  it("rejects when the invite doc's parentUid/voiceId don't match the claims", async () => {
-    const redeemedAt = Timestamp.fromMillis(nowMillis - 1000);
-    const {db} = fakeDb({
-      inviteQueryResults: [
-        {path: inviteDocPath, data: {parentUid: "someone-else", voiceId, status: "redeemed", redeemedAt}},
-      ],
-    });
-    const {bucket} = fakeBucket(["voice-samples/x"]);
-    await expect(submitVoiceInviteCore(db, bucket, uid, voiceId, syntheticUid, nowMillis))
-      .rejects.toMatchObject({code: "failed-precondition", message: INVALID_SESSION_MESSAGE});
-  });
-
-  it("rejects when no sample files were found in Storage", async () => {
-    const redeemedAt = Timestamp.fromMillis(nowMillis - 1000);
-    const {db} = fakeDb({
-      docs: {
-        "storytimeConfig/familyVoice": {enabled: true},
-        [voicePath]: {status: "consented"},
-      },
-      inviteQueryResults: [
-        {path: inviteDocPath, data: {parentUid: uid, voiceId, status: "redeemed", redeemedAt}},
-      ],
-    });
-    const {bucket} = fakeBucket([]);
-    await expect(submitVoiceInviteCore(db, bucket, uid, voiceId, syntheticUid, nowMillis))
-      .rejects.toMatchObject({code: "failed-precondition"});
-  });
-});
-
-describe("uploadVoiceInviteSampleCore", () => {
-  function activeSessionDb() {
-    const redeemedAt = Timestamp.fromMillis(nowMillis - 1000);
-    return fakeDb({
-      inviteQueryResults: [
-        {path: inviteDocPath, data: {parentUid: uid, voiceId, status: "redeemed", redeemedAt}},
-      ],
-    }).db;
-  }
-
-  function fakeBucket() {
-    const calls: {path: string; buf: Buffer; opts: {contentType: string}}[] = [];
-    return {
-      bucket: {
-        file: (path: string) => ({
-          save: async (buf: Buffer, opts: {contentType: string}) => {
-            calls.push({path, buf, opts});
+describe("redeemVoiceInviteCore status reopen", () => {
+  it("returns Pending / Approved / Not approved from the relativeReadings doc", async () => {
+    const readingId = "abc123def4567890";
+    const readingPath = `users/${uid}/relativeReadings/${readingId}`;
+    for (const [status, expected] of [
+      ["pending", "pending"],
+      ["approved", "approved"],
+      ["rejected", "rejected"],
+      ["weird", "pending"],
+    ] as const) {
+      const {db} = fakeDb({
+        docs: {
+          [inviteDocPath]: {
+            parentUid: uid, voiceId, status: "submitted", readingId,
+            expiresAt: Timestamp.fromMillis(nowMillis + 60_000),
           },
-        }),
-      },
-      calls,
-    };
-  }
-
-  it("happy path: saves to the expected path with the given contentType", async () => {
-    const db = activeSessionDb();
-    const {bucket, calls} = fakeBucket();
-    const base64 = Buffer.from("hello-audio-bytes").toString("base64");
-
-    const result = await uploadVoiceInviteSampleCore(
-      db, bucket, uid, voiceId, syntheticUid, nowMillis, 2, base64, "audio/webm",
-    );
-
-    expect(result.path).toBe(`voice-samples/${uid}/${voiceId}/2.webm`);
-    expect(calls).toHaveLength(1);
-    expect(calls[0].path).toBe(`voice-samples/${uid}/${voiceId}/2.webm`);
-    expect(calls[0].opts).toEqual({contentType: "audio/webm"});
-    expect(calls[0].buf.toString()).toBe("hello-audio-bytes");
-  });
-
-  it("maps audio/mp4 to a .m4a path", async () => {
-    const db = activeSessionDb();
-    const {bucket, calls} = fakeBucket();
-    const base64 = Buffer.from("x").toString("base64");
-
-    const result = await uploadVoiceInviteSampleCore(
-      db, bucket, uid, voiceId, syntheticUid, nowMillis, 0, base64, "audio/mp4",
-    );
-    expect(result.path).toBe(`voice-samples/${uid}/${voiceId}/0.m4a`);
-    expect(calls[0].opts).toEqual({contentType: "audio/mp4"});
-  });
-
-  it("rejects idx out of range (negative, >4, non-integer)", async () => {
-    const db = activeSessionDb();
-    const {bucket, calls} = fakeBucket();
-    const base64 = Buffer.from("x").toString("base64");
-
-    for (const idx of [-1, 5, 1.5]) {
-      await expect(uploadVoiceInviteSampleCore(db, bucket, uid, voiceId, syntheticUid, nowMillis, idx, base64, "audio/webm"))
-        .rejects.toMatchObject({code: "invalid-argument"});
+          [voicePath]: {name: "Gran", relationship: "grandma"},
+          [readingPath]: {status, storagePath: "x"},
+        },
+      });
+      const result = await redeemVoiceInviteCore(db, token, nowMillis, vi.fn());
+      expect(result).toEqual({
+        kind: "status",
+        approvalStatus: expected,
+        name: "Gran",
+        relationship: "grandma",
+      });
     }
-    expect(calls).toHaveLength(0);
-  });
-
-  it("rejects an oversized decoded payload (> 8MB)", async () => {
-    const db = activeSessionDb();
-    const {bucket, calls} = fakeBucket();
-    const big = Buffer.alloc(8 * 1024 * 1024 + 1, 1).toString("base64");
-
-    await expect(uploadVoiceInviteSampleCore(db, bucket, uid, voiceId, syntheticUid, nowMillis, 0, big, "audio/webm"))
-      .rejects.toMatchObject({code: "invalid-argument"});
-    expect(calls).toHaveLength(0);
-  });
-
-  it("rejects an unsupported mimeType", async () => {
-    const db = activeSessionDb();
-    const {bucket, calls} = fakeBucket();
-    const base64 = Buffer.from("x").toString("base64");
-
-    await expect(uploadVoiceInviteSampleCore(db, bucket, uid, voiceId, syntheticUid, nowMillis, 0, base64, "audio/wav"))
-      .rejects.toMatchObject({code: "invalid-argument"});
-    expect(calls).toHaveLength(0);
-  });
-
-  it("rejects when the invite session is stale (outside the 2h window), even with valid arguments", async () => {
-    const redeemedAt = Timestamp.fromMillis(nowMillis - 3 * 60 * 60 * 1000);
-    const {db} = fakeDb({
-      inviteQueryResults: [
-        {path: inviteDocPath, data: {parentUid: uid, voiceId, status: "redeemed", redeemedAt}},
-      ],
-    });
-    const {bucket, calls} = fakeBucket();
-    const base64 = Buffer.from("x").toString("base64");
-
-    await expect(uploadVoiceInviteSampleCore(db, bucket, uid, voiceId, syntheticUid, nowMillis, 0, base64, "audio/webm"))
-      .rejects.toMatchObject({code: "failed-precondition", message: INVALID_SESSION_MESSAGE});
-    expect(calls).toHaveLength(0);
   });
 });
