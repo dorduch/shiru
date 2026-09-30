@@ -13,6 +13,7 @@ import 'ui/change_pin_screen.dart';
 import 'ui/family_voices_screens.dart';
 import 'ui/story_composer_screen.dart';
 import 'ui/storytime_screens.dart';
+import 'ui/relative_readings_screens.dart';
 import 'ui/widgets/storytime/component_gallery_screen.dart';
 
 OnEnterResult _handleParentAreaTransition(
@@ -162,6 +163,19 @@ GoRouter createRouter(WidgetRef ref) {
             path: 'stories',
             builder: (context, state) =>
                 const StoryLibraryScreen(parentMode: true),
+          ),
+          GoRoute(
+            path: 'pending-readings',
+            builder: (context, state) =>
+                const RelativeReadingsPendingScreen(),
+            routes: [
+              GoRoute(
+                path: ':readingId',
+                builder: (context, state) => RelativeReadingReviewScreen(
+                  readingId: state.pathParameters['readingId'] ?? '',
+                ),
+              ),
+            ],
           ),
           GoRoute(
             path: 'account',
